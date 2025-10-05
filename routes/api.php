@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,21 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/force-punch', [AttendanceController::class, 'forcePunch']);
             Route::put('/{id}', [AttendanceController::class, 'update']);
             Route::delete('/{id}', [AttendanceController::class, 'destroy']);
+        });
+    });
+
+    // Leaves
+    Route::prefix('leaves')->group(function () {
+        Route::get('/', [LeaveController::class, 'index']);
+        Route::post('/', [LeaveController::class, 'store']);
+        Route::get('/{id}', [LeaveController::class, 'show']);
+        Route::put('/{id}', [LeaveController::class, 'update']);
+        Route::delete('/{id}', [LeaveController::class, 'destroy']);
+
+        // Supervisor/Admin
+        Route::middleware('role:supervisor,admin')->group(function () {
+            Route::put('/{id}/approve', [LeaveController::class, 'approve']);
+            Route::put('/{id}/reject', [LeaveController::class, 'reject']);
         });
     });
 
