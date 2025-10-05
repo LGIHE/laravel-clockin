@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+
+    // Attendance
+    Route::prefix('attendance')->group(function () {
+        Route::post('/clock-in', [AttendanceController::class, 'clockIn']);
+        Route::post('/clock-out', [AttendanceController::class, 'clockOut']);
+        Route::get('/status', [AttendanceController::class, 'status']);
+        Route::get('/', [AttendanceController::class, 'index']);
+        Route::get('/{id}', [AttendanceController::class, 'show']);
+
+        // Admin only
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/force-punch', [AttendanceController::class, 'forcePunch']);
+            Route::put('/{id}', [AttendanceController::class, 'update']);
+            Route::delete('/{id}', [AttendanceController::class, 'destroy']);
+        });
+    });
 
     // User Management (Admin only)
     Route::middleware('role:admin')->group(function () {
