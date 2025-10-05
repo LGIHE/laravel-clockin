@@ -1,0 +1,264 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+
+class UserService
+{
+    /**
+     * Create a new user.
+     *
+     * @param array $data
+     * @return User
+     * @throws \Exception
+     */
+    public function createUser(array $data): User
+    {
+        DB::beginTransaction();
+        
+        try {
+            $userData = [
+                'id' => Str::uuid()->toString(),
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'user_level_id' => $data['user_level_id'],
+                'designation_id' => $data['designation_id'] ?? null,
+                'department_id' => $data['department_id'] ?? null,
+                'status' => $data['status'] ?? 1,
+            ];
+
+            // Handle project assignment if provided
+            if (isset($data['project_ids']) && is_array($data['project_ids'])) {
+                $userData['project_id'] = json_encode($data['project_ids']);
+            }
+
+            $user = User::create($userData);
+
+            DB::commit();
+
+            return $user->load(['userLevel', 'department', 'designation']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Update an existing user.
+     *
+     * @param string $userId
+     * @param array $data
+     * @return User
+     * @throws \Exception
+     */
+    public function updateUser(string $userId, array $data): User
+    {
+        DB::beginTransaction();
+        
+        try {
+            $user = User::findOrFail($userId);
+
+            $updateData = [];
+
+            if (isset($data['name'])) {
+                $updateData['name'] = $data['name'];
+            }
+
+            if (isset($data['email'])) {
+                $updateData['email'] = $data['email'];
+            }
+
+            if (isset($data['user_level_id'])) {
+                $updateData['user_level_id'] = $data['user_level_id'];
+            }
+
+            if (isset($data['designation_id'])) {
+                $updateData['designation_id'] = $data['designation_id'];
+            }
+
+            if (isset($data['department_id'])) {
+                $updateData['department_id'] = $data['department_id'];
+            }
+
+            if (isset($data['status'])) {
+                $updateData['status'] = $data['status'];
+            }
+
+            // Handle project assignment if provided
+            if (isset($data['project_ids'])) {
+                if (is_array($data['project_ids'])) {
+                    $updateData['project_id'] = json_encode($data['project_ids']);
+                } else {
+                    $updateData['project_id'] = null;
+                }
+            }
+
+            $user->update($updateData);
+
+            DB::commit();
+
+            return $user->fresh(['userLevel', 'department', 'designation']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Assign a supervisor to a user.
+     *
+     * @param string $userId
+     * @param string|null $supervisorId
+     * @return User
+     * @throws \Exception
+     */
+    public function assignSupervisor(string $userId, ?string $supervisorId): User
+    {
+        $user = User::findOrFail($userId);
+
+        if ($supervisorId) {
+            // Verify supervisor exists
+            User::findOrFail($supervisorId);
+        }
+
+        $user->update(['supervisor_id' => $supervisorId]);
+
+        return $user->fresh(['userLevel', 'department', 'designation']);
+    }
+
+    /**
+     * Assign projects to a user.
+     *
+     * @param string $userId
+     * @param array $projectIds
+     * @return User
+     * @throws \Exception
+     */
+    public function assignProjects(string $userId, array $projectIds): User
+    {
+        $user = User::findOrFail($userId);
+
+        // Store project IDs as JSON
+        $user->update([
+            'project_id' => !empty($projectIds) ? json_encode($projectIds) : null
+        ]);
+
+        return $user->fresh(['userLevel', 'department', 'designation']);
+    }
+
+    /**
+     * Change user status.
+     *
+     * @param string $userId
+     * @param int $status
+     * @return User
+     * @throws \Exception
+     */
+    public function changeStatus(string $userId, int $status): User
+    {
+        $user = User::findOrFail($userId);
+
+        $user->update(['status' => $status]);
+
+        return $user->fresh(['userLevel', 'department', 'designation']);
+    }
+
+    /**
+     * Change user password.
+     *
+     * @param string $userId
+     * @param string $oldPassword
+     * @param string $newPassword
+     * @return User
+     * @throws \Exception
+     */
+    public function changePassword(string $userId, string $oldPassword, string $newPassword): User
+    {
+        $user = User::findOrFail($userId);
+
+        // Verify old password
+        if (!Hash::check($oldPassword, $user->password)) {
+            throw new \Exception('Current password is incorrect');
+        }
+
+        $user->update([
+            'password' => Hash::make($newPassword)
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * Get user by ID with relationships.
+     *
+     * @param string $userId
+     * @return User
+     */
+    public function getUserById(string $userId): User
+    {
+        return User::with(['userLevel', 'department', 'designation'])
+            ->findOrFail($userId);
+    }
+
+    /**
+     * Get all users with optional filters.
+     *
+     * @param array $filters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getUsers(array $filters = [])
+    {
+        $query = User::with(['userLevel', 'department', 'designation']);
+
+        // Apply filters
+        if (isset($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['department_id'])) {
+            $query->where('department_id', $filters['department_id']);
+        }
+
+        if (isset($filters['user_level_id'])) {
+            $query->where('user_level_id', $filters['user_level_id']);
+        }
+
+        // Sorting
+        $sortField = $filters['sort_by'] ?? 'created_at';
+        $sortDirection = $filters['sort_direction'] ?? 'desc';
+        $query->orderBy($sortField, $sortDirection);
+
+        // Pagination
+        $perPage = $filters['per_page'] ?? 10;
+        
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Delete a user (soft delete).
+     *
+     * @param string $userId
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteUser(string $userId): bool
+    {
+        $user = User::findOrFail($userId);
+        
+        return $user->delete();
+    }
+}
+

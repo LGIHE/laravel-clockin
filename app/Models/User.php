@@ -37,6 +37,7 @@ class User extends Authenticatable
         'designation_id',
         'department_id',
         'project_id',
+        'supervisor_id',
         'name',
         'email',
         'password',
