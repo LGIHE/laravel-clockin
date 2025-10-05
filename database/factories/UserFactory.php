@@ -24,10 +24,19 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'id' => (string) Str::uuid(),
+            'user_level_id' => \App\Models\UserLevel::factory(),
+            'designation_id' => \App\Models\Designation::factory(),
+            'department_id' => \App\Models\Department::factory(),
+            'project_id' => null,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'status' => 1,
+            'ip' => fake()->optional()->ipv4(),
+            'last_in_time' => null,
+            'auto_punch_out_time' => null,
             'remember_token' => Str::random(10),
         ];
     }
