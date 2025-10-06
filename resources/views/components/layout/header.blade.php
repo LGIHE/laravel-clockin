@@ -12,11 +12,16 @@
                 {{ $slot }}
             </div>
 
-            @isset($actions)
-                <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2">
+                <!-- Notification Dropdown -->
+                @auth
+                    @livewire('notifications.notification-dropdown')
+                @endauth
+
+                @isset($actions)
                     {{ $actions }}
-                </div>
-            @endisset
+                @endisset
+            </div>
         </div>
     </div>
 </header>

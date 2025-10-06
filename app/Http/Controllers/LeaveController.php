@@ -300,5 +300,47 @@ class LeaveController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Get leave balance for a user.
+     */
+    public function balance(Request $request): JsonResponse
+    {
+        $userId = $request->get('user_id', $request->user()->id);
+        $year = $request->get('year', now()->year);
+
+        // Check authorization - users can only see their own balance unless admin/supervisor
+        if ($userId !== $request->user()->id && !in_array($request->user()->role, ['ADMIN', 'SUPERVISOR'])) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'UNAUTHORIZED',
+                    'message' => 'You are not authorized to view this balance',
+                ],
+            ], 403);
+        }
+
+        try {
+            $categories = \App\Models\LeaveCategory::all();
+            $balances = [];
+
+            foreach ($categories as $category) {
+                $balances[] = $this->leaveService->getLeaveBalance($userId, $category->id, $year);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $balances,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'BALANCE_FETCH_FAILED',
+                    'message' => $e->getMessage(),
+                ],
+            ], 400);
+        }
+    }
 }
 
