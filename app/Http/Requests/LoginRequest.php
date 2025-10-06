@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
+    use SanitizesInput;
+
     /**
      * Determine if the user is authorized to make this request.
      */

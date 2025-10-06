@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,12 @@ class UserService
             }
 
             $user = User::create($userData);
+
+            // Invalidate relevant caches
+            Cache::forget('admin_system_stats');
+            if (isset($userData['department_id'])) {
+                Cache::forget("department_users:{$userData['department_id']}");
+            }
 
             DB::commit();
 
@@ -100,6 +107,15 @@ class UserService
 
             $user->update($updateData);
 
+            // Invalidate user cache
+            Cache::forget("user:{$userId}");
+            Cache::forget('admin_system_stats');
+            
+            // Invalidate supervisor team cache if supervisor changed
+            if ($user->supervisor_id) {
+                Cache::forget("supervisor_team:{$user->supervisor_id}");
+            }
+
             DB::commit();
 
             return $user->fresh(['userLevel', 'department', 'designation']);
@@ -127,6 +143,12 @@ class UserService
         }
 
         $user->update(['supervisor_id' => $supervisorId]);
+
+        // Invalidate caches
+        Cache::forget("user:{$userId}");
+        if ($supervisorId) {
+            Cache::forget("supervisor_team:{$supervisorId}");
+        }
 
         return $user->fresh(['userLevel', 'department', 'designation']);
     }
@@ -164,6 +186,13 @@ class UserService
         $user = User::findOrFail($userId);
 
         $user->update(['status' => $status]);
+
+        // Invalidate caches
+        Cache::forget("user:{$userId}");
+        Cache::forget('admin_system_stats');
+        if ($user->supervisor_id) {
+            Cache::forget("supervisor_team:{$user->supervisor_id}");
+        }
 
         return $user->fresh(['userLevel', 'department', 'designation']);
     }
@@ -258,7 +287,16 @@ class UserService
     {
         $user = User::findOrFail($userId);
         
-        return $user->delete();
+        $result = $user->delete();
+
+        // Invalidate caches
+        Cache::forget("user:{$userId}");
+        Cache::forget('admin_system_stats');
+        if ($user->supervisor_id) {
+            Cache::forget("supervisor_team:{$user->supervisor_id}");
+        }
+        
+        return $result;
     }
 }
 

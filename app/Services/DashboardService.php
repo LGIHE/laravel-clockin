@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Models\Project;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -21,9 +22,12 @@ class DashboardService
      */
     public function getUserDashboard(string $userId): array
     {
-        $user = User::findOrFail($userId);
+        // Cache user data for 5 minutes
+        $user = Cache::remember("user:{$userId}", 300, function () use ($userId) {
+            return User::with(['userLevel', 'department', 'designation'])->findOrFail($userId);
+        });
         
-        // Get attendance status (whether user is currently clocked in)
+        // Get attendance status (whether user is currently clocked in) - no cache for real-time data
         $currentAttendance = Attendance::where('user_id', $userId)
             ->whereNull('out_time')
             ->latest('in_time')
@@ -56,28 +60,31 @@ class DashboardService
             ->limit(5)
             ->get();
         
-        // Calculate monthly statistics
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
-        
-        $monthlyAttendance = Attendance::where('user_id', $userId)
-            ->whereBetween('in_time', [$startOfMonth, $endOfMonth])
-            ->whereNotNull('out_time')
-            ->get();
-        
-        $totalHoursThisMonth = $monthlyAttendance->sum('worked');
-        $totalDaysThisMonth = $monthlyAttendance->count();
-        $averageHoursPerDay = $totalDaysThisMonth > 0 
-            ? $totalHoursThisMonth / $totalDaysThisMonth 
-            : 0;
-        
-        $stats = [
-            'total_hours_this_month' => $totalHoursThisMonth,
-            'total_days_this_month' => $totalDaysThisMonth,
-            'average_hours_per_day' => round($averageHoursPerDay, 2),
-            'total_hours_formatted' => $this->formatSeconds($totalHoursThisMonth),
-            'average_hours_formatted' => $this->formatSeconds($averageHoursPerDay),
-        ];
+        // Calculate monthly statistics - cache for 10 minutes
+        $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
+        $stats = Cache::remember($cacheKey, 600, function () use ($userId) {
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+            
+            $monthlyAttendance = Attendance::where('user_id', $userId)
+                ->whereBetween('in_time', [$startOfMonth, $endOfMonth])
+                ->whereNotNull('out_time')
+                ->get();
+            
+            $totalHoursThisMonth = $monthlyAttendance->sum('worked');
+            $totalDaysThisMonth = $monthlyAttendance->count();
+            $averageHoursPerDay = $totalDaysThisMonth > 0 
+                ? $totalHoursThisMonth / $totalDaysThisMonth 
+                : 0;
+            
+            return [
+                'total_hours_this_month' => $totalHoursThisMonth,
+                'total_days_this_month' => $totalDaysThisMonth,
+                'average_hours_per_day' => round($averageHoursPerDay, 2),
+                'total_hours_formatted' => $this->formatSeconds($totalHoursThisMonth),
+                'average_hours_formatted' => $this->formatSeconds($averageHoursPerDay),
+            ];
+        });
         
         return [
             'attendance_status' => $attendanceStatus,
@@ -96,19 +103,22 @@ class DashboardService
      */
     public function getSupervisorDashboard(string $userId): array
     {
-        // Get team members (users supervised by this user)
-        $teamMembers = User::where('supervisor_id', $userId)
-            ->where('status', 1)
-            ->with(['department', 'designation'])
-            ->get();
+        // Get team members (users supervised by this user) - cache for 10 minutes
+        $cacheKey = "supervisor_team:{$userId}";
+        $teamMembers = Cache::remember($cacheKey, 600, function () use ($userId) {
+            return User::where('supervisor_id', $userId)
+                ->where('status', 1)
+                ->with(['department', 'designation'])
+                ->get();
+        });
         
         $teamMemberIds = $teamMembers->pluck('id')->toArray();
         
-        // Get team attendance summary for today
+        // Get team attendance summary for today - no cache for real-time data
         $today = Carbon::today();
         $teamAttendance = Attendance::whereIn('user_id', $teamMemberIds)
             ->whereDate('in_time', $today)
-            ->with('user')
+            ->with(['user.userLevel', 'user.department'])
             ->get();
         
         $clockedInCount = $teamAttendance->filter(function ($attendance) {
@@ -175,32 +185,34 @@ class DashboardService
      */
     public function getAdminDashboard(): array
     {
-        // System-wide statistics
-        $totalUsers = User::count();
-        $activeUsers = User::where('status', 1)->count();
-        $inactiveUsers = User::where('status', 0)->count();
-        $totalDepartments = Department::count();
-        $totalProjects = Project::count();
+        // System-wide statistics - cache for 5 minutes
+        $systemStats = Cache::remember('admin_system_stats', 300, function () {
+            $totalUsers = User::count();
+            $activeUsers = User::where('status', 1)->count();
+            $inactiveUsers = User::where('status', 0)->count();
+            $totalDepartments = Department::count();
+            $totalProjects = Project::count();
         
-        // Today's attendance statistics
-        $today = Carbon::today();
-        $todayAttendance = Attendance::whereDate('in_time', $today)->count();
-        $currentlyClockedIn = Attendance::whereDate('in_time', $today)
-            ->whereNull('out_time')
-            ->count();
+            // Today's attendance statistics
+            $today = Carbon::today();
+            $todayAttendance = Attendance::whereDate('in_time', $today)->count();
+            $currentlyClockedIn = Attendance::whereDate('in_time', $today)
+                ->whereNull('out_time')
+                ->count();
+            
+            return [
+                'total_users' => $totalUsers,
+                'active_users' => $activeUsers,
+                'inactive_users' => $inactiveUsers,
+                'total_departments' => $totalDepartments,
+                'total_projects' => $totalProjects,
+                'today_attendance' => $todayAttendance,
+                'currently_clocked_in' => $currentlyClockedIn,
+            ];
+        });
         
-        $systemStats = [
-            'total_users' => $totalUsers,
-            'active_users' => $activeUsers,
-            'inactive_users' => $inactiveUsers,
-            'total_departments' => $totalDepartments,
-            'total_projects' => $totalProjects,
-            'today_attendance' => $todayAttendance,
-            'currently_clocked_in' => $currentlyClockedIn,
-        ];
-        
-        // Recent activities (last 10 attendance records)
-        $recentActivities = Attendance::with(['user'])
+        // Recent activities (last 10 attendance records) - no cache for real-time data
+        $recentActivities = Attendance::with(['user:id,name'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()

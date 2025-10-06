@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class AttendanceService
@@ -41,6 +42,10 @@ class AttendanceService
             'last_in_time' => Carbon::now(),
         ]);
 
+        // Invalidate user stats cache
+        $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
+        Cache::forget($cacheKey);
+
         return $attendance->load('user');
     }
 
@@ -72,6 +77,10 @@ class AttendanceService
             'out_message' => $message,
             'worked' => $workedSeconds,
         ]);
+
+        // Invalidate user stats cache
+        $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
+        Cache::forget($cacheKey);
 
         return $attendance->load('user');
     }

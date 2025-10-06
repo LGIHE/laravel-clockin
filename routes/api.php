@@ -26,10 +26,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Public authentication routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+// Public authentication routes with rate limiting
+Route::middleware('throttle:login')->group(function () {
+    Route::post('/auth/login', [AuthController::class, 'login']);
+});
+
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+});
 
 // Protected authentication routes
 Route::middleware('auth:sanctum')->group(function () {
