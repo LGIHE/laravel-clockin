@@ -91,85 +91,45 @@
     });
 @endphp
 
-<aside {{ $attributes->merge(['class' => 'bg-white border-r border-gray-200 h-screen overflow-y-auto']) }}>
-    <div class="h-full flex flex-col">
-        <!-- Sidebar Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 lg:h-16">
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <span class="text-xl font-bold text-gray-900 lg:block hidden">ClockIn</span>
+<aside {{ $attributes->merge(['class' => 'w-64 min-h-screen border-r border-gray-200 bg-white flex flex-col']) }}>
+    <!-- Sidebar Header with Logo -->
+    <div class="p-4 border-b border-gray-200">
+        <a href="{{ route(match($userRole) { 'ADMIN' => 'admin.dashboard', 'SUPERVISOR' => 'supervisor.dashboard', default => 'dashboard' }) }}" class="flex items-center gap-2">
+            <div class="bg-lgf-blue text-white font-bold p-2 rounded">
+                <span class="text-lg">LGF</span>
             </div>
-            <button 
-                @click="$dispatch('toggle-sidebar')"
-                class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:hidden"
-            >
-                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- User Info -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                    </div>
-                </div>
-                <div class="flex-1 min-w-0 lg:block hidden">
-                    <p class="text-sm font-medium text-gray-900 truncate">
-                        {{ $user->name }}
-                    </p>
-                    <p class="text-xs text-gray-500 truncate">
-                        {{ ucfirst(strtolower($userRole)) }}
-                    </p>
-                </div>
+            <div class="text-gray-700 font-medium leading-tight">
+                <div class="text-xs uppercase">Luigi</div>
+                <div class="text-xs uppercase">Giussani Foundation</div>
             </div>
-        </div>
+        </a>
+    </div>
 
-        <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+    <!-- Navigation -->
+    <div class="flex-1 overflow-y-auto py-4">
+        <ul class="space-y-1">
             @foreach($filteredItems as $item)
                 @if(isset($item['type']) && $item['type'] === 'divider')
-                    <div class="my-4 border-t border-gray-200"></div>
+                    <!-- Divider not shown in React sidebar -->
                 @else
                     @php
                         $isActive = $currentRoute === $item['route'] || 
                                     (isset($item['activeRoutes']) && in_array($currentRoute, $item['activeRoutes']));
                     @endphp
-                    <a 
-                        href="{{ route($item['route']) }}" 
-                        class="flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 {{ $isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
-                        wire:navigate
-                    >
-                        <svg class="flex-shrink-0 w-5 h-5 mr-3 {{ $isActive ? 'text-blue-700' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
-                        </svg>
-                        <span class="lg:block hidden">{{ $item['label'] }}</span>
-                    </a>
+                    <li>
+                        <a 
+                            href="{{ route($item['route']) }}" 
+                            class="flex items-center px-4 py-3 text-sm {{ $isActive ? 'bg-lgf-blue text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                            wire:navigate
+                        >
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
+                            </svg>
+                            <span>{{ $item['label'] }}</span>
+                        </a>
+                    </li>
                 @endif
             @endforeach
-        </nav>
-
-        <!-- Logout Button -->
-        <div class="p-4 border-t border-gray-200">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button 
-                    type="submit"
-                    class="flex items-center w-full px-3 py-2 text-sm font-medium text-red-700 rounded-md hover:bg-red-50 transition-colors duration-150"
-                >
-                    <svg class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span class="lg:block hidden">Logout</span>
-                </button>
-            </form>
-        </div>
+        </ul>
     </div>
 </aside>

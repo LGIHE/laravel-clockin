@@ -16,25 +16,10 @@
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-gray-50">
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
-        <!-- Logo -->
-        <div class="mb-6">
-            <a href="/" class="flex items-center">
-                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="ml-2 text-2xl font-bold text-gray-900">ClockIn</span>
-            </a>
-        </div>
-
+    <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <!-- Content -->
-        <div class="w-full sm:max-w-md px-6 py-8 bg-white shadow-md overflow-hidden sm:rounded-lg">
+        <div class="bg-white rounded-lg shadow-md w-full max-w-md p-8">
             {{ $slot }}
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-6 text-center text-sm text-gray-600">
-            <p>&copy; {{ date('Y') }} ClockIn. All rights reserved.</p>
         </div>
     </div>
 
