@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'ClockIn') }} - Authentication</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -16,11 +16,26 @@
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-gray-50">
-    <div class="min-h-screen">
-        <!-- Page Content -->
-        <main>
+    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
+        <!-- Logo -->
+        <div class="mb-6">
+            <a href="/" class="flex items-center">
+                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="ml-2 text-2xl font-bold text-gray-900">ClockIn</span>
+            </a>
+        </div>
+
+        <!-- Content -->
+        <div class="w-full sm:max-w-md px-6 py-8 bg-white shadow-md overflow-hidden sm:rounded-lg">
             {{ $slot }}
-        </main>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center text-sm text-gray-600">
+            <p>&copy; {{ date('Y') }} ClockIn. All rights reserved.</p>
+        </div>
     </div>
 
     <!-- Toast Notifications -->

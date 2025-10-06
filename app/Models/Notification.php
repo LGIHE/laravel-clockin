@@ -44,5 +44,26 @@ class Notification extends Model
      */
     protected $casts = [
         'read_at' => 'datetime',
+        'data' => 'array',
     ];
+
+    /**
+     * Get the title attribute from data.
+     *
+     * @return string|null
+     */
+    public function getTitleAttribute(): ?string
+    {
+        return $this->data['title'] ?? null;
+    }
+
+    /**
+     * Get the message attribute from data.
+     *
+     * @return string|null
+     */
+    public function getMessageAttribute(): ?string
+    {
+        return $this->data['message'] ?? null;
+    }
 }
