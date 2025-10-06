@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -70,5 +72,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/users/{id}/supervisor', [UserController::class, 'assignSupervisor']);
         Route::put('/users/{id}/projects', [UserController::class, 'assignProjects']);
         Route::put('/users/{id}/password', [UserController::class, 'changePassword']);
+    });
+
+    // Departments (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/departments', [DepartmentController::class, 'index']);
+        Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::get('/departments/{department}', [DepartmentController::class, 'show']);
+        Route::put('/departments/{department}', [DepartmentController::class, 'update']);
+        Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);
+    });
+
+    // Designations (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/designations', [DesignationController::class, 'index']);
+        Route::post('/designations', [DesignationController::class, 'store']);
+        Route::get('/designations/{designation}', [DesignationController::class, 'show']);
+        Route::put('/designations/{designation}', [DesignationController::class, 'update']);
+        Route::delete('/designations/{designation}', [DesignationController::class, 'destroy']);
     });
 });
