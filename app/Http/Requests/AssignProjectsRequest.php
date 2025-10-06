@@ -22,8 +22,8 @@ class AssignProjectsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'project_ids' => 'required|array',
-            'project_ids.*' => 'string|exists:projects,id',
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'required|string|exists:users,id',
         ];
     }
 
@@ -35,10 +35,9 @@ class AssignProjectsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'project_ids.required' => 'Project IDs are required',
-            'project_ids.array' => 'Project IDs must be an array',
-            'project_ids.*.exists' => 'One or more project IDs are invalid',
+            'user_ids.required' => 'User IDs are required',
+            'user_ids.array' => 'User IDs must be an array',
+            'user_ids.*.exists' => 'One or more users do not exist',
         ];
     }
 }
-

@@ -47,4 +47,12 @@ class Project extends Model
         'start_date' => 'date',
         'end_date' => 'date',
     ];
+
+    /**
+     * Get the users assigned to this project.
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class, 'project_id');
+    }
 }

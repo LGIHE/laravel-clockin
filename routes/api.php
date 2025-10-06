@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -90,5 +91,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/designations/{designation}', [DesignationController::class, 'show']);
         Route::put('/designations/{designation}', [DesignationController::class, 'update']);
         Route::delete('/designations/{designation}', [DesignationController::class, 'destroy']);
+    });
+
+    // Projects (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/projects', [ProjectController::class, 'index']);
+        Route::post('/projects', [ProjectController::class, 'store']);
+        Route::get('/projects/{project}', [ProjectController::class, 'show']);
+        Route::put('/projects/{project}', [ProjectController::class, 'update']);
+        Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+        Route::get('/projects/{project}/users', [ProjectController::class, 'users']);
+        Route::post('/projects/{project}/users', [ProjectController::class, 'assignUsers']);
+        Route::delete('/projects/{project}/users/{user}', [ProjectController::class, 'removeUser']);
     });
 });

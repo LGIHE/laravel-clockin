@@ -111,6 +111,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the project that the user is assigned to.
+     */
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    /**
      * Get the user's role name.
      */
     public function getRoleAttribute()
