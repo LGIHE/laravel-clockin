@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AssignProjectsRequest;
+use App\Http\Requests\AssignUsersToProjectRequest;
 use App\Http\Requests\CreateProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
@@ -144,7 +144,7 @@ class ProjectController extends Controller
     /**
      * Assign users to a project.
      */
-    public function assignUsers(AssignProjectsRequest $request, string $id): JsonResponse
+    public function assignUsers(AssignUsersToProjectRequest $request, string $id): JsonResponse
     {
         $project = Project::findOrFail($id);
         $this->projectService->assignUsers($project, $request->input('user_ids'));

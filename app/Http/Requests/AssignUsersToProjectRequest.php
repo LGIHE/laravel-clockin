@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AssignProjectsRequest extends FormRequest
+class AssignUsersToProjectRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,8 +22,8 @@ class AssignProjectsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'project_ids' => 'required|array',
-            'project_ids.*' => 'required|string|exists:projects,id',
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'required|string|exists:users,id',
         ];
     }
 
@@ -35,9 +35,9 @@ class AssignProjectsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'project_ids.required' => 'Project IDs are required',
-            'project_ids.array' => 'Project IDs must be an array',
-            'project_ids.*.exists' => 'One or more projects do not exist',
+            'user_ids.required' => 'User IDs are required',
+            'user_ids.array' => 'User IDs must be an array',
+            'user_ids.*.exists' => 'One or more users do not exist',
         ];
     }
 }
