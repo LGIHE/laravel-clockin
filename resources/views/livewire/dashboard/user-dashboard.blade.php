@@ -1,34 +1,5 @@
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <p class="text-sm text-gray-600 mt-1">Welcome back, {{ auth()->user()->name }}</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button 
-                        wire:click="refreshDashboard" 
-                        class="text-gray-600 hover:text-gray-900 transition"
-                        title="Refresh Dashboard"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                    </button>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-ui.button type="submit" variant="outline" size="sm">
-                            Logout
-                        </x-ui.button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<x-layouts.app title="Dashboard">
+    <div>
         <!-- Clock In/Out Widget -->
         <div class="mb-8">
             <x-ui.card>
@@ -289,4 +260,4 @@
             </div>
         @endif
     </div>
-</div>
+</x-layouts.app>
