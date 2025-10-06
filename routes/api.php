@@ -2,10 +2,16 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -104,4 +110,50 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/projects/{project}/users', [ProjectController::class, 'assignUsers']);
         Route::delete('/projects/{project}/users/{user}', [ProjectController::class, 'removeUser']);
     });
+
+    // Leave Categories (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/leave-categories', [LeaveCategoryController::class, 'index']);
+        Route::post('/leave-categories', [LeaveCategoryController::class, 'store']);
+        Route::get('/leave-categories/{leave_category}', [LeaveCategoryController::class, 'show']);
+        Route::put('/leave-categories/{leave_category}', [LeaveCategoryController::class, 'update']);
+        Route::delete('/leave-categories/{leave_category}', [LeaveCategoryController::class, 'destroy']);
+    });
+
+    // Holidays (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/holidays', [HolidayController::class, 'index']);
+        Route::post('/holidays', [HolidayController::class, 'store']);
+        Route::get('/holidays/{holiday}', [HolidayController::class, 'show']);
+        Route::put('/holidays/{holiday}', [HolidayController::class, 'update']);
+        Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy']);
+    });
+
+    // Notices (Read for all, CUD for admin only)
+    Route::get('/notices', [NoticeController::class, 'index']);
+    Route::get('/notices/{id}', [NoticeController::class, 'show']);
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/notices', [NoticeController::class, 'store']);
+        Route::put('/notices/{id}', [NoticeController::class, 'update']);
+        Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
+    });
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+    // Reports
+    Route::prefix('reports')->group(function () {
+        Route::get('/individual', [ReportController::class, 'individual']);
+        Route::get('/summary', [ReportController::class, 'summary']);
+        Route::get('/timesheet', [ReportController::class, 'timesheet']);
+        Route::get('/export', [ReportController::class, 'export']);
+    });
+
+    // Dashboard
+    Route::get('/dashboard/user', [DashboardController::class, 'user']);
+    Route::get('/dashboard/supervisor', [DashboardController::class, 'supervisor'])
+        ->middleware('role:supervisor,admin');
+    Route::get('/dashboard/admin', [DashboardController::class, 'admin'])
+        ->middleware('role:admin');
 });
