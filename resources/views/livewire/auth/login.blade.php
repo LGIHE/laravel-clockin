@@ -110,6 +110,6 @@
 
     <!-- Copyright Footer -->
     <div class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
-        copyright © {{ date('Y') }} LGF. All rights reserved.
+        Copyright © {{ date('Y') }} LGF. All rights reserved.
     </div>
 </div>
