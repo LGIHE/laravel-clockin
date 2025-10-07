@@ -37,38 +37,41 @@
                 class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
             ></div>
 
-            <!-- Sidebar -->
-            <x-layout.sidebar 
-                :collapsed="false"
-                x-bind:class="{ 
-                    'translate-x-0': sidebarOpen, 
-                    '-translate-x-full': !sidebarOpen,
-                    'lg:translate-x-0': true,
-                    'lg:w-64': !sidebarCollapsed,
-                    'lg:w-20': sidebarCollapsed
-                }"
-                class="fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out transform lg:static lg:translate-x-0"
-            />
-
-            <!-- Main Content Area -->
-            <div class="flex-1 flex flex-col lg:pl-0">
-                <!-- Header -->
-                <x-layout.header 
-                    @toggle-sidebar="sidebarOpen = !sidebarOpen"
-                    @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+            <!-- Flex Container for Sidebar and Main Content -->
+            <div class="flex">
+                <!-- Sidebar -->
+                <x-layout.sidebar 
+                    :collapsed="false"
+                    x-bind:class="{ 
+                        'translate-x-0': sidebarOpen, 
+                        '-translate-x-full': !sidebarOpen,
+                        'lg:translate-x-0': true,
+                        'lg:w-64': !sidebarCollapsed,
+                        'lg:w-20': sidebarCollapsed
+                    }"
+                    class="fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out transform lg:static lg:translate-x-0"
                 />
 
-                <!-- Breadcrumbs -->
-                @if(!empty($breadcrumbs))
-                    <x-layout.breadcrumbs :items="$breadcrumbs" />
-                @endif
+                <!-- Main Content Area -->
+                <div class="flex-1 flex flex-col lg:pl-0">
+                    <!-- Header -->
+                    <x-layout.header 
+                        @toggle-sidebar="sidebarOpen = !sidebarOpen"
+                        @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+                    />
 
-                <!-- Page Content -->
-                <main class="flex-1 py-6">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        {{ $slot }}
-                    </div>
-                </main>
+                    <!-- Breadcrumbs -->
+                    @if(!empty($breadcrumbs))
+                        <x-layout.breadcrumbs :items="$breadcrumbs" />
+                    @endif
+
+                    <!-- Page Content -->
+                    <main class="flex-1 py-6">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {{ $slot }}
+                        </div>
+                    </main>
+                </div>
             </div>
         @else
             <!-- Guest Layout (Login, etc.) -->

@@ -26,36 +26,6 @@
             'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
         ],
         [
-            'label' => 'Leave',
-            'type' => 'submenu',
-            'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-            'roles' => ['USER', 'SUPERVISOR', 'ADMIN'],
-            'activeRoutes' => ['leaves.apply', 'leaves.index', 'leave-categories.index'],
-            'submenu' => [
-                [
-                    'label' => 'Apply',
-                    'route' => 'leaves.apply',
-                    'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
-                ],
-                [
-                    'label' => 'View All',
-                    'route' => 'leaves.index',
-                    'roles' => ['ADMIN', 'SUPERVISOR']
-                ],
-                [
-                    'label' => 'Category',
-                    'route' => 'leave-categories.index',
-                    'roles' => ['ADMIN']
-                ],
-            ]
-        ],
-        [
-            'label' => 'Reports',
-            'route' => 'reports.index',
-            'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-            'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
-        ],
-        [
             'label' => 'Users',
             'route' => 'users.index',
             'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
@@ -90,6 +60,54 @@
             'route' => 'notices.index',
             'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
             'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
+        ],
+        [
+            'label' => 'Leave',
+            'type' => 'submenu',
+            'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+            'roles' => ['USER', 'SUPERVISOR', 'ADMIN'],
+            'activeRoutes' => ['leaves.apply', 'leaves.index', 'leave-categories.index'],
+            'submenu' => [
+                [
+                    'label' => 'Apply',
+                    'route' => 'leaves.apply',
+                    'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
+                ],
+                [
+                    'label' => 'View All',
+                    'route' => 'leaves.index',
+                    'roles' => ['ADMIN', 'SUPERVISOR']
+                ],
+                [
+                    'label' => 'Category',
+                    'route' => 'leave-categories.index',
+                    'roles' => ['ADMIN']
+                ],
+            ]
+        ],
+        [
+            'label' => 'Reports',
+            'type' => 'submenu',
+            'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+            'roles' => ['USER', 'SUPERVISOR', 'ADMIN'],
+            'activeRoutes' => ['reports.index', 'reports.individual', 'reports.summary'],
+            'submenu' => [
+                [
+                    'label' => 'View All',
+                    'route' => 'reports.index',
+                    'roles' => ['ADMIN']
+                ],
+                [
+                    'label' => 'Individual Report',
+                    'route' => 'reports.individual',
+                    'roles' => ['ADMIN', 'SUPERVISOR']
+                ],
+                [
+                    'label' => 'Summary Report',
+                    'route' => 'reports.summary',
+                    'roles' => ['ADMIN']
+                ],
+            ]
         ],
     ];
     
@@ -140,7 +158,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
                             </button>
-                            
                             <ul x-show="open" x-transition class="pl-10 mt-1 space-y-1">
                                 @foreach($filteredSubmenu as $subItem)
                                     @php
