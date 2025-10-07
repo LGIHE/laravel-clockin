@@ -133,12 +133,13 @@
         </div>
 
         <!-- Loading State -->
-        @if(wire:loading)
-            <div class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                <p class="mt-2 text-gray-600 text-sm">Loading report data...</p>
-            </div>
-        @elseif(!$reportData)
+        <div wire:loading class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p class="mt-2 text-gray-600 text-sm">Loading report data...</p>
+        </div>
+
+        <div wire:loading.remove>
+        @if(!$reportData)
             <div class="text-center py-8 text-gray-500 text-sm">
                 Please select a user and date range to generate the report.
             </div>
@@ -235,6 +236,7 @@
                 @endif
             </div>
         @endif
+        </div>
     </div>
 </div>
 
