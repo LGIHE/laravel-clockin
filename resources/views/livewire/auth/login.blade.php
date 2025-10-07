@@ -20,45 +20,7 @@
         </div>
     @endif
 
-    <form wire:submit.prevent="login" 
-          x-data="{ 
-              email: @entangle('email'),
-              password: @entangle('password'),
-              emailError: '',
-              passwordError: '',
-              validateEmail() {
-                  if (!this.email) {
-                      this.emailError = 'Email is required';
-                      return false;
-                  }
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  if (!emailRegex.test(this.email)) {
-                      this.emailError = 'Please enter a valid email address';
-                      return false;
-                  }
-                  this.emailError = '';
-                  return true;
-              },
-              validatePassword() {
-                  if (!this.password) {
-                      this.passwordError = 'Password is required';
-                      return false;
-                  }
-                  if (this.password.length < 6) {
-                      this.passwordError = 'Password must be at least 6 characters';
-                      return false;
-                  }
-                  this.passwordError = '';
-                  return true;
-              },
-              validateForm() {
-                  const emailValid = this.validateEmail();
-                  const passwordValid = this.validatePassword();
-                  return emailValid && passwordValid;
-              }
-          }"
-          @submit="if (!validateForm()) { $event.preventDefault(); }"
-          class="space-y-6">
+    <form wire:submit.prevent="login" class="space-y-6">
         
         <!-- Email Field -->
         <div class="space-y-2">
@@ -69,8 +31,6 @@
                 type="email" 
                 id="email"
                 wire:model="email"
-                x-model="email"
-                @blur="validateEmail()"
                 placeholder="your.email@example.com"
                 :error="$errors->has('email')"
                 aria-label="Email Address"
@@ -82,11 +42,6 @@
             @error('email')
                 <p class="mt-1 text-sm text-red-600" role="alert">{{ $message }}</p>
             @enderror
-            <p x-show="emailError && !{{ $errors->has('email') ? 'true' : 'false' }}" 
-               x-text="emailError" 
-               class="mt-1 text-sm text-red-600"
-               role="alert"
-               style="display: none;"></p>
         </div>
 
         <!-- Password Field -->
@@ -99,8 +54,6 @@
                     x-bind:type="showPassword ? 'text' : 'password'"
                     id="password"
                     wire:model="password"
-                    x-model="password"
-                    @blur="validatePassword()"
                     placeholder="••••••••"
                     :error="$errors->has('password')"
                     aria-label="Password"
@@ -127,11 +80,6 @@
             @error('password')
                 <p class="mt-1 text-sm text-red-600" role="alert">{{ $message }}</p>
             @enderror
-            <p x-show="passwordError && !{{ $errors->has('password') ? 'true' : 'false' }}" 
-               x-text="passwordError" 
-               class="mt-1 text-sm text-red-600"
-               role="alert"
-               style="display: none;"></p>
         </div>
 
         <!-- Remember Me -->
