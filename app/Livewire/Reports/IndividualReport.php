@@ -5,16 +5,21 @@ namespace App\Livewire\Reports;
 use App\Models\User;
 use App\Services\ReportService;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Carbon\Carbon;
 
 class IndividualReport extends Component
 {
+    use WithPagination;
+
     public $userId;
     public $startDate;
     public $endDate;
     public $reportData = null;
     public $users = [];
     public $isAdmin = false;
+    public $perPage = 10;
+    public $currentPage = 1;
 
     protected $rules = [
         'userId' => 'required|string|exists:users,id',
@@ -33,23 +38,56 @@ class IndividualReport extends Component
     {
         $this->isAdmin = auth()->user()->userLevel->name === 'admin';
         
-        // Set default dates (last 30 days)
+        // Set default dates (current month)
+        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
-        $this->startDate = Carbon::now()->subDays(30)->format('Y-m-d');
         
         // If admin, load all users; otherwise, set to current user
         if ($this->isAdmin) {
             $this->users = User::where('status', 1)
+                ->with('userLevel')
                 ->orderBy('name')
                 ->get();
         } else {
             $this->userId = auth()->id();
+            $this->generateReport();
         }
+    }
+
+    public function updatedUserId()
+    {
+        $this->currentPage = 1;
+        if ($this->userId && $this->startDate && $this->endDate) {
+            $this->generateReport();
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->currentPage = 1;
+        if ($this->userId && $this->startDate && $this->endDate) {
+            $this->generateReport();
+        }
+    }
+
+    public function updatedEndDate()
+    {
+        $this->currentPage = 1;
+        if ($this->userId && $this->startDate && $this->endDate) {
+            $this->generateReport();
+        }
+    }
+
+    public function updatedPerPage()
+    {
+        $this->currentPage = 1;
     }
 
     public function generateReport()
     {
-        $this->validate();
+        if (!$this->userId || !$this->startDate || !$this->endDate) {
+            return;
+        }
 
         try {
             $reportService = app(ReportService::class);
@@ -58,17 +96,57 @@ class IndividualReport extends Component
                 'start_date' => $this->startDate,
                 'end_date' => $this->endDate,
             ]);
-
-            session()->flash('success', 'Report generated successfully');
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to generate report: ' . $e->getMessage());
             $this->reportData = null;
         }
     }
 
+    public function getPaginatedAttendances()
+    {
+        if (!$this->reportData || !isset($this->reportData['attendances'])) {
+            return collect();
+        }
+
+        $attendances = collect($this->reportData['attendances']);
+        $total = $attendances->count();
+        
+        return [
+            'data' => $attendances->slice(($this->currentPage - 1) * $this->perPage, $this->perPage)->values(),
+            'total' => $total,
+            'from' => ($this->currentPage - 1) * $this->perPage + 1,
+            'to' => min($this->currentPage * $this->perPage, $total),
+            'current_page' => $this->currentPage,
+            'last_page' => ceil($total / $this->perPage),
+        ];
+    }
+
+    public function previousPage()
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
+    }
+
+    public function nextPage()
+    {
+        $paginated = $this->getPaginatedAttendances();
+        if ($this->currentPage < $paginated['last_page']) {
+            $this->currentPage++;
+        }
+    }
+
+    public function gotoPage($page)
+    {
+        $this->currentPage = $page;
+    }
+
     public function exportPdf()
     {
-        $this->validate();
+        if (!$this->userId || !$this->startDate || !$this->endDate) {
+            session()->flash('error', 'Please select a user and date range');
+            return;
+        }
 
         return redirect()->route('reports.export', [
             'type' => 'individual',
@@ -79,22 +157,12 @@ class IndividualReport extends Component
         ]);
     }
 
-    public function exportExcel()
-    {
-        $this->validate();
-
-        return redirect()->route('reports.export', [
-            'type' => 'individual',
-            'format' => 'excel',
-            'user_id' => $this->userId,
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
-        ]);
-    }
-
     public function exportCsv()
     {
-        $this->validate();
+        if (!$this->userId || !$this->startDate || !$this->endDate) {
+            session()->flash('error', 'Please select a user and date range');
+            return;
+        }
 
         return redirect()->route('reports.export', [
             'type' => 'individual',
@@ -105,13 +173,28 @@ class IndividualReport extends Component
         ]);
     }
 
-    public function clearReport()
+    public function exportJson()
     {
-        $this->reportData = null;
+        if (!$this->userId || !$this->startDate || !$this->endDate) {
+            session()->flash('error', 'Please select a user and date range');
+            return;
+        }
+
+        return redirect()->route('reports.export', [
+            'type' => 'individual',
+            'format' => 'json',
+            'user_id' => $this->userId,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+        ]);
     }
 
     public function render()
     {
-        return view('livewire.reports.individual-report');
+        $paginatedData = $this->getPaginatedAttendances();
+        
+        return view('livewire.reports.individual-report', [
+            'paginatedAttendances' => $paginatedData
+        ])->layout('components.layouts.app', ['title' => 'Individual Report']);
     }
 }
