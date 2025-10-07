@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
     
     // Leave Management
     Route::get('/leaves', LeaveList::class)->name('leaves.index');
+    Route::get('/leaves/apply', \App\Livewire\Leave\ApplyLeave::class)->name('leaves.apply');
     
     // User Management (Admin only)
     Route::middleware('role:admin')->group(function () {
