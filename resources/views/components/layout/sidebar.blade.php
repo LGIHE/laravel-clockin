@@ -117,7 +117,7 @@
     });
 @endphp
 
-<aside {{ $attributes->merge(['class' => 'w-64 min-h-screen border-r border-gray-200 bg-white flex flex-col']) }}>
+<aside {{ $attributes->merge(['class' => 'w-64 h-screen border-r border-gray-200 bg-white flex flex-col fixed left-0 top-0']) }}>
     <!-- Sidebar Header with Logo -->
     <div class="p-4 border-b border-gray-200">
         <a href="{{ route(match($userRole) { 'ADMIN' => 'admin.dashboard', 'SUPERVISOR' => 'supervisor.dashboard', default => 'dashboard' }) }}" class="flex items-center gap-2">
