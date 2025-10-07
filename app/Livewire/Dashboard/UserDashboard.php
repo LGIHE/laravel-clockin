@@ -100,6 +100,7 @@ class UserDashboard extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.user-dashboard');
+        return view('livewire.dashboard.user-dashboard')
+            ->layout('components.layouts.app', ['title' => 'Dashboard']);
     }
 }

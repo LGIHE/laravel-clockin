@@ -1,5 +1,4 @@
-<x-layouts.app title="Admin Dashboard">
-    <div>
+<div>
         <!-- System-wide Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Users -->
@@ -470,4 +469,4 @@
     <div class="mt-6 text-center text-sm text-gray-500">
         © 2025 lgf & made with ❤️
     </div>
-</x-layouts.app>
+</div>

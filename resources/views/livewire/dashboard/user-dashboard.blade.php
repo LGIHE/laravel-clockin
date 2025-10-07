@@ -1,5 +1,4 @@
-<x-layouts.app title="Dashboard">
-    <div>
+<div>
         <!-- Clock In/Out Widget -->
         <div class="mb-8">
             <x-ui.card>
@@ -260,9 +259,8 @@
             </div>
         @endif
         
-        <!-- Footer -->
-        <div class="mt-6 text-center text-sm text-gray-500">
-            © 2025 lgf & made with ❤️
-        </div>
+    <!-- Footer -->
+    <div class="mt-6 text-center text-sm text-gray-500">
+        © 2025 lgf & made with ❤️
     </div>
-</x-layouts.app>
+</div>

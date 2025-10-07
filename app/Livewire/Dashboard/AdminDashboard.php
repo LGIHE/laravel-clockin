@@ -190,6 +190,7 @@ class AdminDashboard extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.admin-dashboard');
+        return view('livewire.dashboard.admin-dashboard')
+            ->layout('components.layouts.app', ['title' => 'Admin Dashboard']);
     }
 }

@@ -190,7 +190,8 @@ class SupervisorDashboard extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.supervisor-dashboard');
+        return view('livewire.dashboard.supervisor-dashboard')
+            ->layout('components.layouts.app', ['title' => 'Supervisor Dashboard']);
     }
 }
 
