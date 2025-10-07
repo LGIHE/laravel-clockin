@@ -115,7 +115,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $department->created_at->format('M d, Y') }}
+                                    {{ $department->created_at ? $department->created_at->format('M d, Y') : 'N/A' }}
                                 </td>
                                 @if($isAdmin)
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

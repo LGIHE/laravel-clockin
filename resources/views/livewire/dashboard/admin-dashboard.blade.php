@@ -1,4 +1,5 @@
 <div>
+    <div>
         <!-- System-wide Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Users -->
@@ -378,11 +379,10 @@
                 </div>
             </x-ui.card>
         </div>
-    </div>
 
-    <!-- Approval Modal -->
-    @if($showApprovalModal && $selectedLeave)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showApprovalModal') }">
+        <!-- Approval Modal -->
+        @if($showApprovalModal && $selectedLeave)
+            <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showApprovalModal') }">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="$wire.closeApprovalModal()"></div>
@@ -463,10 +463,11 @@
                 </div>
             </div>
         </div>
-    @endif
-    
-    <!-- Footer -->
-    <div class="mt-6 text-center text-sm text-gray-500">
-        © 2025 lgf & made with ❤️
+        @endif
+        
+        <!-- Footer -->
+        <div class="mt-6 text-center text-sm text-gray-500">
+            © 2025 lgf & made with ❤️
+        </div>
     </div>
 </div>
