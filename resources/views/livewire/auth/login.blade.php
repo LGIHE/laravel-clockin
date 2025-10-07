@@ -65,18 +65,25 @@
             @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="flex items-center space-x-2">
-            <input 
-                type="checkbox" 
-                id="remember" 
-                wire:model="remember"
-                class="h-4 w-4 text-lgf-blue focus:ring-lgf-blue border-gray-300 rounded"
-                aria-label="Remember me"
-            >
-            <label for="remember" class="text-sm font-medium text-gray-700 leading-none cursor-pointer">
-                Remember Me
-            </label>
+        <div class="flex items-center">
+            <!-- Remember Me -->
+            <div class="flex items-center space-x-2">
+                <input 
+                    type="checkbox" 
+                    id="remember" 
+                    wire:model="remember"
+                    class="h-4 w-4 text-lgf-blue focus:ring-lgf-blue border-gray-300 rounded"
+                    aria-label="Remember me"
+                >
+                <label for="remember" class="text-sm font-medium text-gray-700 leading-none cursor-pointer">
+                    Remember Me
+                </label>
+            </div>
+
+            <!-- Forgot Password -->
+            <a href="{{ route('forgot-password') }}" class="ml-auto text-sm font-medium text-lgf-blue hover:text-blue-600 leading-none">
+                Forgot Password?
+            </a>
         </div>
 
         <!-- Submit Button -->
@@ -103,6 +110,6 @@
 
     <!-- Copyright Footer -->
     <div class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
-        copyright © {{ date('Y') }} lgf. All rights reserved.
+        copyright © {{ date('Y') }} LGF. All rights reserved.
     </div>
 </div>

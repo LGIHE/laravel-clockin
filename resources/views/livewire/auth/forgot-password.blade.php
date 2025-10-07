@@ -26,28 +26,7 @@
         </div>
     @endif
 
-    <form wire:submit.prevent="sendResetLink"
-          x-data="{ 
-              email: @entangle('email'),
-              emailError: '',
-              validateEmail() {
-                  if (!this.email) {
-                      this.emailError = 'Email is required';
-                      return false;
-                  }
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  if (!emailRegex.test(this.email)) {
-                      this.emailError = 'Please enter a valid email address';
-                      return false;
-                  }
-                  this.emailError = '';
-                  return true;
-              },
-              validateForm() {
-                  return this.validateEmail();
-              }
-          }"
-          @submit="if (!validateForm()) { $event.preventDefault(); }">
+    <form wire:submit.prevent="sendResetLink">
         
         <!-- Email Field -->
         <div class="mb-6">
@@ -58,8 +37,6 @@
                 type="email" 
                 id="email"
                 wire:model="email"
-                x-model="email"
-                @blur="validateEmail()"
                 placeholder="you@example.com"
                 :error="$errors->has('email')"
                 aria-label="Email Address"
@@ -71,11 +48,6 @@
             @error('email')
                 <p class="mt-1 text-sm text-red-600" role="alert">{{ $message }}</p>
             @enderror
-            <p x-show="emailError && !{{ $errors->has('email') ? 'true' : 'false' }}" 
-               x-text="emailError" 
-               class="mt-1 text-sm text-red-600"
-               role="alert"
-               style="display: none;"></p>
         </div>
 
         <!-- Submit Button -->
