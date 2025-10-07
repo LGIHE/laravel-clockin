@@ -50,17 +50,16 @@
                 Password
             </label>
             <div x-data="{ showPassword: false }" class="relative">
-                <x-ui.input 
+                <input 
                     x-bind:type="showPassword ? 'text' : 'password'"
                     id="password"
-                    wire:model="password"
+                    wire:model.defer="password"
                     placeholder="••••••••"
-                    :error="$errors->has('password')"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors pr-10 {{ $errors->has('password') ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : '' }}"
                     aria-label="Password"
                     aria-required="true"
                     aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
                     autocomplete="current-password"
-                    class="pr-10"
                 />
                 <button 
                     type="button"
