@@ -26,10 +26,28 @@
             'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
         ],
         [
-            'label' => 'Leaves',
-            'route' => 'leaves.index',
+            'label' => 'Leave',
+            'type' => 'submenu',
             'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-            'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
+            'roles' => ['USER', 'SUPERVISOR', 'ADMIN'],
+            'activeRoutes' => ['leaves.apply', 'leaves.index', 'leave-categories.index'],
+            'submenu' => [
+                [
+                    'label' => 'Apply',
+                    'route' => 'leaves.apply',
+                    'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
+                ],
+                [
+                    'label' => 'View All',
+                    'route' => 'leaves.index',
+                    'roles' => ['ADMIN', 'SUPERVISOR']
+                ],
+                [
+                    'label' => 'Category',
+                    'route' => 'leave-categories.index',
+                    'roles' => ['ADMIN']
+                ],
+            ]
         ],
         [
             'label' => 'Reports',
@@ -38,25 +56,9 @@
             'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
         ],
         [
-            'label' => 'Notices',
-            'route' => 'notices.index',
-            'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
-            'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
-        ],
-        [
-            'type' => 'divider',
-            'roles' => ['ADMIN']
-        ],
-        [
             'label' => 'Users',
             'route' => 'users.index',
             'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-            'roles' => ['ADMIN']
-        ],
-        [
-            'label' => 'Departments',
-            'route' => 'departments.index',
-            'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
             'roles' => ['ADMIN']
         ],
         [
@@ -66,15 +68,15 @@
             'roles' => ['ADMIN']
         ],
         [
-            'label' => 'Projects',
-            'route' => 'projects.index',
-            'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+            'label' => 'Departments',
+            'route' => 'departments.index',
+            'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
             'roles' => ['ADMIN']
         ],
         [
-            'label' => 'Leave Categories',
-            'route' => 'leave-categories.index',
-            'icon' => 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+            'label' => 'Projects',
+            'route' => 'projects.index',
+            'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
             'roles' => ['ADMIN']
         ],
         [
@@ -82,6 +84,12 @@
             'route' => 'holidays.index',
             'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
             'roles' => ['ADMIN']
+        ],
+        [
+            'label' => 'Notices',
+            'route' => 'notices.index',
+            'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+            'roles' => ['USER', 'SUPERVISOR', 'ADMIN']
         ],
     ];
     
@@ -109,12 +117,52 @@
     <div class="flex-1 overflow-y-auto py-4">
         <ul class="space-y-1">
             @foreach($filteredItems as $item)
-                @if(isset($item['type']) && $item['type'] === 'divider')
-                    <!-- Divider not shown in React sidebar -->
+                @if(isset($item['type']) && $item['type'] === 'submenu')
+                    @php
+                        $isActive = isset($item['activeRoutes']) && in_array($currentRoute, $item['activeRoutes']);
+                        $filteredSubmenu = array_filter($item['submenu'] ?? [], function($subItem) use ($userRole) {
+                            return in_array($userRole, $subItem['roles'] ?? []);
+                        });
+                    @endphp
+                    @if(count($filteredSubmenu) > 0)
+                        <li x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
+                            <button
+                                @click="open = !open"
+                                class="flex items-center px-4 py-3 text-sm w-full justify-between {{ $isActive ? 'bg-lgf-blue text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                            >
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
+                                    </svg>
+                                    <span>{{ $item['label'] }}</span>
+                                </div>
+                                <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                            
+                            <ul x-show="open" x-transition class="pl-10 mt-1 space-y-1">
+                                @foreach($filteredSubmenu as $subItem)
+                                    @php
+                                        $isSubActive = $currentRoute === $subItem['route'];
+                                    @endphp
+                                    <li>
+                                        <a
+                                            href="{{ route($subItem['route']) }}"
+                                            class="block py-2 px-4 text-sm rounded {{ $isSubActive ? 'text-lgf-blue font-medium' : 'text-gray-600 hover:text-gray-900' }}"
+                                            wire:navigate
+                                        >
+                                            {{ $subItem['label'] }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
                 @else
                     @php
-                        $isActive = $currentRoute === $item['route'] || 
-                                    (isset($item['activeRoutes']) && in_array($currentRoute, $item['activeRoutes']));
+                        $isActive = isset($item['route']) && ($currentRoute === $item['route'] || 
+                                    (isset($item['activeRoutes']) && in_array($currentRoute, $item['activeRoutes'])));
                     @endphp
                     <li>
                         <a 
