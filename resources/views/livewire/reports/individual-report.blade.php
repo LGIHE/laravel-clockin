@@ -22,23 +22,17 @@
     <div class="bg-white p-6 rounded-md shadow-sm">
         <!-- Header Row: User Selector, Statistics, Date Range -->
         <div class="flex justify-between items-center mb-6">
-            <!-- User Selector (Left) -->
+            <!-- User Selector (Left) - Always show dropdown -->
             <div class="w-1/3">
-                @if($isAdmin)
-                    <select 
-                        wire:model.live="userId"
-                        class="w-full p-2 border border-gray-300 rounded-md text-sm"
-                    >
-                        <option value="">Select User</option>
-                        @foreach($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <div class="p-2 font-medium text-sm">
-                        {{ $reportData['user']['name'] ?? auth()->user()->name }}
-                    </div>
-                @endif
+                <select 
+                    wire:model.live="userId"
+                    class="w-full p-2 border border-gray-300 rounded-md text-sm"
+                >
+                    <option value="">Select User</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <!-- Statistics Summary (Center) -->
@@ -113,6 +107,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                     PDF
+                </button>
+                <button 
+                    wire:click="generateTimesheet"
+                    class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50 flex items-center gap-1"
+                    @if(!$reportData) disabled @endif
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Timesheet
                 </button>
             </div>
 

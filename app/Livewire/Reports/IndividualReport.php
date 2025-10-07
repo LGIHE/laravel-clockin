@@ -42,16 +42,15 @@ class IndividualReport extends Component
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
         
-        // If admin, load all users; otherwise, set to current user
-        if ($this->isAdmin) {
-            $this->users = User::where('status', 1)
-                ->with('userLevel')
-                ->orderBy('name')
-                ->get();
-        } else {
-            $this->userId = auth()->id();
-            $this->generateReport();
-        }
+        // Load all users for dropdown
+        $this->users = User::where('status', 1)
+            ->with('userLevel')
+            ->orderBy('name')
+            ->get();
+        
+        // Set default to current user
+        $this->userId = auth()->id();
+        $this->generateReport();
     }
 
     public function updatedUserId()
@@ -183,6 +182,22 @@ class IndividualReport extends Component
         return redirect()->route('reports.export', [
             'type' => 'individual',
             'format' => 'json',
+            'user_id' => $this->userId,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+        ]);
+    }
+
+    public function generateTimesheet()
+    {
+        if (!$this->userId || !$this->startDate || !$this->endDate) {
+            session()->flash('error', 'Please select a user and date range');
+            return;
+        }
+
+        return redirect()->route('reports.export', [
+            'type' => 'timesheet',
+            'format' => 'pdf',
             'user_id' => $this->userId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
