@@ -27,7 +27,22 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        // Check password - handle both PHP bcrypt ($2y$) and Node.js bcrypt ($2b$)
+        $passwordValid = false;
+        if ($user && $user->password) {
+            // Try standard Laravel Hash::check first
+            if (Hash::check($password, $user->password)) {
+                $passwordValid = true;
+            } 
+            // If that fails and hash starts with $2b$ (Node.js bcrypt), try password_verify
+            elseif (str_starts_with($user->password, '$2b$')) {
+                // Convert $2b$ to $2y$ for PHP compatibility
+                $phpHash = '$2y$' . substr($user->password, 4);
+                $passwordValid = password_verify($password, $phpHash);
+            }
+        }
+
+        if (!$user || !$passwordValid) {
             // Log failed login attempt
             $this->logFailedLogin($email, $ip ?? request()->ip(), $userAgent ?? request()->userAgent());
             
