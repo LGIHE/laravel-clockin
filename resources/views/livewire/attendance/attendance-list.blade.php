@@ -1,32 +1,25 @@
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Attendance Management</h1>
-                    <p class="text-sm text-gray-600 mt-1">View and manage attendance records</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    @if($isAdmin)
-                        <x-ui.button wire:click="openForcePunchModal" variant="primary" size="sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Force Punch
-                        </x-ui.button>
-                    @endif
-                    <a href="{{ route('dashboard') }}">
-                        <x-ui.button variant="outline" size="sm">
-                            Back to Dashboard
-                        </x-ui.button>
-                    </a>
-                </div>
+<div>
+    <!-- Page Header -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Attendance Management</h1>
+                <p class="text-sm text-gray-600 mt-1">View and manage attendance records</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                @if($isAdmin)
+                    <x-ui.button wire:click="openForcePunchModal" variant="primary" size="sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Force Punch
+                    </x-ui.button>
+                @endif
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div>
         <!-- Filters -->
         <x-ui.card class="mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -38,7 +31,7 @@
                         </label>
                         <select 
                             id="userId"
-                            wire:model="userId"
+                            wire:model.live="userId"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">All Users</option>
@@ -71,7 +64,7 @@
                     <input 
                         type="date" 
                         id="startDate"
-                        wire:model="startDate"
+                        wire:model.blur="startDate"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
@@ -84,7 +77,7 @@
                     <input 
                         type="date" 
                         id="endDate"
-                        wire:model="endDate"
+                        wire:model.blur="endDate"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
@@ -96,7 +89,7 @@
                     </label>
                     <select 
                         id="status"
-                        wire:model="status"
+                        wire:model.live="status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">All Status</option>
@@ -127,9 +120,6 @@
             <div class="flex justify-end space-x-3 mt-4">
                 <x-ui.button wire:click="clearFilters" variant="outline" size="sm">
                     Clear Filters
-                </x-ui.button>
-                <x-ui.button wire:click="applyFilters" variant="primary" size="sm">
-                    Apply Filters
                 </x-ui.button>
             </div>
         </x-ui.card>

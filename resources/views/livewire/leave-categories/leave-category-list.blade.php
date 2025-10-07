@@ -1,32 +1,31 @@
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Leave Category Management</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage leave types and annual limits</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    @if($isAdmin)
-                        <x-ui.button wire:click="openCreateModal" variant="primary" size="sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            Add Leave Category
-                        </x-ui.button>
-                    @endif
-                    <a href="{{ route('admin.dashboard') }}">
-                        <x-ui.button variant="outline" size="sm">
-                            Back to Dashboard
-                        </x-ui.button>
-                    </a>
-                </div>
+<!-- Header -->
+<div class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Leave Category Management</h1>
+                <p class="text-sm text-gray-600 mt-1">Manage leave types and annual limits</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                @if($isAdmin)
+                    <x-ui.button wire:click="openCreateModal" variant="primary" size="sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Leave Category
+                    </x-ui.button>
+                @endif
+                <a href="{{ route('admin.dashboard') }}">
+                    <x-ui.button variant="outline" size="sm">
+                        Back to Dashboard
+                    </x-ui.button>
+                </a>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
         <!-- Search Bar -->
         <div class="bg-white rounded-lg shadow p-6">
@@ -361,4 +360,3 @@
             </div>
         </div>
     @endif
-</div>

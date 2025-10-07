@@ -275,6 +275,6 @@ class LeaveCategoryList extends Component
 
         return view('livewire.leave-categories.leave-category-list', [
             'categories' => $categories
-        ]);
+        ])->layout('components.layouts.app');
     }
 }

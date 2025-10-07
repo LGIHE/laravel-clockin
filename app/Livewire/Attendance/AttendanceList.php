@@ -38,7 +38,9 @@ class AttendanceList extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        // Check if user is authenticated and has admin role
+        $user = auth()->user();
+        $this->isAdmin = $user && $user->userLevel && $user->userLevel->name === 'admin';
         
         // Set default date range to current month
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
@@ -56,17 +58,32 @@ class AttendanceList extends Component
         }
     }
 
-    public function updatingSearch()
+    public function updatedStartDate()
     {
         $this->resetPage();
     }
 
-    public function updatingUserId()
+    public function updatedEndDate()
     {
         $this->resetPage();
     }
 
-    public function updatingStatus()
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedUserId()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedStatus()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedSearch()
     {
         $this->resetPage();
     }
@@ -79,16 +96,6 @@ class AttendanceList extends Component
             $this->sortBy = $column;
             $this->sortOrder = 'asc';
         }
-    }
-
-    public function applyFilters()
-    {
-        $this->resetPage();
-        
-        $this->dispatch('toast', [
-            'message' => 'Filters applied',
-            'variant' => 'info'
-        ]);
     }
 
     public function clearFilters()
@@ -104,8 +111,8 @@ class AttendanceList extends Component
         $this->resetPage();
         
         $this->dispatch('toast', [
-            'message' => 'Filters cleared',
-            'variant' => 'info'
+            'message' => 'Filters cleared successfully',
+            'variant' => 'success'
         ]);
     }
 
@@ -170,9 +177,12 @@ class AttendanceList extends Component
     {
         $query = Attendance::with(['user.userLevel', 'user.department', 'user.designation']);
 
-        // Apply user filter
+        // Apply user filter - ensure we always filter for non-admin users
         if (!empty($this->userId)) {
             $query->where('user_id', $this->userId);
+        } elseif (!$this->isAdmin && auth()->check()) {
+            // Non-admin users should only see their own records
+            $query->where('user_id', auth()->id());
         }
 
         // Apply search filter (search by user name or email)
@@ -193,10 +203,12 @@ class AttendanceList extends Component
         }
 
         // Apply status filter
-        if ($this->status === 'clocked_in') {
-            $query->whereNull('out_time');
-        } elseif ($this->status === 'clocked_out') {
-            $query->whereNotNull('out_time');
+        if (!empty($this->status)) {
+            if ($this->status === 'clocked_in') {
+                $query->whereNull('out_time');
+            } elseif ($this->status === 'clocked_out') {
+                $query->whereNotNull('out_time');
+            }
         }
 
         // Apply sorting
@@ -207,6 +219,6 @@ class AttendanceList extends Component
 
         return view('livewire.attendance.attendance-list', [
             'attendances' => $attendances
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'Attendance Management']);
     }
 }

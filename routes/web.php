@@ -8,6 +8,7 @@ use App\Livewire\Dashboard\UserDashboard;
 use App\Livewire\Dashboard\SupervisorDashboard;
 use App\Livewire\Dashboard\AdminDashboard;
 use App\Livewire\Attendance\AttendanceList;
+use App\Livewire\Attendance\UserAttendance;
 use App\Livewire\Leave\LeaveList;
 use App\Livewire\Users\UserList;
 use App\Livewire\Users\UserForm;
@@ -32,8 +33,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/supervisor/dashboard', SupervisorDashboard::class)->name('supervisor.dashboard');
     Route::get('/admin/dashboard', AdminDashboard::class)->name('admin.dashboard');
     
-    // Attendance Management
-    Route::get('/attendance', AttendanceList::class)->name('attendance.index');
+    // Attendance - User view (accessible to all authenticated users)
+    Route::get('/attendance', UserAttendance::class)->name('attendance.user');
     
     // Leave Management
     Route::get('/leaves', LeaveList::class)->name('leaves.index');
@@ -41,6 +42,9 @@ Route::middleware('auth')->group(function () {
     
     // User Management (Admin only)
     Route::middleware('role:admin')->group(function () {
+        // Attendance Management (Admin view)
+        Route::get('/attendance/manage', AttendanceList::class)->name('attendance.index');
+        
         Route::get('/users', UserList::class)->name('users.index');
         Route::get('/users/create', UserForm::class)->name('users.create');
         Route::get('/users/{userId}/edit', UserForm::class)->name('users.edit');

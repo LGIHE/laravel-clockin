@@ -275,6 +275,6 @@ class DepartmentList extends Component
 
         return view('livewire.departments.department-list', [
             'departments' => $departments
-        ]);
+        ])->layout('components.layouts.app');
     }
 }
