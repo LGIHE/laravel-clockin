@@ -23,6 +23,13 @@ class UserAttendance extends Component
     
     public $user;
     public $isLoading = true;
+    
+    // Edit modal properties
+    public $showEditModal = false;           // Controls modal visibility
+    public $selectedRecordId = null;         // ID of attendance being edited
+    public $editTime = '';                   // Editable time field
+    public $editTimeType = 'in';             // Type: 'in' or 'out'
+    public $editMessage = '';                // Message text being edited
 
     protected AttendanceService $attendanceService;
 
@@ -80,6 +87,137 @@ class UserAttendance extends Component
             $this->currentPage--;
             $this->loadAttendanceData();
         }
+    }
+    
+    public function openEditModal($attendanceId, $timeType)
+    {
+        $attendance = Attendance::find($attendanceId);
+        
+        if (!$attendance) {
+            $this->dispatch('toast', [
+                'message' => 'Attendance record not found',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        // Check if user is authorized to edit this attendance
+        if ($attendance->user_id !== $this->user->id) {
+            $this->dispatch('toast', [
+                'message' => 'You are not authorized to edit this attendance record',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        $this->selectedRecordId = $attendanceId;
+        $this->editTimeType = $timeType;
+        
+        if ($timeType === 'in') {
+            // Format for datetime-local input (Y-m-d\TH:i)
+            $this->editTime = Carbon::parse($attendance->in_time)->format('Y-m-d\TH:i');
+            $this->editMessage = $attendance->in_message ?? '';
+        } else {
+            if (!$attendance->out_time) {
+                $this->dispatch('toast', [
+                    'message' => 'No out time recorded yet',
+                    'variant' => 'warning'
+                ]);
+                return;
+            }
+            $this->editTime = Carbon::parse($attendance->out_time)->format('Y-m-d\TH:i');
+            $this->editMessage = $attendance->out_message ?? '';
+        }
+        
+        $this->showEditModal = true;
+    }
+    
+    public function saveTimeMessage()
+    {
+        if (!$this->selectedRecordId) {
+            $this->dispatch('toast', [
+                'message' => 'Invalid attendance record',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        // Validate time input
+        if (!$this->editTime) {
+            $this->dispatch('toast', [
+                'message' => 'Time is required',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        try {
+            $attendance = Attendance::find($this->selectedRecordId);
+            
+            if (!$attendance) {
+                throw new \Exception('Attendance record not found');
+            }
+            
+            // Check authorization
+            if ($attendance->user_id !== $this->user->id) {
+                throw new \Exception('You are not authorized to edit this attendance record');
+            }
+            
+            // Parse the datetime-local input to Carbon instance
+            $newTime = Carbon::parse($this->editTime);
+            
+            // Validate that time is not in the future
+            if ($newTime->isFuture()) {
+                throw new \Exception('Time cannot be in the future');
+            }
+            
+            // Update the appropriate time and message
+            if ($this->editTimeType === 'in') {
+                // Validate that in_time is before out_time if out_time exists
+                if ($attendance->out_time && $newTime->isAfter(Carbon::parse($attendance->out_time))) {
+                    throw new \Exception('Clock in time cannot be after clock out time');
+                }
+                
+                $attendance->in_time = $newTime;
+                $attendance->in_message = $this->editMessage;
+            } else {
+                // Validate that out_time is after in_time
+                if ($newTime->isBefore(Carbon::parse($attendance->in_time))) {
+                    throw new \Exception('Clock out time cannot be before clock in time');
+                }
+                
+                $attendance->out_time = $newTime;
+                $attendance->out_message = $this->editMessage;
+            }
+            
+            $attendance->save();
+            
+            $this->dispatch('toast', [
+                'message' => 'Attendance updated successfully',
+                'variant' => 'success'
+            ]);
+            
+            // Reload data to show updated message
+            $this->loadAttendanceData();
+            
+            // Close modal
+            $this->closeEditModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+    
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->selectedRecordId = null;
+        $this->selectedRecordTime = '';
+        $this->editTimeType = 'in';
+        $this->editMessage = '';
     }
 
     public function loadAttendanceData()

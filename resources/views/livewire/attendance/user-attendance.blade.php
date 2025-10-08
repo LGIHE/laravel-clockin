@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center">
         <div class="space-x-2">
             <a href="{{ route('dashboard') }}">
-                <button class="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+                <button class="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors">
                     Dashboard
                 </button>
             </a>
@@ -131,7 +131,7 @@
                 </div>
             @else
                 <!-- Attendance table -->
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto rounded-md border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -157,7 +157,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($attendances as $index => $record)
-                                <tr>
+                                <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ (($currentPage - 1) * $pageSize) + $index + 1 }}
                                     </td>
@@ -166,11 +166,20 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         <div class="flex items-center gap-1">
-                                            {{ $record['inTime'] }}
+                                            <span>{{ $record['inTime'] }}</span>
+                                            <button 
+                                                wire:click="openEditModal('{{ $record['id'] }}', 'in')"
+                                                class="inline-flex items-center text-blue-500 hover:text-blue-700"
+                                                title="Edit in time message"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                            </button>
                                             @if($record['inMessage'])
                                                 <span class="relative group">
                                                     <svg class="w-3.5 h-3.5 text-green-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
                                                     </svg>
                                                     <div class="hidden group-hover:block absolute z-10 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg bottom-full left-1/2 transform -translate-x-1/2 mb-2">
                                                         {{ $record['inMessage'] }}
@@ -181,11 +190,22 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         <div class="flex items-center gap-1">
-                                            {{ $record['outTime'] ?? '-' }}
+                                            <span>{{ $record['outTime'] ?? '-' }}</span>
+                                            @if($record['outTime'])
+                                                <button 
+                                                    wire:click="openEditModal('{{ $record['id'] }}', 'out')"
+                                                    class="inline-flex items-center text-blue-500 hover:text-blue-700"
+                                                    title="Edit out time message"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                            @endif
                                             @if($record['outMessage'])
                                                 <span class="relative group">
                                                     <svg class="w-3.5 h-3.5 text-green-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
                                                     </svg>
                                                     <div class="hidden group-hover:block absolute z-10 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg bottom-full left-1/2 transform -translate-x-1/2 mb-2">
                                                         {{ $record['outMessage'] }}
@@ -247,4 +267,75 @@
             @endif
         </div>
     </div>
+
+    <!-- Edit Time Modal -->
+    @if($showEditModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeEditModal"></div>
+
+                <!-- This element is to trick the browser into centering the modal contents. -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900" id="modal-title">
+                                Edit {{ ucfirst($editTimeType) }} Time
+                            </h3>
+                            <button wire:click="closeEditModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="editTime" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Time *
+                                </label>
+                                <input 
+                                    type="datetime-local"
+                                    id="editTime"
+                                    wire:model="editTime"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <p class="text-xs text-gray-500 mt-1">Enter the {{ $editTimeType }} time in your local timezone</p>
+                            </div>
+
+                            <div>
+                                <label for="editMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Message (Optional)
+                                </label>
+                                <textarea 
+                                    id="editMessage"
+                                    wire:model="editMessage"
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Add a note about this {{ $editTimeType }} time..."
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+                        <button 
+                            wire:click="closeEditModal" 
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            wire:click="saveTimeMessage" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

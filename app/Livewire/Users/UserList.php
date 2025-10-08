@@ -20,15 +20,27 @@ class UserList extends Component
     public $userLevelId = '';
     public $sortBy = 'created_at';
     public $sortOrder = 'desc';
-    public $perPage = 15;
+    public $perPage = 10;
     
     public $selectedUser = null;
     public $showDetailModal = false;
     public $showDeleteModal = false;
+    public $showBulkAssignModal = false;
     
     public $departments = [];
     public $userLevels = [];
+    public $supervisors = [];
     public $isAdmin = false;
+    
+    // For tabs
+    public $activeTab = 'userList';
+    
+    // For bulk supervisor assignment
+    public $selectedSupervisor = '';
+    public $bulkDepartmentFilter = '';
+    public $selectedUserIds = [];
+    public $selectAll = false;
+    public $filteredUsersForBulk = [];
 
     protected UserService $userService;
 
@@ -44,6 +56,46 @@ class UserList extends Component
         // Load filter options
         $this->departments = Department::orderBy('name')->get();
         $this->userLevels = UserLevel::orderBy('name')->get();
+        
+        // Load supervisors (users with admin or supervisor roles)
+        $this->loadSupervisors();
+        
+        // Load filtered users for bulk assignment
+        $this->loadFilteredUsersForBulk();
+    }
+
+    public function loadSupervisors()
+    {
+        $this->supervisors = User::whereHas('userLevel', function($query) {
+            $query->whereIn('name', ['admin', 'supervisor', 'super_admin']);
+        })->orderBy('name')->get();
+    }
+
+    public function loadFilteredUsersForBulk()
+    {
+        $query = User::with(['department']);
+        
+        if (!empty($this->bulkDepartmentFilter)) {
+            $query->where('department_id', $this->bulkDepartmentFilter);
+        }
+        
+        $this->filteredUsersForBulk = $query->get();
+    }
+
+    public function updatedBulkDepartmentFilter()
+    {
+        $this->loadFilteredUsersForBulk();
+        $this->selectedUserIds = [];
+        $this->selectAll = false;
+    }
+
+    public function toggleSelectAll()
+    {
+        if ($this->selectAll) {
+            $this->selectedUserIds = $this->filteredUsersForBulk->pluck('id')->toArray();
+        } else {
+            $this->selectedUserIds = [];
+        }
     }
 
     public function updatingSearch()
@@ -62,6 +114,11 @@ class UserList extends Component
     }
 
     public function updatingUserLevelId()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatingPerPage()
     {
         $this->resetPage();
     }
@@ -184,6 +241,134 @@ class UserList extends Component
         $this->showDeleteModal = false;
         $this->selectedUser = null;
     }
+    
+    // Bulk supervisor assignment methods
+    public function openBulkAssignModal()
+    {
+        $this->showBulkAssignModal = true;
+        $this->loadFilteredUsersForBulk();
+    }
+    
+    public function closeBulkAssignModal()
+    {
+        $this->showBulkAssignModal = false;
+        $this->selectedSupervisor = '';
+        $this->bulkDepartmentFilter = '';
+        $this->selectedUserIds = [];
+        $this->selectAll = false;
+    }
+    
+    public function assignSupervisorToUsers()
+    {
+        if (empty($this->selectedSupervisor)) {
+            $this->dispatch('toast', [
+                'message' => 'Please select a supervisor to assign',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        if (count($this->selectedUserIds) === 0) {
+            $this->dispatch('toast', [
+                'message' => 'Please select at least one user',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+        
+        try {
+            // Update supervisor for selected users
+            User::whereIn('id', $this->selectedUserIds)->update([
+                'supervisor_id' => $this->selectedSupervisor
+            ]);
+            
+            $this->dispatch('toast', [
+                'message' => "Assigned supervisor to " . count($this->selectedUserIds) . " user(s) successfully",
+                'variant' => 'success'
+            ]);
+            
+            $this->closeBulkAssignModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+    
+    // Additional action methods
+    public function changeDepartment($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Change department feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function changeSupervisor($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Change supervisor feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function ipRestriction($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'IP restriction feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function updatePassword($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Update password feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function updateDesignation($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Update designation feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function lastInTime($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Last in time feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function autoPunchOut($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Auto punch out feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function forcePunch($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Force punch feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
+    
+    public function forceLogin($userId)
+    {
+        $this->dispatch('toast', [
+            'message' => 'Force login feature coming soon',
+            'variant' => 'info'
+        ]);
+    }
 
     protected $listeners = ['user-saved' => '$refresh'];
 
@@ -222,6 +407,6 @@ class UserList extends Component
 
         return view('livewire.users.user-list', [
             'users' => $users
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'User Management']);
     }
 }

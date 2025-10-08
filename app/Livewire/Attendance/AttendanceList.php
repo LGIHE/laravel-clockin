@@ -24,6 +24,7 @@ class AttendanceList extends Component
     
     public $selectedAttendance = null;
     public $showDetailModal = false;
+    public $showEditModal = false;
     public $showForcePunchModal = false;
     
     public $users = [];
@@ -143,6 +144,97 @@ class AttendanceList extends Component
     }
 
     protected $listeners = ['attendance-updated' => '$refresh', 'close-force-punch-modal' => 'closeForcePunchModal'];
+
+    public function editAttendance($attendanceId)
+    {
+        $this->selectedAttendance = Attendance::with(['user.userLevel', 'user.department', 'user.designation'])
+            ->find($attendanceId);
+        
+        if ($this->selectedAttendance) {
+            // Check if user has permission to edit
+            if (!$this->isAdmin && $this->selectedAttendance->user_id !== auth()->id()) {
+                $this->dispatch('toast', [
+                    'message' => 'You are not authorized to edit this attendance record',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+            
+            $this->showEditModal = true;
+        }
+    }
+
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->selectedAttendance = null;
+        $this->resetValidation();
+    }
+
+    public function updateAttendance()
+    {
+        if (!$this->selectedAttendance) {
+            return;
+        }
+
+        // Validate the input
+        $this->validate([
+            'selectedAttendance.in_time' => 'required|date',
+            'selectedAttendance.out_time' => 'nullable|date|after:selectedAttendance.in_time',
+            'selectedAttendance.in_message' => 'nullable|string|max:255',
+            'selectedAttendance.out_message' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $attendance = Attendance::find($this->selectedAttendance->id);
+            
+            if (!$attendance) {
+                $this->dispatch('toast', [
+                    'message' => 'Attendance record not found',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+
+            // Check permissions
+            if (!$this->isAdmin && $attendance->user_id !== auth()->id()) {
+                $this->dispatch('toast', [
+                    'message' => 'You are not authorized to update this attendance record',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+
+            // Update the attendance record
+            $attendance->in_time = $this->selectedAttendance->in_time;
+            $attendance->out_time = $this->selectedAttendance->out_time;
+            $attendance->in_message = $this->selectedAttendance->in_message;
+            $attendance->out_message = $this->selectedAttendance->out_message;
+
+            // Recalculate worked hours if both times are set
+            if ($attendance->in_time && $attendance->out_time) {
+                $inTime = Carbon::parse($attendance->in_time);
+                $outTime = Carbon::parse($attendance->out_time);
+                $attendance->worked = $outTime->diffInSeconds($inTime);
+            } else {
+                $attendance->worked = null;
+            }
+
+            $attendance->save();
+
+            $this->dispatch('toast', [
+                'message' => 'Attendance record updated successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeEditModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update attendance record: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
 
     public function deleteAttendance($attendanceId)
     {

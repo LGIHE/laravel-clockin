@@ -260,7 +260,7 @@
                                     <div class="flex justify-end space-x-2">
                                         <button 
                                             wire:click="viewDetails('{{ $attendance->id }}')"
-                                            class="text-blue-600 hover:text-blue-900"
+                                            class="text-blue-600 hover:text-blue-900 transition-colors"
                                             title="View Details"
                                         >
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,11 +268,22 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </button>
+                                        @if($isAdmin || $attendance->user_id === auth()->id())
+                                            <button 
+                                                wire:click="editAttendance('{{ $attendance->id }}')"
+                                                class="text-green-600 hover:text-green-900 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                        @endif
                                         @if($isAdmin)
                                             <button 
                                                 wire:click="deleteAttendance('{{ $attendance->id }}')"
                                                 wire:confirm="Are you sure you want to delete this attendance record?"
-                                                class="text-red-600 hover:text-red-900"
+                                                class="text-red-600 hover:text-red-900 transition-colors"
                                                 title="Delete"
                                             >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,6 +427,116 @@
                         <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
                             <x-ui.button wire:click="closeDetailModal" variant="outline">
                                 Close
+                            </x-ui.button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit Attendance Modal -->
+    @if($showEditModal && $selectedAttendance)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showEditModal') }" x-show="show" style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="show = false"></div>
+
+                <!-- Modal panel -->
+                <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
+                        <div class="flex items-start justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Edit Attendance Record</h3>
+                            <button @click="show = false" class="text-gray-400 hover:text-gray-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            @if($isAdmin)
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>Employee:</strong> {{ $selectedAttendance->user->name }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            <!-- Clock In Time -->
+                            <div>
+                                <label for="editInTime" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Clock In Time <span class="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="datetime-local" 
+                                    id="editInTime"
+                                    wire:model="selectedAttendance.in_time"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    required
+                                >
+                                @error('selectedAttendance.in_time') 
+                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <!-- Clock Out Time -->
+                            <div>
+                                <label for="editOutTime" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Clock Out Time
+                                </label>
+                                <input 
+                                    type="datetime-local" 
+                                    id="editOutTime"
+                                    wire:model="selectedAttendance.out_time"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                @error('selectedAttendance.out_time') 
+                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <!-- Clock In Message -->
+                            <div>
+                                <label for="editInMessage" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Clock In Message
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="editInMessage"
+                                    wire:model="selectedAttendance.in_message"
+                                    placeholder="Optional message"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                @error('selectedAttendance.in_message') 
+                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <!-- Clock Out Message -->
+                            <div>
+                                <label for="editOutMessage" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Clock Out Message
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="editOutMessage"
+                                    wire:model="selectedAttendance.out_message"
+                                    placeholder="Optional message"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                @error('selectedAttendance.out_message') 
+                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse mt-4 -mx-4 -mb-4">
+                            <x-ui.button wire:click="updateAttendance" variant="primary" class="ml-3">
+                                Save Changes
+                            </x-ui.button>
+                            <x-ui.button wire:click="closeEditModal" variant="outline">
+                                Cancel
                             </x-ui.button>
                         </div>
                     </div>

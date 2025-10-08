@@ -53,7 +53,7 @@
                 />
 
                 <!-- Main Content Area -->
-                <div class="flex-1 flex flex-col ml-64">
+                <div class="flex-1 flex flex-col">
                     <!-- Header -->
                     <x-layout.header 
                         @toggle-sidebar="sidebarOpen = !sidebarOpen"
