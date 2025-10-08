@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -25,6 +26,20 @@ class User extends Authenticatable
      * @var string
      */
     protected $keyType = 'string';
+    
+    /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -40,6 +55,8 @@ class User extends Authenticatable
         'supervisor_id',
         'name',
         'email',
+        'phone',
+        'employee_code',
         'password',
         'status',
         'ip',

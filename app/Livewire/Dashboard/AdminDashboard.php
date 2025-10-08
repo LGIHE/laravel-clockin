@@ -13,6 +13,9 @@ class AdminDashboard extends Component
     public $recentActivities;
     public $pendingApprovals;
     public $departmentStats;
+    public $monthlyAttendance;
+    public $holidays;
+    public $notices;
     public $isLoading = false;
     
     // For quick approval modal
@@ -42,6 +45,9 @@ class AdminDashboard extends Component
             $this->recentActivities = $this->dashboardData['recent_activities'];
             $this->pendingApprovals = $this->dashboardData['pending_approvals'];
             $this->departmentStats = $this->dashboardData['department_stats'];
+            $this->monthlyAttendance = $this->dashboardData['monthly_attendance'];
+            $this->holidays = $this->dashboardData['holidays'];
+            $this->notices = $this->dashboardData['notices'];
         } catch (\Exception $e) {
             $this->dispatch('toast', [
                 'message' => 'Failed to load dashboard data: ' . $e->getMessage(),

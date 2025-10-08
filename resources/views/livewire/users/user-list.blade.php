@@ -30,14 +30,18 @@
                         </svg>
                         <span>Assign Supervisor</span>
                     </button>
-                    <a href="{{ route('users.create') }}">
-                        <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span>Add New User</span>
-                        </button>
-                    </a>
+                    <button 
+                        wire:click="openAddUserModal"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        <svg class="w-3 h-3 -ml-3 -mt-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Add New User</span>
+                    </button>
                 @endif
             </div>
         </div>
@@ -547,6 +551,160 @@
                                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                             Assign Supervisor
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Add User Modal -->
+    @if($showAddUserModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeAddUserModal"></div>
+
+                <!-- This element is to trick the browser into centering the modal contents. -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900" id="modal-title">
+                                Add New User
+                            </h3>
+                            <button wire:click="closeAddUserModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="createUser" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="newUserName" class="block text-sm font-medium text-gray-700">Name *</label>
+                                    <input 
+                                        type="text"
+                                        id="newUserName"
+                                        wire:model="newUser.name"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        required
+                                    />
+                                    @error('newUser.name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="newUserEmail" class="block text-sm font-medium text-gray-700">Email *</label>
+                                    <input 
+                                        type="email"
+                                        id="newUserEmail"
+                                        wire:model="newUser.email"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        required
+                                    />
+                                    @error('newUser.email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="newUserPhone" class="block text-sm font-medium text-gray-700">Phone</label>
+                                    <input 
+                                        type="text"
+                                        id="newUserPhone"
+                                        wire:model="newUser.phone"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                    @error('newUser.phone') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="newUserEmployeeCode" class="block text-sm font-medium text-gray-700">Employee Code</label>
+                                    <input 
+                                        type="text"
+                                        id="newUserEmployeeCode"
+                                        wire:model="newUser.employee_code"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                    @error('newUser.employee_code') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="newUserRole" class="block text-sm font-medium text-gray-700">Role *</label>
+                                    <select 
+                                        id="newUserRole"
+                                        wire:model="newUser.user_level_id"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        required
+                                    >
+                                        <option value="">Select role</option>
+                                        @foreach($userLevels as $level)
+                                            <option value="{{ $level->id }}">{{ $level->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('newUser.user_level_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="newUserDepartment" class="block text-sm font-medium text-gray-700">Department *</label>
+                                    <select 
+                                        id="newUserDepartment"
+                                        wire:model="newUser.department_id"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        required
+                                    >
+                                        <option value="">Select department</option>
+                                        @foreach($departments as $dept)
+                                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('newUser.department_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2 col-span-2">
+                                    <label for="newUserDesignation" class="block text-sm font-medium text-gray-700">Designation</label>
+                                    <select 
+                                        id="newUserDesignation"
+                                        wire:model="newUser.designation_id"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Select designation</option>
+                                        @foreach($designations as $designation)
+                                            <option value="{{ $designation->id }}">{{ $designation->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('newUser.designation_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-2 col-span-2">
+                                    <label for="newUserPassword" class="block text-sm font-medium text-gray-700">Password *</label>
+                                    <input 
+                                        type="password"
+                                        id="newUserPassword"
+                                        wire:model="newUser.password"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        required
+                                    />
+                                    @error('newUser.password') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    <p class="text-xs text-gray-500">Minimum 8 characters</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 -mx-6 -mb-4 px-6 py-3 flex justify-end space-x-2 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeAddUserModal" 
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Add User
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

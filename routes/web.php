@@ -18,6 +18,7 @@ use App\Livewire\Projects\ProjectList;
 use App\Livewire\LeaveCategories\LeaveCategoryList;
 use App\Livewire\Holidays\HolidayList;
 use App\Livewire\Notices\NoticeList;
+use App\Livewire\Tasks\TaskList;
 
 // Guest routes (authentication)
 Route::middleware('guest')->group(function () {
@@ -35,6 +36,9 @@ Route::middleware('auth')->group(function () {
     
     // Attendance - User view (accessible to all authenticated users)
     Route::get('/attendance', UserAttendance::class)->name('attendance.user');
+    
+    // Tasks (accessible to all authenticated users)
+    Route::get('/tasks', TaskList::class)->name('tasks.index');
     
     // Leave Management
     Route::get('/leaves', LeaveList::class)->name('leaves.index');

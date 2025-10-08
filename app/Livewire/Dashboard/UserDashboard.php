@@ -10,6 +10,9 @@ class UserDashboard extends Component
 {
     public $dashboardData;
     public $attendanceStatus;
+    public $chartData;
+    public $holidays;
+    public $notices;
     public $clockMessage = '';
     public $isLoading = false;
 
@@ -24,6 +27,25 @@ class UserDashboard extends Component
 
     public function mount()
     {
+        // Initialize with safe defaults
+        $this->dashboardData = [
+            'attendance_status' => [
+                'clocked_in' => false,
+                'in_time' => null,
+                'in_message' => null,
+            ],
+            'stats' => [
+                'leave_this_year' => 0,
+                'last_30_days_formatted' => '00:00:00',
+            ],
+            'work_duration' => '00:00:00',
+            'recent_attendance' => collect([]),
+        ];
+        $this->attendanceStatus = $this->dashboardData['attendance_status'];
+        $this->chartData = [];
+        $this->holidays = collect([]);
+        $this->notices = collect([]);
+        
         $this->loadDashboardData();
     }
 
@@ -31,8 +53,34 @@ class UserDashboard extends Component
     {
         try {
             $this->dashboardData = $this->dashboardService->getUserDashboard(auth()->id());
-            $this->attendanceStatus = $this->dashboardData['attendance_status'];
+            $this->attendanceStatus = $this->dashboardData['attendance_status'] ?? [
+                'clocked_in' => false,
+                'in_time' => null,
+                'in_message' => null,
+            ];
+            $this->chartData = $this->dashboardData['chart_data'] ?? [];
+            $this->holidays = $this->dashboardData['holidays'] ?? collect([]);
+            $this->notices = $this->dashboardData['notices'] ?? collect([]);
         } catch (\Exception $e) {
+            // Set safe defaults on error
+            $this->dashboardData = [
+                'attendance_status' => [
+                    'clocked_in' => false,
+                    'in_time' => null,
+                    'in_message' => null,
+                ],
+                'stats' => [
+                    'leave_this_year' => 0,
+                    'last_30_days_formatted' => '00:00:00',
+                ],
+                'work_duration' => '00:00:00',
+                'recent_attendance' => collect([]),
+            ];
+            $this->attendanceStatus = $this->dashboardData['attendance_status'];
+            $this->chartData = [];
+            $this->holidays = collect([]);
+            $this->notices = collect([]);
+            
             $this->dispatch('toast', [
                 'message' => 'Failed to load dashboard data: ' . $e->getMessage(),
                 'variant' => 'danger'

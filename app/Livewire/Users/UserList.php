@@ -26,9 +26,11 @@ class UserList extends Component
     public $showDetailModal = false;
     public $showDeleteModal = false;
     public $showBulkAssignModal = false;
+    public $showAddUserModal = false;
     
     public $departments = [];
     public $userLevels = [];
+    public $designations = [];
     public $supervisors = [];
     public $isAdmin = false;
     
@@ -41,6 +43,18 @@ class UserList extends Component
     public $selectedUserIds = [];
     public $selectAll = false;
     public $filteredUsersForBulk = [];
+    
+    // For adding new user
+    public $newUser = [
+        'name' => '',
+        'email' => '',
+        'phone' => '',
+        'employee_code' => '',
+        'user_level_id' => '',
+        'department_id' => '',
+        'designation_id' => '',
+        'password' => '',
+    ];
 
     protected UserService $userService;
 
@@ -51,11 +65,14 @@ class UserList extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        // Check if user is admin, supervisor, or super_admin (case-insensitive)
+        $userLevelName = strtolower(auth()->user()->userLevel->name);
+        $this->isAdmin = in_array($userLevelName, ['admin', 'supervisor', 'super_admin', 'super admin']);
         
         // Load filter options
         $this->departments = Department::orderBy('name')->get();
         $this->userLevels = UserLevel::orderBy('name')->get();
+        $this->designations = Designation::orderBy('name')->get();
         
         // Load supervisors (users with admin or supervisor roles)
         $this->loadSupervisors();
@@ -368,6 +385,74 @@ class UserList extends Component
             'message' => 'Force login feature coming soon',
             'variant' => 'info'
         ]);
+    }
+    
+    public function openAddUserModal()
+    {
+        $this->showAddUserModal = true;
+        $this->resetNewUserForm();
+    }
+    
+    public function closeAddUserModal()
+    {
+        $this->showAddUserModal = false;
+        $this->resetNewUserForm();
+    }
+    
+    public function resetNewUserForm()
+    {
+        $this->newUser = [
+            'name' => '',
+            'email' => '',
+            'phone' => '',
+            'employee_code' => '',
+            'user_level_id' => '',
+            'department_id' => '',
+            'designation_id' => '',
+            'password' => '',
+        ];
+        $this->resetErrorBag();
+    }
+    
+    public function createUser()
+    {
+        $this->validate([
+            'newUser.name' => 'required|string|max:255',
+            'newUser.email' => 'required|email|unique:users,email',
+            'newUser.phone' => 'nullable|string|max:20',
+            'newUser.employee_code' => 'nullable|string|max:50',
+            'newUser.user_level_id' => 'required|exists:user_levels,id',
+            'newUser.department_id' => 'required|exists:departments,id',
+            'newUser.designation_id' => 'nullable|exists:designations,id',
+            'newUser.password' => 'required|string|min:8',
+        ]);
+        
+        try {
+            User::create([
+                'name' => $this->newUser['name'],
+                'email' => $this->newUser['email'],
+                'phone' => $this->newUser['phone'],
+                'employee_code' => $this->newUser['employee_code'],
+                'user_level_id' => $this->newUser['user_level_id'],
+                'department_id' => $this->newUser['department_id'],
+                'designation_id' => $this->newUser['designation_id'],
+                'password' => bcrypt($this->newUser['password']),
+                'status' => 1, // Active by default
+            ]);
+            
+            $this->dispatch('toast', [
+                'message' => 'User created successfully',
+                'variant' => 'success'
+            ]);
+            
+            $this->closeAddUserModal();
+            $this->resetPage();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to create user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
 
     protected $listeners = ['user-saved' => '$refresh'];

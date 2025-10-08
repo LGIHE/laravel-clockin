@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\Department;
+use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\Notice;
 use App\Models\Notification;
 use App\Models\Project;
 use App\Models\User;
@@ -77,14 +79,61 @@ class DashboardService
                 ? $totalHoursThisMonth / $totalDaysThisMonth 
                 : 0;
             
+            // Calculate last 30 days
+            $thirtyDaysAgo = Carbon::now()->subDays(30);
+            $last30DaysAttendance = Attendance::where('user_id', $userId)
+                ->whereBetween('in_time', [$thirtyDaysAgo, Carbon::now()])
+                ->whereNotNull('out_time')
+                ->sum('worked');
+            
+            // Calculate leave this year
+            $leaveThisYear = 0;
+            try {
+                $leaveThisYear = Leave::where('user_id', $userId)
+                    ->whereYear('date', Carbon::now()->year)
+                    ->whereHas('status', function ($query) {
+                        $query->where('name', 'approved');
+                    })
+                    ->count();
+            } catch (\Exception $e) {
+                // If status relationship fails, try without it
+                $leaveThisYear = Leave::where('user_id', $userId)
+                    ->whereYear('date', Carbon::now()->year)
+                    ->count();
+            }
+            
             return [
                 'total_hours_this_month' => $totalHoursThisMonth,
                 'total_days_this_month' => $totalDaysThisMonth,
                 'average_hours_per_day' => round($averageHoursPerDay, 2),
                 'total_hours_formatted' => $this->formatSeconds($totalHoursThisMonth),
                 'average_hours_formatted' => $this->formatSeconds($averageHoursPerDay),
+                'last_30_days_formatted' => $this->formatHoursMinutesSeconds($last30DaysAttendance),
+                'leave_this_year' => $leaveThisYear,
             ];
         });
+        
+        // Get chart data for last 7 days
+        $chartData = $this->getUserChartData($userId);
+        
+        // Get holidays for this year
+        $holidays = Holiday::whereYear('date', Carbon::now()->year)
+            ->orderBy('date', 'asc')
+            ->get();
+        
+        // Get recent notices
+        $notices = Notice::where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Calculate work duration if currently clocked in
+        $workDuration = '00:00:00';
+        if ($currentAttendance) {
+            $clockInTime = Carbon::parse($currentAttendance->in_time);
+            $duration = $clockInTime->diffInSeconds(Carbon::now());
+            $workDuration = $this->formatHoursMinutesSeconds($duration);
+        }
         
         return [
             'attendance_status' => $attendanceStatus,
@@ -92,6 +141,10 @@ class DashboardService
             'upcoming_leaves' => $upcomingLeaves,
             'notifications' => $notifications,
             'stats' => $stats,
+            'chart_data' => $chartData,
+            'holidays' => $holidays,
+            'notices' => $notices,
+            'work_duration' => $workDuration,
         ];
     }
     
@@ -200,6 +253,14 @@ class DashboardService
                 ->whereNull('out_time')
                 ->count();
             
+            // Pending leaves count
+            $pendingLeaves = Leave::whereHas('status', function ($query) {
+                $query->where('name', 'pending');
+            })->count();
+            
+            // Calculate absent users today (total active users - clocked in)
+            $absentToday = $activeUsers - $todayAttendance;
+            
             return [
                 'total_users' => $totalUsers,
                 'active_users' => $activeUsers,
@@ -208,6 +269,9 @@ class DashboardService
                 'total_projects' => $totalProjects,
                 'today_attendance' => $todayAttendance,
                 'currently_clocked_in' => $currentlyClockedIn,
+                'pending_leaves' => $pendingLeaves,
+                'present_today' => $todayAttendance,
+                'absent_today' => max(0, $absentToday),
             ];
         });
         
@@ -263,11 +327,103 @@ class DashboardService
                 ];
             });
         
+        // Get monthly attendance for top users table
+        $monthlyAttendance = $this->getMonthlyUserAttendance();
+        
+        // Get holidays for this year
+        $holidays = Holiday::whereYear('date', Carbon::now()->year)
+            ->orderBy('date', 'asc')
+            ->get();
+        
+        // Get recent notices
+        $notices = Notice::where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
         return [
             'system_stats' => $systemStats,
             'recent_activities' => $recentActivities,
             'pending_approvals' => $pendingApprovals,
             'department_stats' => $departmentStats,
+            'monthly_attendance' => $monthlyAttendance,
+            'holidays' => $holidays,
+            'notices' => $notices,
+        ];
+    }
+    
+    /**
+     * Get chart data for last 7 days for a user.
+     *
+     * @param string $userId
+     * @return array
+     */
+    private function getUserChartData(string $userId): array
+    {
+        $last7Days = [];
+        
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dateStr = $date->format('Y-m-d');
+            $dayName = $date->format('D'); // Mon, Tue, etc.
+            
+            $workedSeconds = Attendance::where('user_id', $userId)
+                ->whereDate('in_time', $dateStr)
+                ->whereNotNull('out_time')
+                ->sum('worked');
+            
+            $hours = $workedSeconds > 0 ? round($workedSeconds / 3600, 2) : 0;
+            
+            $last7Days[] = [
+                'name' => $dayName,
+                'hours' => $hours,
+            ];
+        }
+        
+        return $last7Days;
+    }
+    
+    /**
+     * Get monthly user attendance summary.
+     *
+     * @return array
+     */
+    private function getMonthlyUserAttendance(): array
+    {
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        
+        $userReports = User::where('status', 1)
+            ->select('id', 'name')
+            ->get()
+            ->map(function ($user) use ($startOfMonth, $endOfMonth) {
+                $totalSeconds = Attendance::where('user_id', $user->id)
+                    ->whereBetween('in_time', [$startOfMonth, $endOfMonth])
+                    ->whereNotNull('out_time')
+                    ->sum('worked');
+                
+                return [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                    ],
+                    'statistics' => [
+                        'total_seconds' => $totalSeconds,
+                        'total_hours_formatted' => $this->formatHoursMinutesSeconds($totalSeconds),
+                    ],
+                ];
+            })
+            ->filter(function ($report) {
+                return $report['statistics']['total_seconds'] > 0;
+            })
+            ->sortByDesc('statistics.total_seconds')
+            ->values()
+            ->take(10)
+            ->toArray();
+        
+        return [
+            'user_reports' => $userReports,
+            'month' => Carbon::now()->format('F Y'),
         ];
     }
     
@@ -283,5 +439,20 @@ class DashboardService
         $minutes = floor(($seconds % 3600) / 60);
         
         return sprintf('%02d:%02d', $hours, $minutes);
+    }
+    
+    /**
+     * Format seconds to HH:MM:SS format.
+     *
+     * @param float $seconds
+     * @return string
+     */
+    private function formatHoursMinutesSeconds(float $seconds): string
+    {
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
+        
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
     }
 }
