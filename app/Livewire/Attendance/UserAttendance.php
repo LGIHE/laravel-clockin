@@ -264,8 +264,13 @@ class UserAttendance extends Component
                 if ($attendance->out_time) {
                     $inTime = Carbon::parse($attendance->in_time);
                     $outTime = Carbon::parse($attendance->out_time);
-                    $totalSeconds += $outTime->diffInSeconds($inTime);
-                    $daysWorked++;
+                    // Calculate seconds worked: outTime - inTime
+                    $secondsWorked = $outTime->timestamp - $inTime->timestamp;
+                    // Only add if positive (valid time range)
+                    if ($secondsWorked > 0) {
+                        $totalSeconds += $secondsWorked;
+                        $daysWorked++;
+                    }
                 }
             }
             
