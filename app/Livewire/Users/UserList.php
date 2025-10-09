@@ -952,7 +952,7 @@ class UserList extends Component
     public function saveAutoPunchOut()
     {
         $this->validate([
-            'autoPunchOutData.auto_punch_out_time' => 'required|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/',
+            'autoPunchOutData.auto_punch_out_time' => ['required', 'regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/'],
         ], [
             'autoPunchOutData.auto_punch_out_time.regex' => 'The auto punch out time must be a valid time format (HH:MM).',
         ]);
