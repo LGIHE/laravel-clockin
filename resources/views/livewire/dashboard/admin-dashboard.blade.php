@@ -168,15 +168,17 @@
                 <!-- Recent Activities List -->
                 <div class="space-y-1 max-h-64 overflow-y-auto">
                     @if($recentActivities && count($recentActivities) > 0)
-                        @foreach($recentActivities as $activity)
-                            <div class="border-b border-gray-200 py-2 flex items-center gap-2">
-                                <span class="px-2 py-1 text-xs font-semibold rounded {{ $activity['action'] === 'clocked_in' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800' }}">
-                                    {{ $activity['action'] === 'clocked_in' ? 'Punch In' : 'Punch Out' }}
-                                </span>
-                                <span class="text-gray-600 text-sm">
-                                    {{ \Carbon\Carbon::parse($activity['time'])->format('M d, Y h:i a') }}
-                                </span>
-                            </div>
+                        @foreach($recentActivities as $index => $activity)
+                            @if($index < 3)
+                                <div class="border-b border-gray-200 py-2 flex items-center gap-2">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded {{ $activity['action'] === 'clocked_in' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800' }}">
+                                        {{ $activity['action'] === 'clocked_in' ? 'Punch In' : 'Punch Out' }}
+                                    </span>
+                                    <span class="text-gray-600 text-sm">
+                                        {{ \Carbon\Carbon::parse($activity['time'])->format('M d, Y h:i a') }}
+                                    </span>
+                                </div>
+                            @endif
                         @endforeach
                     @else
                         <div class="text-center text-gray-500 py-4">
