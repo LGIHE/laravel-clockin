@@ -112,6 +112,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the supervisor of the user.
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    /**
+     * Get the users supervised by this user.
+     */
+    public function supervisedUsers()
+    {
+        return $this->hasMany(User::class, 'supervisor_id');
+    }
+
+    /**
      * Get the attendances for the user.
      */
     public function attendances()
@@ -133,6 +149,15 @@ class User extends Authenticatable
     public function project()
     {
         return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    /**
+     * Get all projects assigned to the user (many-to-many).
+     */
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user', 'user_id', 'project_id')
+                    ->withTimestamps();
     }
 
     /**

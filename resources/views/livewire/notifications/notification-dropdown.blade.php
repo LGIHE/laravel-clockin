@@ -1,5 +1,5 @@
 <div 
-    x-data="{ open: @entangle('isOpen') }"
+    x-data="{ open: false }"
     @click.away="open = false"
     class="relative"
 >

@@ -1,11 +1,5 @@
 import './bootstrap';
 import './toast';
 
-// Import Alpine.js
-import Alpine from 'alpinejs';
-
-// Make Alpine available globally
-window.Alpine = Alpine;
-
-// Start Alpine
-Alpine.start();
+// Alpine is already included with Livewire
+// No need to import and start it separately

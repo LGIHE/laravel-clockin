@@ -89,7 +89,7 @@
                     </div>
                 </div>
                 <!-- Users Table -->
-                <div class="border rounded-md overflow-hidden bg-white">
+                <div class="border rounded-md bg-white overflow-visible">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -109,7 +109,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider overflow-visible">
                                         Options
                                     </th>
                                 </tr>
@@ -122,7 +122,7 @@
                                                 <div>
                                                     <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
                                                     @if($user->designation)
-                                                        <div class="text-xs text-white bg-purple-500 px-2 py-0.5 rounded-sm inline-block mt-1">
+                                                        <div class="text-xs text-green-800 bg-green-100 font-medium px-2 py-0.5 rounded-sm inline-block mt-1">
                                                             {{ $user->designation->name }}
                                                         </div>
                                                     @endif
@@ -142,7 +142,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <span class="text-gray-400">—</span>
+                                            {{ $user->supervisor_id ? ($user->supervisor->name ?? 'N/A') : 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $user->email }}
@@ -161,14 +161,14 @@
                                                     </svg>
                                                 </button>
 
-                                                <div x-show="open" @click.away="open = false" class="z-40 origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                                                <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                                                     <div class="py-1" role="menu">
-                                                        <a href="{{ route('users.edit', $user->id) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                                        <button wire:click="openEditUserModal('{{ $user->id }}')" @click="open = false" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
                                                             <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                             </svg>
                                                             Edit User
-                                                        </a>
+                                                        </button>
                                                         
                                                         <div class="border-t border-gray-100"></div>
                                                         
@@ -702,6 +702,247 @@
                                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                                 >
                                     Add User
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit User Modal -->
+    @if($showEditUserModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeEditUserModal"></div>
+
+                <!-- This element is to trick the browser into centering the modal contents. -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900" id="modal-title">
+                                Edit User
+                            </h3>
+                            <button wire:click="closeEditUserModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="updateUser" class="space-y-6">
+                            <!-- Basic Information -->
+                            <div class="border rounded-lg p-4">
+                                <h4 class="text-md font-medium text-gray-900 mb-4">Basic Information</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label for="editUserName" class="block text-sm font-medium text-gray-700">Name *</label>
+                                        <input 
+                                            type="text"
+                                            id="editUserName"
+                                            wire:model="editUser.name"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                        @error('editUser.name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserEmail" class="block text-sm font-medium text-gray-700">Email *</label>
+                                        <input 
+                                            type="email"
+                                            id="editUserEmail"
+                                            wire:model="editUser.email"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                        @error('editUser.email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserPhone" class="block text-sm font-medium text-gray-700">Phone</label>
+                                        <input 
+                                            type="text"
+                                            id="editUserPhone"
+                                            wire:model="editUser.phone"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                        @error('editUser.phone') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserEmployeeCode" class="block text-sm font-medium text-gray-700">Employee Code</label>
+                                        <input 
+                                            type="text"
+                                            id="editUserEmployeeCode"
+                                            wire:model="editUser.employee_code"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                        @error('editUser.employee_code') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <!-- Password Fields (Optional) -->
+                                    <div class="space-y-2">
+                                        <label for="editUserPassword" class="block text-sm font-medium text-gray-700">Password (leave blank to keep current)</label>
+                                        <div class="relative">
+                                            <input 
+                                                type="{{ $showEditPassword ? 'text' : 'password' }}"
+                                                id="editUserPassword"
+                                                wire:model="editUser.password"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Minimum 6 characters"
+                                            />
+                                            <button type="button"
+                                                    wire:click="$toggle('showEditPassword')"
+                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                                @if($showEditPassword)
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                    </svg>
+                                                @endif
+                                            </button>
+                                        </div>
+                                        @error('editUser.password') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserPasswordConfirmation" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                                        <input 
+                                            type="{{ $showEditPassword ? 'text' : 'password' }}"
+                                            id="editUserPasswordConfirmation"
+                                            wire:model="editUser.password_confirmation"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Re-enter password"
+                                        />
+                                        @error('editUser.password_confirmation') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Role & Organization -->
+                            <div class="border rounded-lg p-4">
+                                <h4 class="text-md font-medium text-gray-900 mb-4">Role & Organization</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label for="editUserRole" class="block text-sm font-medium text-gray-700">Role *</label>
+                                        <select 
+                                            id="editUserRole"
+                                            wire:model="editUser.user_level_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        >
+                                            <option value="">Select role</option>
+                                            @foreach($userLevels as $level)
+                                                <option value="{{ $level->id }}">{{ ucfirst($level->name) }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('editUser.user_level_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserStatus" class="block text-sm font-medium text-gray-700">Status *</label>
+                                        <select 
+                                            id="editUserStatus"
+                                            wire:model="editUser.status"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        >
+                                            <option value="1">Active</option>
+                                            <option value="0">Inactive</option>
+                                        </select>
+                                        @error('editUser.status') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserDepartment" class="block text-sm font-medium text-gray-700">Department</label>
+                                        <select 
+                                            id="editUserDepartment"
+                                            wire:model="editUser.department_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Select department</option>
+                                            @foreach($departments as $dept)
+                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('editUser.department_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserDesignation" class="block text-sm font-medium text-gray-700">Designation</label>
+                                        <select 
+                                            id="editUserDesignation"
+                                            wire:model="editUser.designation_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Select designation</option>
+                                            @foreach($designations as $designation)
+                                                <option value="{{ $designation->id }}">{{ $designation->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('editUser.designation_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2 col-span-2">
+                                        <label for="editUserSupervisor" class="block text-sm font-medium text-gray-700">Supervisor</label>
+                                        <select 
+                                            id="editUserSupervisor"
+                                            wire:model="editUser.supervisor_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">No Supervisor</option>
+                                            @foreach($supervisors as $supervisor)
+                                                <option value="{{ $supervisor->id }}">{{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('editUser.supervisor_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Project Assignment -->
+                            <div class="border rounded-lg p-4">
+                                <h4 class="text-md font-medium text-gray-900 mb-4">Project Assignment</h4>
+                                @if(count($projects) > 0)
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        @foreach($projects as $project)
+                                            <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors
+                                                {{ in_array($project->id, $editUserProjects) ? 'bg-blue-50 border-blue-500' : '' }}">
+                                                <input type="checkbox" 
+                                                       wire:click="toggleEditProjectSelection('{{ $project->id }}')"
+                                                       {{ in_array($project->id, $editUserProjects) ? 'checked' : '' }}
+                                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                                <span class="ml-3 text-sm text-gray-900">{{ $project->name }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-sm text-gray-500">No active projects available</p>
+                                @endif
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeEditUserModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Update User
                                 </button>
                             </div>
                         </form>

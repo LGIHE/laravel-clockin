@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserLevel;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\Project;
 use App\Services\UserService;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -27,6 +28,7 @@ class UserList extends Component
     public $showDeleteModal = false;
     public $showBulkAssignModal = false;
     public $showAddUserModal = false;
+    public $showEditUserModal = false;
     
     public $departments = [];
     public $userLevels = [];
@@ -56,6 +58,26 @@ class UserList extends Component
         'password' => '',
     ];
 
+    // For editing user
+    public $editUser = [
+        'id' => '',
+        'name' => '',
+        'email' => '',
+        'phone' => '',
+        'employee_code' => '',
+        'user_level_id' => '',
+        'department_id' => '',
+        'designation_id' => '',
+        'supervisor_id' => '',
+        'status' => 1,
+        'password' => '',
+        'password_confirmation' => '',
+    ];
+    
+    public $editUserProjects = [];
+    public $projects = [];
+    public $showEditPassword = false;
+
     protected UserService $userService;
 
     public function boot(UserService $userService)
@@ -73,6 +95,7 @@ class UserList extends Component
         $this->departments = Department::orderBy('name')->get();
         $this->userLevels = UserLevel::orderBy('name')->get();
         $this->designations = Designation::orderBy('name')->get();
+        $this->projects = Project::where('status', 'ACTIVE')->orderBy('name')->get();
         
         // Load supervisors (users with admin or supervisor roles)
         $this->loadSupervisors();
@@ -450,6 +473,130 @@ class UserList extends Component
         } catch (\Exception $e) {
             $this->dispatch('toast', [
                 'message' => 'Failed to create user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function openEditUserModal($userId)
+    {
+        try {
+            $user = User::with(['userLevel', 'department', 'designation', 'supervisor', 'projects'])->find($userId);
+            
+            if ($user) {
+                $this->editUser = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone ?? '',
+                    'employee_code' => $user->employee_code ?? '',
+                    'user_level_id' => $user->user_level_id,
+                    'department_id' => $user->department_id ?? '',
+                    'designation_id' => $user->designation_id ?? '',
+                    'supervisor_id' => $user->supervisor_id ?? '',
+                    'status' => $user->status,
+                    'password' => '',
+                    'password_confirmation' => '',
+                ];
+                $this->editUserProjects = $user->projects ? $user->projects->pluck('id')->toArray() : [];
+                $this->showEditUserModal = true;
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeEditUserModal()
+    {
+        $this->showEditUserModal = false;
+        $this->showEditPassword = false;
+        $this->editUser = [
+            'id' => '',
+            'name' => '',
+            'email' => '',
+            'phone' => '',
+            'employee_code' => '',
+            'user_level_id' => '',
+            'department_id' => '',
+            'designation_id' => '',
+            'supervisor_id' => '',
+            'status' => 1,
+            'password' => '',
+            'password_confirmation' => '',
+        ];
+        $this->editUserProjects = [];
+        $this->resetErrorBag();
+    }
+
+    public function toggleEditProjectSelection($projectId)
+    {
+        if (in_array($projectId, $this->editUserProjects)) {
+            $this->editUserProjects = array_diff($this->editUserProjects, [$projectId]);
+        } else {
+            $this->editUserProjects[] = $projectId;
+        }
+    }
+
+    public function updateUser()
+    {
+        $rules = [
+            'editUser.name' => 'required|string|max:255',
+            'editUser.email' => 'required|email|unique:users,email,' . $this->editUser['id'],
+            'editUser.phone' => 'nullable|string|max:20',
+            'editUser.employee_code' => 'nullable|string|max:50',
+            'editUser.user_level_id' => 'required|exists:user_levels,id',
+            'editUser.department_id' => 'nullable|exists:departments,id',
+            'editUser.designation_id' => 'nullable|exists:designations,id',
+            'editUser.supervisor_id' => 'nullable|exists:users,id',
+            'editUser.status' => 'required|in:0,1',
+        ];
+
+        // Only validate password if it's provided
+        if (!empty($this->editUser['password'])) {
+            $rules['editUser.password'] = 'required|string|min:6|confirmed';
+            $rules['editUser.password_confirmation'] = 'required';
+        }
+
+        $this->validate($rules);
+        
+        try {
+            $user = User::findOrFail($this->editUser['id']);
+            
+            $updateData = [
+                'name' => $this->editUser['name'],
+                'email' => $this->editUser['email'],
+                'phone' => $this->editUser['phone'],
+                'employee_code' => $this->editUser['employee_code'],
+                'user_level_id' => $this->editUser['user_level_id'],
+                'department_id' => $this->editUser['department_id'],
+                'designation_id' => $this->editUser['designation_id'],
+                'supervisor_id' => $this->editUser['supervisor_id'],
+                'status' => $this->editUser['status'],
+            ];
+
+            // Only update password if it's provided
+            if (!empty($this->editUser['password'])) {
+                $updateData['password'] = bcrypt($this->editUser['password']);
+            }
+
+            $user->update($updateData);
+
+            // Sync projects
+            $user->projects()->sync($this->editUserProjects);
+            
+            $this->dispatch('toast', [
+                'message' => 'User updated successfully',
+                'variant' => 'success'
+            ]);
+            
+            $this->closeEditUserModal();
+            $this->resetPage();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update user: ' . $e->getMessage(),
                 'variant' => 'danger'
             ]);
         }
