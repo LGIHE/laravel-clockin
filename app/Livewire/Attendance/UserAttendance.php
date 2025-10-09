@@ -305,9 +305,16 @@ class UserAttendance extends Component
 
         $inTime = Carbon::parse($attendance->in_time);
         $outTime = Carbon::parse($attendance->out_time);
-        $diff = $inTime->diff($outTime);
+        
+        // Calculate total seconds
+        $totalSeconds = $outTime->timestamp - $inTime->timestamp;
+        
+        // Convert to hours, minutes, seconds
+        $hours = floor($totalSeconds / 3600);
+        $minutes = floor(($totalSeconds % 3600) / 60);
+        $seconds = $totalSeconds % 60;
 
-        return sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
     public function exportCsv()
