@@ -454,11 +454,11 @@ class UserList extends Component
             User::create([
                 'name' => $this->newUser['name'],
                 'email' => $this->newUser['email'],
-                'phone' => $this->newUser['phone'],
-                'employee_code' => $this->newUser['employee_code'],
+                'phone' => $this->newUser['phone'] ?: null,
+                'employee_code' => $this->newUser['employee_code'] ?: null,
                 'user_level_id' => $this->newUser['user_level_id'],
                 'department_id' => $this->newUser['department_id'],
-                'designation_id' => $this->newUser['designation_id'],
+                'designation_id' => $this->newUser['designation_id'] ?: null,
                 'password' => bcrypt($this->newUser['password']),
                 'status' => 1, // Active by default
             ]);
@@ -565,15 +565,16 @@ class UserList extends Component
         try {
             $user = User::findOrFail($this->editUser['id']);
             
+            // Convert empty strings to null for nullable foreign keys
             $updateData = [
                 'name' => $this->editUser['name'],
                 'email' => $this->editUser['email'],
-                'phone' => $this->editUser['phone'],
-                'employee_code' => $this->editUser['employee_code'],
+                'phone' => $this->editUser['phone'] ?: null,
+                'employee_code' => $this->editUser['employee_code'] ?: null,
                 'user_level_id' => $this->editUser['user_level_id'],
-                'department_id' => $this->editUser['department_id'],
-                'designation_id' => $this->editUser['designation_id'],
-                'supervisor_id' => $this->editUser['supervisor_id'],
+                'department_id' => $this->editUser['department_id'] ?: null,
+                'designation_id' => $this->editUser['designation_id'] ?: null,
+                'supervisor_id' => $this->editUser['supervisor_id'] ?: null,
                 'status' => $this->editUser['status'],
             ];
 
@@ -591,7 +592,7 @@ class UserList extends Component
                 'message' => 'User updated successfully',
                 'variant' => 'success'
             ]);
-            
+
             $this->closeEditUserModal();
             $this->resetPage();
         } catch (\Exception $e) {
