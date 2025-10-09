@@ -17,6 +17,7 @@ class ProjectList extends Component
     public $sortBy = 'created_at';
     public $sortOrder = 'desc';
     public $perPage = 15;
+    public $activeTab = 'project'; // Add activeTab property
     
     public $showCreateModal = false;
     public $showEditModal = false;

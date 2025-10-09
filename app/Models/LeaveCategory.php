@@ -32,6 +32,7 @@ class LeaveCategory extends Model
     protected $fillable = [
         'id',
         'name',
+        'description',
         'max_in_year',
     ];
 

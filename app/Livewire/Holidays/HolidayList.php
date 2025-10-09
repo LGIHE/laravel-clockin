@@ -23,8 +23,13 @@ class HolidayList extends Component
     
     public $holidayId = null;
     public $date = '';
+    public $name = '';
+    public $description = '';
     
     public $selectedHoliday = null;
+    public $selectedDate = null;
+    public $selectedYear;
+    public $yearOptions = [];
     public $isAdmin = false;
     
     // Calendar view properties
@@ -34,18 +39,30 @@ class HolidayList extends Component
 
     protected $rules = [
         'date' => 'required|date',
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string|max:1000',
     ];
 
     protected $messages = [
         'date.required' => 'Holiday date is required',
         'date.date' => 'Please enter a valid date',
+        'name.required' => 'Holiday name is required',
+        'name.max' => 'Holiday name cannot exceed 255 characters',
+        'description.max' => 'Description cannot exceed 1000 characters',
     ];
 
     public function mount()
     {
         $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->selectedYear = now()->year;
         $this->currentMonth = now()->month;
         $this->currentYear = now()->year;
+        
+        // Generate year options (current year ± 5 years)
+        $currentYear = now()->year;
+        for ($i = -5; $i <= 5; $i++) {
+            $this->yearOptions[] = $currentYear + $i;
+        }
     }
 
     public function updatingSearch()

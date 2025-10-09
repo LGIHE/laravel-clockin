@@ -15,28 +15,34 @@ class LeaveList extends Component
 {
     use WithPagination;
 
-    public $search = '';
-    public $userId = '';
-    public $status = '';
-    public $categoryId = '';
-    public $startDate = '';
-    public $endDate = '';
-    public $sortBy = 'created_at';
-    public $sortOrder = 'desc';
-    public $perPage = 15;
+    // Filter properties
+    public $searchTerm = '';
+    public $categoryFilter = '';
+    public $statusFilter = '';
     
-    public $selectedLeave = null;
-    public $showDetailModal = false;
-    public $showApprovalModal = false;
-    public $approvalAction = ''; // 'approve' or 'reject'
-    public $approvalComments = '';
+    // Tab state
+    public $activeTab = 'my-leaves';
     
-    public $users = [];
-    public $categories = [];
-    public $statuses = [];
-    public $currentUserRole = '';
+    // Dialog states
+    public $showDeleteDialog = false;
+    public $showRejectDialog = false;
+    public $deleteLeaveId = null;
+    public $rejectLeaveId = null;
+    public $rejectionReason = '';
+    
+    // User role flags
     public $isAdmin = false;
     public $isSupervisor = false;
+    
+    // Data
+    public $categories = [];
+    public $isLoading = false;
+    
+    // Leave balance
+    public $approvedDays = 0;
+    public $pendingDays = 0;
+    public $pendingCount = 0;
+    public $totalRequests = 0;
 
     protected LeaveService $leaveService;
 
@@ -48,159 +54,69 @@ class LeaveList extends Component
     public function mount()
     {
         $user = auth()->user();
-        $this->currentUserRole = $user->userLevel->name;
-        $this->isAdmin = $this->currentUserRole === 'admin';
-        $this->isSupervisor = $this->currentUserRole === 'supervisor';
-        
-        // Set default date range to current month
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->isAdmin = $user->userLevel->name === 'admin';
+        $this->isSupervisor = $user->userLevel->name === 'supervisor';
         
         // Load filter options
         $this->categories = LeaveCategory::orderBy('name')->get();
-        $this->statuses = LeaveStatus::all();
         
-        // Load users for filter (admin/supervisor only)
-        if ($this->isAdmin) {
-            $this->users = User::select('id', 'name', 'email')
-                ->where('status', 1)
-                ->orderBy('name')
-                ->get();
-        } elseif ($this->isSupervisor) {
-            // Supervisors see their team members
-            $this->users = User::select('id', 'name', 'email')
-                ->where('supervisor_id', $user->id)
-                ->where('status', 1)
-                ->orderBy('name')
-                ->get();
+        // Calculate leave balance
+        $this->calculateLeaveBalance();
+    }
+
+    public function calculateLeaveBalance()
+    {
+        $userId = auth()->id();
+        // Use case-insensitive search and handle both 'approved' and 'granted'
+        $approvedStatus = LeaveStatus::whereRaw('LOWER(name) IN (?, ?)', ['approved', 'granted'])->first();
+        $pendingStatus = LeaveStatus::whereRaw('LOWER(name) = ?', ['pending'])->first();
+        
+        // Count approved leaves (assuming 1 day per leave for now)
+        if ($approvedStatus) {
+            $this->approvedDays = Leave::where('user_id', $userId)
+                ->where('leave_status_id', $approvedStatus->id)
+                ->count();
         } else {
-            // Regular users can only see their own leaves
-            $this->userId = auth()->id();
+            $this->approvedDays = 0;
         }
-    }
-
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingUserId()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingStatus()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingCategoryId()
-    {
-        $this->resetPage();
-    }
-
-    public function sortByColumn($column)
-    {
-        if ($this->sortBy === $column) {
-            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+            
+        // Count pending leaves
+        if ($pendingStatus) {
+            $this->pendingDays = Leave::where('user_id', $userId)
+                ->where('leave_status_id', $pendingStatus->id)
+                ->count();
         } else {
-            $this->sortBy = $column;
-            $this->sortOrder = 'asc';
+            $this->pendingDays = 0;
+        }
+            
+        // Total requests
+        $this->totalRequests = Leave::where('user_id', $userId)->count();
+        
+        // Pending approvals (for admin/supervisor)
+        if ($this->isAdmin || $this->isSupervisor) {
+            if ($pendingStatus) {
+                $this->pendingCount = Leave::where('leave_status_id', $pendingStatus->id)->count();
+            } else {
+                $this->pendingCount = 0;
+            }
         }
     }
 
-    public function applyFilters()
-    {
-        $this->resetPage();
-        
-        $this->dispatch('toast', [
-            'message' => 'Filters applied',
-            'variant' => 'info'
-        ]);
-    }
-
-    public function clearFilters()
-    {
-        $this->search = '';
-        $this->userId = ($this->isAdmin || $this->isSupervisor) ? '' : auth()->id();
-        $this->status = '';
-        $this->categoryId = '';
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
-        $this->sortBy = 'created_at';
-        $this->sortOrder = 'desc';
-        
-        $this->resetPage();
-        
-        $this->dispatch('toast', [
-            'message' => 'Filters cleared',
-            'variant' => 'info'
-        ]);
-    }
-
-    public function viewDetails($leaveId)
-    {
-        $this->selectedLeave = Leave::with(['user.userLevel', 'user.department', 'user.designation', 'category', 'status'])
-            ->find($leaveId);
-        
-        if ($this->selectedLeave) {
-            $this->showDetailModal = true;
-        }
-    }
-
-    public function closeDetailModal()
-    {
-        $this->showDetailModal = false;
-        $this->selectedLeave = null;
-    }
-
-    public function openApprovalModal($leaveId, $action)
-    {
-        $this->selectedLeave = Leave::with(['user', 'category', 'status'])->find($leaveId);
-        
-        if ($this->selectedLeave) {
-            $this->approvalAction = $action;
-            $this->approvalComments = '';
-            $this->showApprovalModal = true;
-        }
-    }
-
-    public function closeApprovalModal()
-    {
-        $this->showApprovalModal = false;
-        $this->selectedLeave = null;
-        $this->approvalAction = '';
-        $this->approvalComments = '';
-    }
-
-    public function submitApproval()
+    public function approveLeave($leaveId)
     {
         try {
-            if ($this->approvalAction === 'approve') {
-                $this->leaveService->approveLeave(
-                    $this->selectedLeave->id,
-                    auth()->id(),
-                    $this->approvalComments
-                );
-                
-                $this->dispatch('toast', [
-                    'message' => 'Leave approved successfully!',
-                    'variant' => 'success'
-                ]);
-            } elseif ($this->approvalAction === 'reject') {
-                $this->leaveService->rejectLeave(
-                    $this->selectedLeave->id,
-                    auth()->id(),
-                    $this->approvalComments
-                );
-                
-                $this->dispatch('toast', [
-                    'message' => 'Leave rejected successfully!',
-                    'variant' => 'success'
-                ]);
-            }
+            $this->leaveService->approveLeave(
+                $leaveId,
+                auth()->id(),
+                ''
+            );
             
-            $this->closeApprovalModal();
+            $this->dispatch('toast', [
+                'message' => 'Leave approved successfully!',
+                'variant' => 'success'
+            ]);
+            
+            $this->calculateLeaveBalance();
             
         } catch (\Exception $e) {
             $this->dispatch('toast', [
@@ -210,10 +126,65 @@ class LeaveList extends Component
         }
     }
 
-    public function deleteLeave($leaveId)
+    public function openRejectDialog($leaveId)
+    {
+        $this->rejectLeaveId = $leaveId;
+        $this->rejectionReason = '';
+        $this->showRejectDialog = true;
+    }
+
+    public function closeRejectDialog()
+    {
+        $this->showRejectDialog = false;
+        $this->rejectLeaveId = null;
+        $this->rejectionReason = '';
+    }
+
+    public function confirmReject()
+    {
+        $this->validate([
+            'rejectionReason' => 'required|string|min:5'
+        ]);
+
+        try {
+            $this->leaveService->rejectLeave(
+                $this->rejectLeaveId,
+                auth()->id(),
+                $this->rejectionReason
+            );
+            
+            $this->dispatch('toast', [
+                'message' => 'Leave rejected successfully!',
+                'variant' => 'success'
+            ]);
+            
+            $this->closeRejectDialog();
+            $this->calculateLeaveBalance();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function openDeleteDialog($leaveId)
+    {
+        $this->deleteLeaveId = $leaveId;
+        $this->showDeleteDialog = true;
+    }
+
+    public function closeDeleteDialog()
+    {
+        $this->showDeleteDialog = false;
+        $this->deleteLeaveId = null;
+    }
+
+    public function confirmDelete()
     {
         try {
-            $leave = Leave::find($leaveId);
+            $leave = Leave::find($this->deleteLeaveId);
             
             if (!$leave) {
                 throw new \Exception('Leave not found');
@@ -224,8 +195,12 @@ class LeaveList extends Component
                 throw new \Exception('You are not authorized to delete this leave');
             }
             
-            // Check if leave is pending
-            $pendingStatus = LeaveStatus::where('name', 'pending')->first();
+            // Check if leave is pending (case-insensitive)
+            $pendingStatus = LeaveStatus::whereRaw('LOWER(name) = ?', ['pending'])->first();
+            if (!$pendingStatus) {
+                throw new \Exception('Pending status not found in the system');
+            }
+            
             if ($leave->leave_status_id !== $pendingStatus->id) {
                 throw new \Exception('Only pending leaves can be deleted');
             }
@@ -237,6 +212,9 @@ class LeaveList extends Component
                 'variant' => 'success'
             ]);
             
+            $this->closeDeleteDialog();
+            $this->calculateLeaveBalance();
+            
         } catch (\Exception $e) {
             $this->dispatch('toast', [
                 'message' => $e->getMessage(),
@@ -245,70 +223,51 @@ class LeaveList extends Component
         }
     }
 
-    protected $listeners = ['leave-applied' => '$refresh'];
-
-    public function render()
+    public function getFilteredLeaves($forCurrentUser = false)
     {
-        $query = Leave::with(['user.userLevel', 'user.department', 'category', 'status']);
+        $query = Leave::with(['user', 'category', 'status']);
 
-        // Apply role-based filtering
-        $user = auth()->user();
-        if ($this->currentUserRole === 'user') {
-            // Regular users see only their leaves
-            $query->where('user_id', $user->id);
-        } elseif ($this->currentUserRole === 'supervisor') {
-            // Supervisors see their team's leaves
-            if (empty($this->userId)) {
-                $teamUserIds = User::where('supervisor_id', $user->id)->pluck('id');
-                $query->whereIn('user_id', $teamUserIds->push($user->id));
-            } else {
-                $query->where('user_id', $this->userId);
-            }
-        } else {
-            // Admins see all leaves or filtered by user
-            if (!empty($this->userId)) {
-                $query->where('user_id', $this->userId);
-            }
-        }
-
-        // Apply search filter (search by user name or email)
-        if (!empty($this->search) && ($this->isAdmin || $this->isSupervisor)) {
-            $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        // Apply status filter
-        if (!empty($this->status)) {
-            $statusRecord = LeaveStatus::where('name', $this->status)->first();
-            if ($statusRecord) {
-                $query->where('leave_status_id', $statusRecord->id);
-            }
+        // Filter by user
+        if ($forCurrentUser) {
+            $query->where('user_id', auth()->id());
+        } elseif (!$this->isAdmin && !$this->isSupervisor) {
+            $query->where('user_id', auth()->id());
         }
 
         // Apply category filter
-        if (!empty($this->categoryId)) {
-            $query->where('leave_category_id', $this->categoryId);
+        if (!empty($this->categoryFilter)) {
+            $query->where('leave_category_id', $this->categoryFilter);
         }
 
-        // Apply date range filter
-        if (!empty($this->startDate)) {
-            $query->whereDate('date', '>=', $this->startDate);
+        // Apply status filter
+        if (!empty($this->statusFilter)) {
+            $status = LeaveStatus::where('name', strtolower($this->statusFilter))->first();
+            if ($status) {
+                $query->where('leave_status_id', $status->id);
+            }
         }
 
-        if (!empty($this->endDate)) {
-            $query->whereDate('date', '<=', $this->endDate);
+        // Apply search filter
+        if (!empty($this->searchTerm)) {
+            $query->where(function($q) {
+                $q->where('description', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhereHas('user', function($userQuery) {
+                      $userQuery->where('name', 'like', '%' . $this->searchTerm . '%');
+                  });
+            });
         }
 
-        // Apply sorting
-        $query->orderBy($this->sortBy, $this->sortOrder);
+        return $query->orderBy('created_at', 'desc')->get();
+    }
 
-        // Paginate results
-        $leaves = $query->paginate($this->perPage);
+    public function render()
+    {
+        $myLeaves = $this->getFilteredLeaves(true);
+        $allLeaves = ($this->isAdmin || $this->isSupervisor) ? $this->getFilteredLeaves(false) : collect();
 
         return view('livewire.leave.leave-list', [
-            'leaves' => $leaves
-        ]);
+            'myLeaves' => $myLeaves,
+            'allLeaves' => $allLeaves,
+        ])->layout('components.layouts.app');
     }
 }

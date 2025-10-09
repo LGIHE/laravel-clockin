@@ -1,551 +1,320 @@
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Leave Management</h1>
-                    <p class="text-sm text-gray-600 mt-1">View and manage leave requests</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('dashboard') }}">
-                        <x-ui.button variant="outline" size="sm">
-                            Back to Dashboard
-                        </x-ui.button>
-                    </a>
-                </div>
+<div class="space-y-6 p-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-semibold">Leave Management</h1>
+    </div>
+
+    <!-- Leave Balance Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-md shadow-sm">
+            <div class="text-sm text-gray-500">Approved Leaves</div>
+            <div class="text-2xl font-bold text-green-600">{{ $approvedDays }} days</div>
+        </div>
+        <div class="bg-white p-4 rounded-md shadow-sm">
+            <div class="text-sm text-gray-500">Pending Leaves</div>
+            <div class="text-2xl font-bold text-yellow-600">{{ $pendingDays }} days</div>
+        </div>
+        <div class="bg-white p-4 rounded-md shadow-sm">
+            <div class="text-sm text-gray-500">
+                {{ $isAdmin || $isSupervisor ? 'Pending Approvals' : 'Total Requests' }}
+            </div>
+            <div class="text-2xl font-bold text-blue-600">
+                {{ $isAdmin || $isSupervisor ? $pendingCount : $totalRequests }}
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Apply Leave Section -->
-        <div class="mb-6">
-            <livewire:leave.apply-leave />
-        </div>
+    <div class="bg-white p-6 rounded-md shadow-sm">
+    <div class="bg-white p-6 rounded-md shadow-sm">
+        @if($isAdmin || $isSupervisor)
+            <!-- Tabs for admin/supervisor -->
+            <div class="mb-4">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8">
+                        <button
+                            wire:click="$set('activeTab', 'my-leaves')"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $activeTab === 'my-leaves' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                        >
+                            My Leaves
+                        </button>
+                        <button
+                            wire:click="$set('activeTab', 'all-leaves')"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $activeTab === 'all-leaves' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                        >
+                            All Leaves
+                            @if($pendingCount > 0)
+                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                    {{ $pendingCount }}
+                                </span>
+                            @endif
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        @endif
 
         <!-- Filters -->
-        <x-ui.card class="mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- User Filter (Admin/Supervisor only) -->
-                @if($isAdmin || $isSupervisor)
-                    <div>
-                        <label for="userId" class="block text-sm font-medium text-gray-700 mb-1">
-                            User
-                        </label>
-                        <select 
-                            id="userId"
-                            wire:model="userId"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="">All Users</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Search -->
-                    <div>
-                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
-                            Search
-                        </label>
-                        <input 
-                            type="text" 
-                            id="search"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="Search by name or email..."
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                    </div>
-                @endif
-
-                <!-- Status Filter -->
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
-                        Status
-                    </label>
-                    <select 
-                        id="status"
-                        wire:model="status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">All Status</option>
-                        @foreach($statuses as $statusOption)
-                            <option value="{{ $statusOption->name }}">{{ ucfirst($statusOption->name) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Category Filter -->
-                <div>
-                    <label for="categoryId" class="block text-sm font-medium text-gray-700 mb-1">
-                        Category
-                    </label>
-                    <select 
-                        id="categoryId"
-                        wire:model="categoryId"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">All Categories</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Start Date -->
-                <div>
-                    <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">
-                        Start Date
-                    </label>
-                    <input 
-                        type="date" 
-                        id="startDate"
-                        wire:model="startDate"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                </div>
-
-                <!-- End Date -->
-                <div>
-                    <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
-                        End Date
-                    </label>
-                    <input 
-                        type="date" 
-                        id="endDate"
-                        wire:model="endDate"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                </div>
-
-                <!-- Per Page -->
-                <div>
-                    <label for="perPage" class="block text-sm font-medium text-gray-700 mb-1">
-                        Per Page
-                    </label>
-                    <select 
-                        id="perPage"
-                        wire:model.live="perPage"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                </div>
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Filters:</span>
             </div>
 
-            <div class="flex justify-end space-x-3 mt-4">
-                <x-ui.button wire:click="clearFilters" variant="outline" size="sm">
-                    Clear Filters
-                </x-ui.button>
-                <x-ui.button wire:click="applyFilters" variant="primary" size="sm">
-                    Apply Filters
-                </x-ui.button>
+            <div class="flex space-x-4 flex-wrap gap-2">
+                <select 
+                    wire:model.live="categoryFilter"
+                    class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-[180px]"
+                >
+                    <option value="">All Categories</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </select>
+
+                <select 
+                    wire:model.live="statusFilter"
+                    class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-[180px]"
+                >
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+
+                <input 
+                    type="text" 
+                    wire:model.live.debounce.300ms="searchTerm"
+                    placeholder="Search..."
+                    class="border border-gray-300 p-2 rounded-md w-64"
+                />
             </div>
-        </x-ui.card>
+        </div>
 
-        <!-- Leave Table -->
-        <x-ui.card>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            @if($isAdmin || $isSupervisor)
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" wire:click="sortByColumn('user_id')">
-                                    <div class="flex items-center space-x-1">
-                                        <span>User</span>
-                                        @if($sortBy === 'user_id')
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                @if($sortOrder === 'asc')
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                                @else
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                @endif
-                                            </svg>
-                                        @endif
-                                    </div>
-                                </th>
-                            @endif
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" wire:click="sortByColumn('date')">
-                                <div class="flex items-center space-x-1">
-                                    <span>Leave Date</span>
-                                    @if($sortBy === 'date')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            @if($sortOrder === 'asc')
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                            @else
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            @endif
-                                        </svg>
-                                    @endif
-                                </div>
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Category
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Description
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" wire:click="sortByColumn('created_at')">
-                                <div class="flex items-center space-x-1">
-                                    <span>Applied On</span>
-                                    @if($sortBy === 'created_at')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            @if($sortOrder === 'asc')
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                            @else
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            @endif
-                                        </svg>
-                                    @endif
-                                </div>
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+        <!-- Table Content -->
+        @if($isLoading)
+            <div class="space-y-2">
+                <div class="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+            </div>
+        @else
+            @php
+                $displayLeaves = $activeTab === 'my-leaves' || !($isAdmin || $isSupervisor) ? $myLeaves : $allLeaves;
+                $showUserColumn = $activeTab === 'all-leaves' && ($isAdmin || $isSupervisor);
+            @endphp
 
-                        @forelse($leaves as $leave)
-                            <tr class="hover:bg-gray-50">
-                                @if($isAdmin || $isSupervisor)
+            @if($displayLeaves->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">#</th>
+                                @if($showUserColumn)
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                @endif
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($displayLeaves as $index => $leave)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $index + 1 }}</td>
+                                    @if($showUserColumn)
+                                        <td class="px-6 py-4 whitespace-nowrap">User #{{ $leave->user_id }}</td>
+                                    @endif
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $leave->category->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">1</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ $leave->user->name }}
+                                        @php
+                                            $statusName = strtolower($leave->status->name);
+                                        @endphp
+                                        @if(in_array($statusName, ['approved', 'granted']))
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white hover:bg-green-600">Approved</span>
+                                        @elseif($statusName === 'rejected')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white hover:bg-red-600">Rejected</span>
+                                        @elseif($statusName === 'pending')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500 text-white hover:bg-yellow-600">Pending</span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500 text-white">{{ ucfirst($statusName) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 max-w-xs truncate" title="{{ $leave->description }}">
+                                        {{ $leave->description ?: '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex gap-2">
+                                            @if(($isAdmin || $isSupervisor) && strtolower($leave->status->name) === 'pending')
+                                                <button
+                                                    wire:click="approveLeave('{{ $leave->id }}')"
+                                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-green-600 bg-white hover:bg-green-50 border-gray-300"
+                                                >
+                                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    wire:click="openRejectDialog('{{ $leave->id }}')"
+                                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 border-gray-300"
+                                                >
+                                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Reject
+                                                </button>
+                                            @endif
+                                            @if($leave->user_id === auth()->id() && strtolower($leave->status->name) === 'pending')
+                                                <div class="relative">
+                                                    <button
+                                                        onclick="document.getElementById('menu-{{ $leave->id }}').classList.toggle('hidden')"
+                                                        class="inline-flex items-center px-2 py-1 text-gray-600 hover:text-gray-900"
+                                                    >
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                        </svg>
+                                                    </button>
+                                                    <div id="menu-{{ $leave->id }}" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                                                        <div class="py-1">
+                                                            <button
+                                                                wire:click="openDeleteDialog('{{ $leave->id }}')"
+                                                                class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                                            >
+                                                                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ $leave->user->email }}
-                                                </div>
-                                            </div>
+                                            @endif
+                                            @if(!($isAdmin || $isSupervisor) && $leave->user_id !== auth()->id())
+                                                <span class="text-sm text-gray-400">-</span>
+                                            @elseif(strtolower($leave->status->name) !== 'pending' && $leave->user_id !== auth()->id())
+                                                <span class="text-sm text-gray-400">-</span>
+                                            @endif
                                         </div>
                                     </td>
-                                @endif
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        {{ \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}
-                                    </div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($leave->date)->format('l') }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        {{ $leave->category->name }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($leave->description)
-                                        <div class="text-sm text-gray-900 max-w-xs truncate" title="{{ $leave->description }}">
-                                            {{ $leave->description }}
-                                        </div>
-                                    @else
-                                        <span class="text-sm text-gray-400">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $statusName = strtolower($leave->status->name);
-                                        $badgeVariant = match($statusName) {
-                                            'approved' => 'success',
-                                            'rejected' => 'danger',
-                                            'pending' => 'warning',
-                                            default => 'default'
-                                        };
-                                    @endphp
-                                    <x-ui.badge variant="{{ $badgeVariant }}" size="sm">
-                                        {{ ucfirst($leave->status->name) }}
-                                    </x-ui.badge>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        {{ \Carbon\Carbon::parse($leave->created_at)->format('M d, Y') }}
-                                    </div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($leave->created_at)->format('h:i A') }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex justify-end space-x-2">
-                                        <button 
-                                            wire:click="viewDetails('{{ $leave->id }}')"
-                                            class="text-blue-600 hover:text-blue-900"
-                                            title="View Details"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                        
-                                        @if(($isAdmin || $isSupervisor) && strtolower($leave->status->name) === 'pending')
-                                            <button 
-                                                wire:click="openApprovalModal('{{ $leave->id }}', 'approve')"
-                                                class="text-green-600 hover:text-green-900"
-                                                title="Approve"
-                                            >
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </button>
-                                            <button 
-                                                wire:click="openApprovalModal('{{ $leave->id }}', 'reject')"
-                                                class="text-red-600 hover:text-red-900"
-                                                title="Reject"
-                                            >
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        @endif
-                                        
-                                        @if($leave->user_id === auth()->id() && strtolower($leave->status->name) === 'pending')
-                                            <button 
-                                                wire:click="deleteLeave('{{ $leave->id }}')"
-                                                wire:confirm="Are you sure you want to delete this leave request?"
-                                                class="text-red-600 hover:text-red-900"
-                                                title="Delete"
-                                            >
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ ($isAdmin || $isSupervisor) ? 7 : 6 }}" class="px-6 py-12 text-center">
-                                    <x-ui.empty-state 
-                                        title="No leave requests found"
-                                        description="Try adjusting your filters or apply for a new leave"
-                                    />
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-            <!-- Pagination -->
-            @if($leaves->hasPages())
-                <div class="px-6 py-4 border-t border-gray-200">
-                    {{ $leaves->links() }}
+                <div class="mt-4 text-sm text-gray-600">
+                    Showing {{ $displayLeaves->count() }} entries
+                </div>
+            @else
+                <div class="text-center py-12 text-gray-500">
+                    <p class="text-lg">No leave requests found</p>
+                    <p class="text-sm mt-2">Try adjusting your filters</p>
                 </div>
             @endif
-        </x-ui.card>
+        @endif
     </div>
 
-    <!-- Detail Modal -->
-    @if($showDetailModal && $selectedLeave)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showDetailModal') }" x-show="show" style="display: none;">
+    <!-- Delete Confirmation Dialog -->
+    @if($showDeleteDialog)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showDeleteDialog') }" x-show="show" style="display: none;">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="show = false"></div>
 
-                <!-- Modal panel -->
-                <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
-                        <div class="flex items-start justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Leave Request Details</h3>
-                            <button @click="show = false" class="text-gray-400 hover:text-gray-500">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                 </svg>
-                            </button>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <!-- User Information -->
-                            @if($isAdmin || $isSupervisor)
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="text-sm font-semibold text-gray-700 mb-2">User Information</h4>
-                                    <div class="grid grid-cols-2 gap-3 text-sm">
-                                        <div>
-                                            <span class="text-gray-600">Name:</span>
-                                            <span class="ml-2 font-medium text-gray-900">{{ $selectedLeave->user->name }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-600">Email:</span>
-                                            <span class="ml-2 font-medium text-gray-900">{{ $selectedLeave->user->email }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-600">Department:</span>
-                                            <span class="ml-2 font-medium text-gray-900">{{ $selectedLeave->user->department->name ?? 'N/A' }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-600">Designation:</span>
-                                            <span class="ml-2 font-medium text-gray-900">{{ $selectedLeave->user->designation->name ?? 'N/A' }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <!-- Leave Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Leave Information</h4>
-                                <div class="space-y-3 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Leave Date:</span>
-                                        <span class="font-medium text-gray-900">
-                                            {{ \Carbon\Carbon::parse($selectedLeave->date)->format('l, F d, Y') }}
-                                        </span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Category:</span>
-                                        <span class="font-medium text-gray-900">{{ $selectedLeave->category->name }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Status:</span>
-                                        <span>
-                                            @php
-                                                $statusName = strtolower($selectedLeave->status->name);
-                                                $badgeVariant = match($statusName) {
-                                                    'approved' => 'success',
-                                                    'rejected' => 'danger',
-                                                    'pending' => 'warning',
-                                                    default => 'default'
-                                                };
-                                            @endphp
-                                            <x-ui.badge variant="{{ $badgeVariant }}" size="sm">
-                                                {{ ucfirst($selectedLeave->status->name) }}
-                                            </x-ui.badge>
-                                        </span>
-                                    </div>
-                                    @if($selectedLeave->description)
-                                        <div>
-                                            <span class="text-gray-600">Description:</span>
-                                            <p class="mt-1 text-gray-900">{{ $selectedLeave->description }}</p>
-                                        </div>
-                                    @endif
-                                </div>
                             </div>
-
-                            <!-- Timestamps -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Request Information</h4>
-                                <div class="space-y-2 text-xs text-gray-600">
-                                    <div class="flex justify-between">
-                                        <span>Applied On:</span>
-                                        <span>{{ \Carbon\Carbon::parse($selectedLeave->created_at)->format('M d, Y h:i A') }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Last Updated:</span>
-                                        <span>{{ \Carbon\Carbon::parse($selectedLeave->updated_at)->format('M d, Y h:i A') }}</span>
-                                    </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Are you sure?</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">
+                                        This action cannot be undone. This will permanently delete your leave request.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <x-ui.button wire:click="closeDetailModal" variant="outline">
-                            Close
-                        </x-ui.button>
+                    <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                        <button
+                            wire:click="confirmDelete"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        >
+                            Delete
+                        </button>
+                        <button
+                            wire:click="closeDeleteDialog"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     @endif
 
-    <!-- Approval/Rejection Modal -->
-    @if($showApprovalModal && $selectedLeave)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showApprovalModal') }" x-show="show" style="display: none;">
+    <!-- Reject Leave Dialog -->
+    @if($showRejectDialog)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showRejectDialog') }" x-show="show" style="display: none;">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="show = false"></div>
 
-                <!-- Modal panel -->
                 <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
                         <div class="flex items-start justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">
-                                {{ ucfirst($approvalAction) }} Leave Request
-                            </h3>
-                            <button wire:click="closeApprovalModal" class="text-gray-400 hover:text-gray-500">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Reject Leave Request</h3>
+                                <p class="mt-1 text-sm text-gray-500">Please provide a reason for rejecting this leave request.</p>
+                            </div>
+                            <button wire:click="closeRejectDialog" class="text-gray-400 hover:text-gray-500">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
                         
-                        <div class="space-y-4">
-                            <!-- Leave Summary -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">User:</span>
-                                        <span class="font-medium text-gray-900">{{ $selectedLeave->user->name }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Leave Date:</span>
-                                        <span class="font-medium text-gray-900">
-                                            {{ \Carbon\Carbon::parse($selectedLeave->date)->format('M d, Y') }}
-                                        </span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Category:</span>
-                                        <span class="font-medium text-gray-900">{{ $selectedLeave->category->name }}</span>
-                                    </div>
-                                    @if($selectedLeave->description)
-                                        <div class="pt-2 border-t border-gray-200">
-                                            <span class="text-gray-600">Description:</span>
-                                            <p class="mt-1 text-gray-900">{{ $selectedLeave->description }}</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Comments -->
-                            <div>
-                                <label for="approvalComments" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Comments (Optional)
-                                </label>
+                        <div class="space-y-4 py-4">
+                            <div class="space-y-2">
+                                <label for="rejectionReason" class="block text-sm font-medium text-gray-700">Rejection Reason *</label>
                                 <textarea 
-                                    id="approvalComments"
-                                    wire:model="approvalComments"
-                                    rows="3"
+                                    id="rejectionReason"
+                                    wire:model="rejectionReason"
+                                    rows="4"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Add any comments or notes..."
+                                    placeholder="Enter reason for rejection..."
                                 ></textarea>
-                            </div>
-
-                            <!-- Confirmation Message -->
-                            <div class="bg-{{ $approvalAction === 'approve' ? 'green' : 'red' }}-50 border border-{{ $approvalAction === 'approve' ? 'green' : 'red' }}-200 rounded-lg p-3">
-                                <p class="text-sm text-{{ $approvalAction === 'approve' ? 'green' : 'red' }}-800">
-                                    Are you sure you want to {{ $approvalAction }} this leave request?
-                                    @if($approvalAction === 'approve')
-                                        The user will be notified of the approval.
-                                    @else
-                                        The user will be notified of the rejection.
-                                    @endif
-                                </p>
+                                @error('rejectionReason')
+                                    <p class="text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
-                    <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse space-x-3 space-x-reverse">
-                        <x-ui.button 
-                            wire:click="submitApproval" 
-                            variant="{{ $approvalAction === 'approve' ? 'primary' : 'danger' }}"
+                    <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                        <button
+                            wire:click="confirmReject"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                         >
-                            {{ ucfirst($approvalAction) }}
-                        </x-ui.button>
-                        <x-ui.button wire:click="closeApprovalModal" variant="outline">
+                            Reject Leave
+                        </button>
+                        <button
+                            wire:click="closeRejectDialog"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
+                        >
                             Cancel
-                        </x-ui.button>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     @endif
 </div>
+

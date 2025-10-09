@@ -4,6 +4,7 @@ namespace App\Livewire\Dashboard;
 
 use App\Services\DashboardService;
 use App\Services\LeaveService;
+use App\Services\AttendanceService;
 use Livewire\Component;
 
 class AdminDashboard extends Component
@@ -18,6 +19,10 @@ class AdminDashboard extends Component
     public $notices;
     public $isLoading = false;
     
+    // For clock in/out
+    public $attendanceStatus;
+    public $clockMessage = '';
+    
     // For quick approval modal
     public $selectedLeave = null;
     public $approvalComments = '';
@@ -25,30 +30,56 @@ class AdminDashboard extends Component
 
     protected DashboardService $dashboardService;
     protected LeaveService $leaveService;
+    protected AttendanceService $attendanceService;
 
-    public function boot(DashboardService $dashboardService, LeaveService $leaveService)
-    {
+    public function boot(
+        DashboardService $dashboardService, 
+        LeaveService $leaveService,
+        AttendanceService $attendanceService
+    ) {
         $this->dashboardService = $dashboardService;
         $this->leaveService = $leaveService;
+        $this->attendanceService = $attendanceService;
     }
 
     public function mount()
     {
         $this->loadDashboardData();
+        $this->loadAttendanceStatus();
+    }
+    
+    public function loadAttendanceStatus()
+    {
+        try {
+            $this->attendanceStatus = $this->attendanceService->getCurrentStatus(auth()->id());
+        } catch (\Exception $e) {
+            \Log::error('Failed to load attendance status: ' . $e->getMessage());
+        }
     }
 
     public function loadDashboardData()
     {
         try {
             $this->dashboardData = $this->dashboardService->getAdminDashboard();
-            $this->systemStats = $this->dashboardData['system_stats'];
-            $this->recentActivities = $this->dashboardData['recent_activities'];
-            $this->pendingApprovals = $this->dashboardData['pending_approvals'];
-            $this->departmentStats = $this->dashboardData['department_stats'];
-            $this->monthlyAttendance = $this->dashboardData['monthly_attendance'];
-            $this->holidays = $this->dashboardData['holidays'];
-            $this->notices = $this->dashboardData['notices'];
+            $this->systemStats = $this->dashboardData['system_stats'] ?? [];
+            $this->recentActivities = $this->dashboardData['recent_activities'] ?? collect([]);
+            $this->pendingApprovals = $this->dashboardData['pending_approvals'] ?? collect([]);
+            $this->departmentStats = $this->dashboardData['department_stats'] ?? collect([]);
+            $this->monthlyAttendance = $this->dashboardData['monthly_attendance'] ?? [];
+            $this->holidays = $this->dashboardData['holidays'] ?? collect([]);
+            $this->notices = $this->dashboardData['notices'] ?? collect([]);
+            
+            // Debug logging
+            \Log::info('Dashboard Data Loaded', [
+                'systemStats' => $this->systemStats,
+                'recentActivitiesCount' => is_countable($this->recentActivities) ? count($this->recentActivities) : 0,
+                'holidaysCount' => is_countable($this->holidays) ? count($this->holidays) : 0,
+            ]);
         } catch (\Exception $e) {
+            \Log::error('Dashboard Load Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->dispatch('toast', [
                 'message' => 'Failed to load dashboard data: ' . $e->getMessage(),
                 'variant' => 'danger'
@@ -59,11 +90,62 @@ class AdminDashboard extends Component
     public function refreshDashboard()
     {
         $this->loadDashboardData();
+        $this->loadAttendanceStatus();
         
         $this->dispatch('toast', [
             'message' => 'Dashboard refreshed',
             'variant' => 'info'
         ]);
+    }
+    
+    public function clockIn()
+    {
+        $this->isLoading = true;
+        
+        try {
+            $this->attendanceService->clockIn(auth()->id(), $this->clockMessage);
+            
+            $this->clockMessage = '';
+            $this->loadAttendanceStatus();
+            $this->loadDashboardData(); // Refresh recent activities
+            
+            $this->dispatch('toast', [
+                'message' => 'Clocked in successfully!',
+                'variant' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        } finally {
+            $this->isLoading = false;
+        }
+    }
+
+    public function clockOut()
+    {
+        $this->isLoading = true;
+        
+        try {
+            $this->attendanceService->clockOut(auth()->id(), $this->clockMessage);
+            
+            $this->clockMessage = '';
+            $this->loadAttendanceStatus();
+            $this->loadDashboardData(); // Refresh recent activities
+            
+            $this->dispatch('toast', [
+                'message' => 'Clocked out successfully!',
+                'variant' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        } finally {
+            $this->isLoading = false;
+        }
     }
 
     public function openApprovalModal($leaveId)

@@ -122,8 +122,7 @@ class DashboardService
             ->get();
         
         // Get recent notices
-        $notices = Notice::where('is_active', true)
-            ->orderBy('created_at', 'desc')
+        $notices = Notice::orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         
@@ -336,8 +335,7 @@ class DashboardService
             ->get();
         
         // Get recent notices
-        $notices = Notice::where('is_active', true)
-            ->orderBy('created_at', 'desc')
+        $notices = Notice::orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         

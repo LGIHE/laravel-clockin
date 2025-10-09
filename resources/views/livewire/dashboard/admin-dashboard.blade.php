@@ -91,6 +91,81 @@
                 <h3 class="text-lg font-semibold">Recent Activity</h3>
             </div>
             <div class="p-6">
+                <!-- Clock In/Out Form -->
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                    <div class="space-y-4">
+                        @if(isset($attendanceStatus) && is_array($attendanceStatus) && ($attendanceStatus['clocked_in'] ?? false))
+                            <!-- Clocked In Status -->
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    <span class="text-sm font-semibold text-green-700">Currently Clocked In</span>
+                                </div>
+                                <div class="text-xs text-gray-600 space-y-1">
+                                    <div>
+                                        <span class="font-medium">Clocked in at: </span>
+                                        {{ \Carbon\Carbon::parse($attendanceStatus['in_time'])->format('h:i A') }}
+                                    </div>
+                                    @if(isset($attendanceStatus['attendance']) && $attendanceStatus['attendance']->in_message)
+                                        <div>
+                                            <span class="font-medium">Note: </span>
+                                            {{ $attendanceStatus['attendance']->in_message }}
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <span class="font-medium">Duration: </span>
+                                        <span class="font-semibold">
+                                            {{ sprintf('%02d:%02d', floor(($attendanceStatus['duration'] ?? 0) / 3600), floor((($attendanceStatus['duration'] ?? 0) % 3600) / 60)) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <!-- Not Clocked In -->
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full"></span>
+                                    <span class="text-sm font-medium text-yellow-700">Not Clocked In</span>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        <!-- Message Input -->
+                        <div>
+                            <label for="clockMessage" class="block text-sm font-medium text-gray-700 mb-1">
+                                Message (Optional)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="clockMessage"
+                                wire:model="clockMessage"
+                                placeholder="Add a note..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                @if($isLoading) disabled @endif
+                            >
+                        </div>
+                        
+                        <!-- Clock In/Out Button -->
+                        @php
+                            $isClockedIn = isset($attendanceStatus) && is_array($attendanceStatus) && ($attendanceStatus['clocked_in'] ?? false);
+                        @endphp
+                        <button 
+                            wire:click="{{ $isClockedIn ? 'clockOut' : 'clockIn' }}"
+                            class="w-full px-4 py-2 text-white rounded-md font-medium transition text-sm {{ $isClockedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}"
+                            @if($isLoading) disabled @endif
+                        >
+                            @if($isLoading)
+                                <svg class="animate-spin inline-block -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            @endif
+                            {{ $isClockedIn ? 'Punch Out' : 'Punch In' }}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Activities List -->
                 <div class="space-y-1 max-h-64 overflow-y-auto">
                     @if($recentActivities && count($recentActivities) > 0)
                         @foreach($recentActivities as $activity)

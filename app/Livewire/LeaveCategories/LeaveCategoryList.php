@@ -9,32 +9,32 @@ use Illuminate\Support\Str;
 
 class LeaveCategoryList extends Component
 {
-    use WithPagination;
-
     public $search = '';
     public $sortBy = 'created_at';
     public $sortOrder = 'desc';
-    public $perPage = 15;
     
-    public $showCreateModal = false;
     public $showEditModal = false;
     public $showDeleteModal = false;
     
     public $categoryId = null;
     public $name = '';
+    public $description = '';
     public $max_in_year = '';
     
     public $selectedCategory = null;
     public $isAdmin = false;
+    public $isLoading = false;
 
     protected $rules = [
         'name' => 'required|string|max:255',
+        'description' => 'nullable|string|max:500',
         'max_in_year' => 'required|integer|min:1|max:365',
     ];
 
     protected $messages = [
         'name.required' => 'Leave category name is required',
         'name.max' => 'Leave category name cannot exceed 255 characters',
+        'description.max' => 'Description cannot exceed 500 characters',
         'max_in_year.required' => 'Maximum days per year is required',
         'max_in_year.integer' => 'Maximum days must be a number',
         'max_in_year.min' => 'Maximum days must be at least 1',
@@ -61,18 +61,6 @@ class LeaveCategoryList extends Component
         }
     }
 
-    public function openCreateModal()
-    {
-        $this->resetForm();
-        $this->showCreateModal = true;
-    }
-
-    public function closeCreateModal()
-    {
-        $this->showCreateModal = false;
-        $this->resetForm();
-    }
-
     public function createCategory()
     {
         if (!$this->isAdmin) {
@@ -96,6 +84,7 @@ class LeaveCategoryList extends Component
             LeaveCategory::create([
                 'id' => Str::uuid()->toString(),
                 'name' => $this->name,
+                'description' => $this->description,
                 'max_in_year' => $this->max_in_year,
             ]);
 
@@ -104,7 +93,7 @@ class LeaveCategoryList extends Component
                 'variant' => 'success'
             ]);
 
-            $this->closeCreateModal();
+            $this->resetForm();
             
         } catch (\Exception $e) {
             $this->dispatch('toast', [
@@ -129,6 +118,7 @@ class LeaveCategoryList extends Component
         if ($category) {
             $this->categoryId = $category->id;
             $this->name = $category->name;
+            $this->description = $category->description ?? '';
             $this->max_in_year = $category->max_in_year;
             $this->showEditModal = true;
         }
@@ -167,6 +157,7 @@ class LeaveCategoryList extends Component
 
             $category->update([
                 'name' => $this->name,
+                'description' => $this->description,
                 'max_in_year' => $this->max_in_year,
             ]);
 
@@ -254,6 +245,7 @@ class LeaveCategoryList extends Component
     {
         $this->categoryId = null;
         $this->name = '';
+        $this->description = '';
         $this->max_in_year = '';
         $this->resetErrorBag();
     }
@@ -270,8 +262,8 @@ class LeaveCategoryList extends Component
         // Apply sorting
         $query->orderBy($this->sortBy, $this->sortOrder);
 
-        // Paginate results
-        $categories = $query->paginate($this->perPage);
+        // Get all results (no pagination for simple table)
+        $categories = $query->get();
 
         return view('livewire.leave-categories.leave-category-list', [
             'categories' => $categories
