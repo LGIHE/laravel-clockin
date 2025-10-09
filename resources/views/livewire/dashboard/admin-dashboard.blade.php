@@ -235,24 +235,29 @@
 
     <!-- Active Users Pie Chart and Recent Notices -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- Active User Chart Placeholder -->
+        <!-- Active User Chart -->
         <div class="bg-white rounded-lg shadow">
             <div class="p-6 border-b border-gray-200">
                 <h3 class="text-lg font-semibold">Active User</h3>
             </div>
             <div class="p-6 flex flex-col items-center">
-                <div class="h-64 w-64 flex items-center justify-center">
-                    <!-- Placeholder for pie chart -->
-                    <div class="text-center">
-                        <div class="w-40 h-40 mx-auto mb-4 rounded-full border-8 border-indigo-500 flex items-center justify-center">
-                            <div class="text-center">
-                                <div class="text-3xl font-bold">{{ $systemStats['active_users'] ?? 0 }}</div>
-                                <div class="text-sm text-gray-600">Active</div>
-                            </div>
+                <div class="h-64 w-64">
+                    <canvas id="activeUserChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2 w-full max-w-xs">
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="block w-3 h-3 rounded-sm" style="background-color: #6366f1;"></span>
+                            <span class="text-gray-700">Active</span>
                         </div>
-                        <div class="text-sm text-gray-600">
-                            {{ $systemStats['inactive_users'] ?? 0 }} Inactive
+                        <span class="font-semibold text-gray-900">{{ $systemStats['active_users'] ?? 0 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="block w-3 h-3 rounded-sm" style="background-color: #ef4444;"></span>
+                            <span class="text-gray-700">Inactive</span>
                         </div>
+                        <span class="font-semibold text-gray-900">{{ $systemStats['inactive_users'] ?? 0 }}</span>
                     </div>
                 </div>
             </div>
@@ -356,3 +361,105 @@
         © 2025 lgf & made with ❤️
     </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('activeUserChart');
+    if (ctx) {
+        const activeUsers = {{ $systemStats['active_users'] ?? 0 }};
+        const inactiveUsers = {{ $systemStats['inactive_users'] ?? 0 }};
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Inactive'],
+                datasets: [{
+                    data: [activeUsers, inactiveUsers],
+                    backgroundColor: [
+                        '#6366f1', // Indigo for active
+                        '#ef4444'  // Red for inactive
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = activeUsers + inactiveUsers;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+});
+
+// Listen for Livewire updates to refresh the chart
+document.addEventListener('livewire:init', () => {
+    Livewire.hook('morph.updated', ({ el, component }) => {
+        if (component.name === 'dashboard.admin-dashboard') {
+            const ctx = document.getElementById('activeUserChart');
+            if (ctx) {
+                // Destroy existing chart if it exists
+                const existingChart = Chart.getChart(ctx);
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+                
+                // Recreate the chart with new data
+                const activeUsers = {{ $systemStats['active_users'] ?? 0 }};
+                const inactiveUsers = {{ $systemStats['inactive_users'] ?? 0 }};
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Active', 'Inactive'],
+                        datasets: [{
+                            data: [activeUsers, inactiveUsers],
+                            backgroundColor: ['#6366f1', '#ef4444'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = activeUsers + inactiveUsers;
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return label + ': ' + value + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+        }
+    });
+});
+</script>
+@endpush

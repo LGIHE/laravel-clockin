@@ -162,7 +162,7 @@
 
                 <div class="space-y-1 max-h-64 overflow-y-auto">
                     @if(isset($dashboardData['recent_attendance']) && count($dashboardData['recent_attendance']) > 0)
-                        @foreach($dashboardData['recent_attendance']->take(5) as $attendance)
+                        @foreach($dashboardData['recent_attendance']->take(2) as $attendance)
                             @if($attendance->in_time)
                                 <div class="border-b border-gray-200 py-2 flex items-center gap-2">
                                     <span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">

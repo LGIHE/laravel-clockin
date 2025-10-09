@@ -195,12 +195,17 @@ class IndividualReport extends Component
             return;
         }
 
+        // Convert start_date to month and year
+        $startDate = Carbon::parse($this->startDate);
+        $month = $startDate->month;
+        $year = $startDate->year;
+
         return redirect()->route('reports.export', [
             'type' => 'timesheet',
             'format' => 'pdf',
             'user_id' => $this->userId,
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
+            'month' => $month,
+            'year' => $year,
         ]);
     }
 
