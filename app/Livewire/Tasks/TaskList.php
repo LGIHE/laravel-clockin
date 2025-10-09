@@ -63,7 +63,6 @@ class TaskList extends Component
 
         try {
             Task::create([
-                'id' => Str::uuid()->toString(),
                 'user_id' => auth()->id(),
                 'title' => $this->title,
                 'description' => $this->description,
