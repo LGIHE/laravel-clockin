@@ -29,6 +29,13 @@ class UserList extends Component
     public $showBulkAssignModal = false;
     public $showAddUserModal = false;
     public $showEditUserModal = false;
+    public $showChangeDepartmentModal = false;
+    public $showChangeSupervisorModal = false;
+    public $showIpRestrictionModal = false;
+    public $showUpdatePasswordModal = false;
+    public $showUpdateDesignationModal = false;
+    public $showAutoPunchOutModal = false;
+    public $showLastInTimeModal = false;
     
     public $departments = [];
     public $userLevels = [];
@@ -77,6 +84,63 @@ class UserList extends Component
     public $editUserProjects = [];
     public $projects = [];
     public $showEditPassword = false;
+
+    // For Change Department Modal
+    public $changeDepartmentData = [
+        'user_id' => '',
+        'user_name' => '',
+        'current_department' => '',
+        'new_department_id' => '',
+    ];
+
+    // For Change Supervisor Modal
+    public $changeSupervisorData = [
+        'user_id' => '',
+        'user_name' => '',
+        'current_supervisor' => '',
+        'new_supervisor_id' => '',
+    ];
+
+    // For IP Restriction Modal
+    public $ipRestrictionData = [
+        'user_id' => '',
+        'user_name' => '',
+        'ip_address' => '',
+        'restriction_type' => 'allow', // allow or deny
+    ];
+
+    // For Update Password Modal
+    public $updatePasswordData = [
+        'user_id' => '',
+        'user_name' => '',
+        'new_password' => '',
+        'confirm_password' => '',
+    ];
+
+    // For Update Designation Modal
+    public $updateDesignationData = [
+        'user_id' => '',
+        'user_name' => '',
+        'current_designation' => '',
+        'new_designation_id' => '',
+    ];
+
+    // For Auto Punch Out Modal
+    public $autoPunchOutData = [
+        'user_id' => '',
+        'user_name' => '',
+        'auto_punch_out_time' => '',
+    ];
+
+    // For Last In Time Modal
+    public $lastInTimeData = [
+        'user_id' => '',
+        'user_name' => '',
+        'last_punch_in' => '',
+        'task' => '',
+        'message' => '',
+        'project' => '',
+    ];
 
     protected UserService $userService;
 
@@ -340,58 +404,158 @@ class UserList extends Component
     // Additional action methods
     public function changeDepartment($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Change department feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::with('department')->findOrFail($userId);
+            
+            $this->changeDepartmentData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'current_department' => $user->department ? $user->department->name : 'No Department',
+                'new_department_id' => $user->department_id ?? '',
+            ];
+            
+            $this->showChangeDepartmentModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function changeSupervisor($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Change supervisor feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::with('supervisor')->findOrFail($userId);
+            
+            $this->changeSupervisorData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'current_supervisor' => $user->supervisor ? $user->supervisor->name : 'No Supervisor',
+                'new_supervisor_id' => $user->supervisor_id ?? '',
+            ];
+            
+            $this->showChangeSupervisorModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function ipRestriction($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'IP restriction feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::findOrFail($userId);
+            
+            $this->ipRestrictionData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'ip_address' => $user->allowed_ip ?? '',
+                'restriction_type' => 'allow',
+            ];
+            
+            $this->showIpRestrictionModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function updatePassword($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Update password feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::findOrFail($userId);
+            
+            $this->updatePasswordData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'new_password' => '',
+                'confirm_password' => '',
+            ];
+            
+            $this->showUpdatePasswordModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function updateDesignation($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Update designation feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::with('designation')->findOrFail($userId);
+            
+            $this->updateDesignationData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'current_designation' => $user->designation ? $user->designation->name : 'No Designation',
+                'new_designation_id' => $user->designation_id ?? '',
+            ];
+            
+            $this->showUpdateDesignationModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function lastInTime($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Last in time feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::findOrFail($userId);
+            
+            // Get the last punch in record (assuming you have an Attendance model)
+            // Adjust this query based on your actual database structure
+            $lastPunchIn = \DB::table('attendances')
+                ->where('user_id', $userId)
+                ->whereNotNull('punch_in')
+                ->orderBy('punch_in', 'desc')
+                ->first();
+
+            $this->lastInTimeData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'last_punch_in' => $lastPunchIn ? $lastPunchIn->punch_in : 'No punch in record',
+                'task' => $lastPunchIn->task ?? 'N/A',
+                'message' => $lastPunchIn->message ?? 'N/A',
+                'project' => $lastPunchIn->project_id ? \App\Models\Project::find($lastPunchIn->project_id)->name ?? 'N/A' : 'N/A',
+            ];
+            
+            $this->showLastInTimeModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading last in time: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function autoPunchOut($userId)
     {
-        $this->dispatch('toast', [
-            'message' => 'Auto punch out feature coming soon',
-            'variant' => 'info'
-        ]);
+        try {
+            $user = User::findOrFail($userId);
+            
+            $this->autoPunchOutData = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'auto_punch_out_time' => $user->auto_punch_out_time ?? '18:00',
+            ];
+            
+            $this->showAutoPunchOutModal = true;
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error loading user: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
     }
     
     public function forcePunch($userId)
@@ -601,6 +765,236 @@ class UserList extends Component
                 'variant' => 'danger'
             ]);
         }
+    }
+
+    // Save methods for the new modals
+    public function saveChangeDepartment()
+    {
+        $this->validate([
+            'changeDepartmentData.new_department_id' => 'required|exists:departments,id',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->changeDepartmentData['user_id']);
+            $user->update(['department_id' => $this->changeDepartmentData['new_department_id']]);
+
+            $this->dispatch('toast', [
+                'message' => 'Department changed successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeChangeDepartmentModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to change department: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeChangeDepartmentModal()
+    {
+        $this->showChangeDepartmentModal = false;
+        $this->changeDepartmentData = [
+            'user_id' => '',
+            'user_name' => '',
+            'current_department' => '',
+            'new_department_id' => '',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveChangeSupervisor()
+    {
+        $this->validate([
+            'changeSupervisorData.new_supervisor_id' => 'nullable|exists:users,id',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->changeSupervisorData['user_id']);
+            $user->update(['supervisor_id' => $this->changeSupervisorData['new_supervisor_id'] ?: null]);
+
+            $this->dispatch('toast', [
+                'message' => 'Supervisor changed successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeChangeSupervisorModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to change supervisor: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeChangeSupervisorModal()
+    {
+        $this->showChangeSupervisorModal = false;
+        $this->changeSupervisorData = [
+            'user_id' => '',
+            'user_name' => '',
+            'current_supervisor' => '',
+            'new_supervisor_id' => '',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveIpRestriction()
+    {
+        $this->validate([
+            'ipRestrictionData.ip_address' => 'nullable|ip',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->ipRestrictionData['user_id']);
+            $user->update(['allowed_ip' => $this->ipRestrictionData['ip_address'] ?: null]);
+
+            $this->dispatch('toast', [
+                'message' => 'IP restriction updated successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeIpRestrictionModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update IP restriction: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeIpRestrictionModal()
+    {
+        $this->showIpRestrictionModal = false;
+        $this->ipRestrictionData = [
+            'user_id' => '',
+            'user_name' => '',
+            'ip_address' => '',
+            'restriction_type' => 'allow',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveUpdatePassword()
+    {
+        $this->validate([
+            'updatePasswordData.new_password' => 'required|string|min:6',
+            'updatePasswordData.confirm_password' => 'required|same:updatePasswordData.new_password',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->updatePasswordData['user_id']);
+            $user->update(['password' => bcrypt($this->updatePasswordData['new_password'])]);
+
+            $this->dispatch('toast', [
+                'message' => 'Password updated successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeUpdatePasswordModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update password: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeUpdatePasswordModal()
+    {
+        $this->showUpdatePasswordModal = false;
+        $this->updatePasswordData = [
+            'user_id' => '',
+            'user_name' => '',
+            'new_password' => '',
+            'confirm_password' => '',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveUpdateDesignation()
+    {
+        $this->validate([
+            'updateDesignationData.new_designation_id' => 'nullable|exists:designations,id',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->updateDesignationData['user_id']);
+            $user->update(['designation_id' => $this->updateDesignationData['new_designation_id'] ?: null]);
+
+            $this->dispatch('toast', [
+                'message' => 'Designation updated successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeUpdateDesignationModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update designation: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeUpdateDesignationModal()
+    {
+        $this->showUpdateDesignationModal = false;
+        $this->updateDesignationData = [
+            'user_id' => '',
+            'user_name' => '',
+            'current_designation' => '',
+            'new_designation_id' => '',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveAutoPunchOut()
+    {
+        $this->validate([
+            'autoPunchOutData.auto_punch_out_time' => 'required|date_format:H:i',
+        ]);
+
+        try {
+            $user = User::findOrFail($this->autoPunchOutData['user_id']);
+            $user->update(['auto_punch_out_time' => $this->autoPunchOutData['auto_punch_out_time']]);
+
+            $this->dispatch('toast', [
+                'message' => 'Auto punch out time updated successfully',
+                'variant' => 'success'
+            ]);
+
+            $this->closeAutoPunchOutModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to update auto punch out time: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeAutoPunchOutModal()
+    {
+        $this->showAutoPunchOutModal = false;
+        $this->autoPunchOutData = [
+            'user_id' => '',
+            'user_name' => '',
+            'auto_punch_out_time' => '',
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function closeLastInTimeModal()
+    {
+        $this->showLastInTimeModal = false;
+        $this->lastInTimeData = [
+            'user_id' => '',
+            'user_name' => '',
+            'last_punch_in' => '',
+            'task' => '',
+            'message' => '',
+            'project' => '',
+        ];
     }
 
     protected $listeners = ['user-saved' => '$refresh'];

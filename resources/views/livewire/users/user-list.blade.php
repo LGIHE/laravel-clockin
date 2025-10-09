@@ -179,18 +179,18 @@
                                                             Change Department
                                                         </button>
                                                         
+                                                        <button wire:click="updateDesignation('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
+                                                            <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                            </svg>
+                                                            Update Designation
+                                                        </button>
+                                                        
                                                         <button wire:click="changeSupervisor('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
                                                             <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                                             </svg>
                                                             Change Supervisor
-                                                        </button>
-                                                        
-                                                        <button wire:click="ipRestriction('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
-                                                            <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                                            </svg>
-                                                            IP Restriction
                                                         </button>
                                                         
                                                         <button wire:click="updatePassword('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
@@ -200,11 +200,11 @@
                                                             Update Password
                                                         </button>
                                                         
-                                                        <button wire:click="updateDesignation('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
+                                                        <button wire:click="ipRestriction('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left" role="menuitem">
                                                             <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                                             </svg>
-                                                            Update Designation
+                                                            IP Restriction
                                                         </button>
                                                         
                                                         <div class="border-t border-gray-100"></div>
@@ -946,6 +946,451 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Change Department Modal -->
+    @if($showChangeDepartmentModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeChangeDepartmentModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Change Department</h3>
+                            <button wire:click="closeChangeDepartmentModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveChangeDepartment" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-2">User: <strong>{{ $changeDepartmentData['user_name'] }}</strong></p>
+                                <p class="text-sm text-gray-600 mb-4">Current Department: <strong>{{ $changeDepartmentData['current_department'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="newDepartment" class="block text-sm font-medium text-gray-700">New Department *</label>
+                                <select 
+                                    id="newDepartment"
+                                    wire:model="changeDepartmentData.new_department_id"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                >
+                                    <option value="">Select department</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('changeDepartmentData.new_department_id') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeChangeDepartmentModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Change Supervisor Modal -->
+    @if($showChangeSupervisorModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeChangeSupervisorModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Change Supervisor</h3>
+                            <button wire:click="closeChangeSupervisorModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveChangeSupervisor" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-2">User: <strong>{{ $changeSupervisorData['user_name'] }}</strong></p>
+                                <p class="text-sm text-gray-600 mb-4">Current Supervisor: <strong>{{ $changeSupervisorData['current_supervisor'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="newSupervisor" class="block text-sm font-medium text-gray-700">New Supervisor</label>
+                                <select 
+                                    id="newSupervisor"
+                                    wire:model="changeSupervisorData.new_supervisor_id"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">No Supervisor</option>
+                                    @foreach($supervisors as $supervisor)
+                                        <option value="{{ $supervisor->id }}">{{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})</option>
+                                    @endforeach
+                                </select>
+                                @error('changeSupervisorData.new_supervisor_id') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeChangeSupervisorModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- IP Restriction Modal -->
+    @if($showIpRestrictionModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeIpRestrictionModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">IP Restriction</h3>
+                            <button wire:click="closeIpRestrictionModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveIpRestriction" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-4">User: <strong>{{ $ipRestrictionData['user_name'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="ipAddress" class="block text-sm font-medium text-gray-700">Allowed IP Address</label>
+                                <input 
+                                    type="text"
+                                    id="ipAddress"
+                                    wire:model="ipRestrictionData.ip_address"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="e.g., 192.168.1.1"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">Leave blank to allow access from any IP address</p>
+                                @error('ipRestrictionData.ip_address') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeIpRestrictionModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Update Password Modal -->
+    @if($showUpdatePasswordModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeUpdatePasswordModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Update Password</h3>
+                            <button wire:click="closeUpdatePasswordModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveUpdatePassword" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-4">User: <strong>{{ $updatePasswordData['user_name'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="newPassword" class="block text-sm font-medium text-gray-700">New Password *</label>
+                                <input 
+                                    type="password"
+                                    id="newPassword"
+                                    wire:model="updatePasswordData.new_password"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Minimum 6 characters"
+                                    required
+                                />
+                                @error('updatePasswordData.new_password') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password *</label>
+                                <input 
+                                    type="password"
+                                    id="confirmPassword"
+                                    wire:model="updatePasswordData.confirm_password"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Re-enter password"
+                                    required
+                                />
+                                @error('updatePasswordData.confirm_password') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeUpdatePasswordModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Update Designation Modal -->
+    @if($showUpdateDesignationModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeUpdateDesignationModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Update Designation</h3>
+                            <button wire:click="closeUpdateDesignationModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveUpdateDesignation" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-2">User: <strong>{{ $updateDesignationData['user_name'] }}</strong></p>
+                                <p class="text-sm text-gray-600 mb-4">Current Designation: <strong>{{ $updateDesignationData['current_designation'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="newDesignation" class="block text-sm font-medium text-gray-700">New Designation</label>
+                                <select 
+                                    id="newDesignation"
+                                    wire:model="updateDesignationData.new_designation_id"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select designation</option>
+                                    @foreach($designations as $designation)
+                                        <option value="{{ $designation->id }}">{{ $designation->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('updateDesignationData.new_designation_id') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeUpdateDesignationModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Auto Punch Out Modal -->
+    @if($showAutoPunchOutModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeAutoPunchOutModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Auto Punch Out Time</h3>
+                            <button wire:click="closeAutoPunchOutModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form wire:submit.prevent="saveAutoPunchOut" class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-4">User: <strong>{{ $autoPunchOutData['user_name'] }}</strong></p>
+                            </div>
+
+                            <div>
+                                <label for="autoPunchOutTime" class="block text-sm font-medium text-gray-700">Auto Punch Out Time *</label>
+                                <input 
+                                    type="time"
+                                    id="autoPunchOutTime"
+                                    wire:model="autoPunchOutData.auto_punch_out_time"
+                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                />
+                                <p class="mt-1 text-xs text-gray-500">User will be automatically punched out at this time if they forget</p>
+                                @error('autoPunchOutData.auto_punch_out_time') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeAutoPunchOutModal"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Last In Time Modal -->
+    @if($showLastInTimeModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeLastInTimeModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Last Punch In Time</h3>
+                            <button wire:click="closeLastInTimeModal" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-4">User: <strong>{{ $lastInTimeData['user_name'] }}</strong></p>
+                            </div>
+
+                            <div class="border rounded-lg p-4 bg-gray-50">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Last Punch In</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $lastInTimeData['last_punch_in'] }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Project</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $lastInTimeData['project'] }}</p>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Task</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $lastInTimeData['task'] }}</p>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Message</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $lastInTimeData['message'] }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-end -mx-6 -mb-4 mt-6">
+                                <button 
+                                    type="button"
+                                    wire:click="closeLastInTimeModal"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
