@@ -289,3 +289,13 @@
     </script>
     @endpush
 @endif
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('open-url', (event) => {
+            window.open(event.url, '_blank');
+        });
+    });
+</script>
+@endpush

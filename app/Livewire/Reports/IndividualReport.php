@@ -147,13 +147,15 @@ class IndividualReport extends Component
             return;
         }
 
-        return redirect()->route('reports.export', [
+        $url = route('reports.export', [
             'type' => 'individual',
             'format' => 'pdf',
             'user_id' => $this->userId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
         ]);
+
+        $this->dispatch('open-url', url: $url);
     }
 
     public function exportCsv()
@@ -163,13 +165,15 @@ class IndividualReport extends Component
             return;
         }
 
-        return redirect()->route('reports.export', [
+        $url = route('reports.export', [
             'type' => 'individual',
             'format' => 'csv',
             'user_id' => $this->userId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
         ]);
+
+        $this->dispatch('open-url', url: $url);
     }
 
     public function exportJson()
@@ -179,13 +183,15 @@ class IndividualReport extends Component
             return;
         }
 
-        return redirect()->route('reports.export', [
+        $url = route('reports.export', [
             'type' => 'individual',
             'format' => 'json',
             'user_id' => $this->userId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
         ]);
+
+        $this->dispatch('open-url', url: $url);
     }
 
     public function generateTimesheet()
@@ -200,13 +206,15 @@ class IndividualReport extends Component
         $month = $startDate->month;
         $year = $startDate->year;
 
-        return redirect()->route('reports.export', [
+        $url = route('reports.export', [
             'type' => 'timesheet',
             'format' => 'pdf',
             'user_id' => $this->userId,
             'month' => $month,
             'year' => $year,
         ]);
+
+        $this->dispatch('open-url', url: $url);
     }
 
     public function render()
