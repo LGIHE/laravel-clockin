@@ -53,7 +53,7 @@ class HolidayList extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->isAdmin = strtolower(auth()->user()->userLevel->name) === 'admin';
         $this->selectedYear = now()->year;
         $this->currentMonth = now()->month;
         $this->currentYear = now()->year;
@@ -281,6 +281,14 @@ class HolidayList extends Component
         $this->selectedHoliday = null;
     }
 
+    public function selectDate($dateString)
+    {
+        $this->selectedDate = Carbon::parse($dateString);
+        
+        // Find the holiday for this date
+        $this->selectedHoliday = Holiday::whereDate('date', $this->selectedDate)->first();
+    }
+
     private function resetForm()
     {
         $this->holidayId = null;
@@ -327,9 +335,47 @@ class HolidayList extends Component
         return $weeks;
     }
 
+    private function getCalendarMonths()
+    {
+        $calendarMonths = [];
+        
+        // Generate calendar for each month of the selected year
+        for ($month = 1; $month <= 12; $month++) {
+            $firstDay = Carbon::create($this->selectedYear, $month, 1);
+            $lastDay = $firstDay->copy()->endOfMonth();
+            
+            // Start from the first day of the week
+            $startDate = $firstDay->copy()->startOfWeek(Carbon::SUNDAY);
+            $endDate = $lastDay->copy()->endOfWeek(Carbon::SATURDAY);
+            
+            $weeks = [];
+            $currentDate = $startDate->copy();
+            
+            while ($currentDate <= $endDate) {
+                $week = [];
+                for ($i = 0; $i < 7; $i++) {
+                    if ($currentDate->month == $month) {
+                        $week[] = $currentDate->day;
+                    } else {
+                        $week[] = null;
+                    }
+                    $currentDate->addDay();
+                }
+                $weeks[] = $week;
+            }
+            
+            $calendarMonths[$month] = $weeks;
+        }
+        
+        return $calendarMonths;
+    }
+
     public function render()
     {
         $query = Holiday::query();
+
+        // Filter by selected year
+        $query->whereYear('date', $this->selectedYear);
 
         // Apply search filter (search by date)
         if (!empty($this->search)) {
@@ -339,15 +385,19 @@ class HolidayList extends Component
         // Apply sorting
         $query->orderBy($this->sortBy, $this->sortOrder);
 
-        // Paginate results for list view
-        $holidays = $query->paginate($this->perPage);
+        // Get all holidays for the selected year (not paginated for calendar display)
+        $holidays = $query->get();
         
         // Get calendar data for calendar view
         $calendarWeeks = $this->viewMode === 'calendar' ? $this->getCalendarData() : [];
+        
+        // Get calendar months for the compact calendar view
+        $calendarMonths = $this->getCalendarMonths();
 
         return view('livewire.holidays.holiday-list', [
             'holidays' => $holidays,
             'calendarWeeks' => $calendarWeeks,
+            'calendarMonths' => $calendarMonths,
         ]);
     }
 }

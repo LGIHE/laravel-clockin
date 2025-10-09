@@ -38,8 +38,8 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Description
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Options
                             </th>
                         </tr>
                     </thead>
@@ -52,23 +52,41 @@
                                     <td class="px-4 py-4">
                                         <div class="text-sm text-gray-500">{{ $department->description ?: '-' }}</div>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-4 whitespace-nowrap text-right">
                                         @if($isAdmin)
-                                            <div class="flex gap-2">
-                                                <button wire:click="openEditModal('{{ $department->id }}')"
-                                                        class="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                                                        title="Edit">
-                                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            <div class="relative inline-block text-left" x-data="{ open: false }">
+                                                <button @click="open = !open" 
+                                                        type="button"
+                                                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1976d2] text-white text-sm rounded-md hover:bg-[#2196f3] transition-colors">
+                                                    <span>Action</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                                     </svg>
                                                 </button>
-                                                <button wire:click="confirmDelete('{{ $department->id }}')"
-                                                        class="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                                                        title="Delete">
-                                                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                    </svg>
-                                                </button>
+
+                                                <div x-show="open" 
+                                                     @click.away="open = false"
+                                                     x-transition
+                                                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                                                    <div class="py-1">
+                                                        <button wire:click="openEditModal('{{ $department->id }}')"
+                                                                @click="open = false"
+                                                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                            </svg>
+                                                            Edit
+                                                        </button>
+                                                        <button wire:click="confirmDelete('{{ $department->id }}')"
+                                                                @click="open = false"
+                                                                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2">
+                                                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                            </svg>
+                                                            <span class="text-red-500">Delete</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         @endif
                                     </td>
@@ -89,9 +107,9 @@
 
 <!-- Create Modal -->
 @if($showCreateModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showCreateModal') }">
+    <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeCreateModal"></div>
 
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form wire:submit.prevent="createDepartment">
@@ -130,7 +148,7 @@
 
                     <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                         <button type="button" 
-                                @click="open = false"
+                                wire:click="closeCreateModal"
                                 class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
                             Cancel
                         </button>
@@ -147,9 +165,9 @@
 
 <!-- Edit Modal -->
 @if($showEditModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showEditModal') }">
+    <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeEditModal"></div>
 
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form wire:submit.prevent="updateDepartment">
@@ -188,7 +206,7 @@
 
                     <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                         <button type="button" 
-                                @click="open = false"
+                                wire:click="closeEditModal"
                                 class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
                             Cancel
                         </button>
@@ -205,9 +223,9 @@
 
 <!-- Delete Confirmation Modal -->
 @if($showDeleteModal && $selectedDepartment)
-    <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showDeleteModal') }">
+    <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeDeleteModal"></div>
 
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-6 pt-5 pb-4">
@@ -219,7 +237,7 @@
                 </div>
 
                 <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                    <button @click="open = false" 
+                    <button wire:click="closeDeleteModal" 
                             class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
                         Cancel
                     </button>

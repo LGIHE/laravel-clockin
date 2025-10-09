@@ -41,7 +41,7 @@ class AttendanceList extends Component
     {
         // Check if user is authenticated and has admin role
         $user = auth()->user();
-        $this->isAdmin = $user && $user->userLevel && $user->userLevel->name === 'admin';
+        $this->isAdmin = $user && $user->userLevel && strtolower($user->userLevel->name) === 'admin';
         
         // Set default date range to current month
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');

@@ -42,74 +42,8 @@
                     </div>
                 @else
                     <div class="space-y-6">
-                        <!-- Calendar -->
-                        <div class="flex justify-center">
-                            <div class="border rounded-md p-3 w-full max-w-md">
-                                <div class="space-y-2">
-                                    @foreach($calendarMonths as $month => $weeks)
-                                        <div class="mb-4">
-                                            <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ \Carbon\Carbon::create($selectedYear, $month, 1)->format('F Y') }}</h3>
-                                            <div class="grid grid-cols-7 gap-1">
-                                                @foreach(['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $day)
-                                                    <div class="text-center text-xs font-semibold text-gray-600 py-1">{{ $day }}</div>
-                                                @endforeach
-                                                @foreach($weeks as $week)
-                                                    @foreach($week as $day)
-                                                        @if($day)
-                                                            @php
-                                                                $date = \Carbon\Carbon::create($selectedYear, $month, $day);
-                                                                $isHoliday = $holidays->contains(function($h) use ($date) {
-                                                                    return $h->date->isSameDay($date);
-                                                                });
-                                                                $isToday = $date->isToday();
-                                                                $isSelected = $selectedDate && $selectedDate->isSameDay($date);
-                                                            @endphp
-                                                            <button 
-                                                                wire:click="selectDate('{{ $date->format('Y-m-d') }}')"
-                                                                class="relative text-sm py-1.5 rounded-md transition-colors
-                                                                    {{ $isSelected ? 'bg-blue-600 text-white' : ($isHoliday ? 'text-red-500 font-medium' : 'text-gray-900') }}
-                                                                    {{ !$isSelected && !$isHoliday ? 'hover:bg-gray-100' : '' }}">
-                                                                {{ $day }}
-                                                                @if($isHoliday && !$isSelected)
-                                                                    <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-sm"></div>
-                                                                @endif
-                                                            </button>
-                                                        @else
-                                                            <div></div>
-                                                        @endif
-                                                    @endforeach
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Selected Date Holiday Details -->
-                        @if($selectedDate && $selectedHoliday)
-                            <div class="p-4 bg-red-50 border border-red-200 rounded-md">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <h3 class="font-medium text-lg text-red-600">{{ $selectedHoliday->name ?? 'Holiday' }}</h3>
-                                        <p class="text-gray-600 mt-1">Date: {{ $selectedDate->format('l, F j, Y') }}</p>
-                                        @if($selectedHoliday->description)
-                                            <p class="text-sm text-gray-500 mt-2">{{ $selectedHoliday->description }}</p>
-                                        @endif
-                                    </div>
-                                    @if($isAdmin)
-                                        <button wire:click="confirmDelete('{{ $selectedHoliday->id }}')" class="p-1 text-red-500 hover:text-red-700">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
                         <!-- Upcoming/All Holidays List -->
-                        <div class="border-t pt-6">
+                        <div class="border-b pb-6">
                             <h3 class="font-medium text-lg mb-4">
                                 @if($selectedYear === now()->year)
                                     Upcoming Holidays
@@ -154,6 +88,70 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        <!-- Calendar -->
+                        <div class="w-full">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($calendarMonths as $month => $weeks)
+                                    <div class="border rounded-md p-3">
+                                        <h3 class="text-sm font-semibold text-gray-700 mb-2 text-center">{{ \Carbon\Carbon::create($selectedYear, $month, 1)->format('F Y') }}</h3>
+                                        <div class="grid grid-cols-7 gap-1">
+                                            @foreach(['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $day)
+                                                <div class="text-center text-xs font-semibold text-gray-600 py-1">{{ $day }}</div>
+                                            @endforeach
+                                            @foreach($weeks as $week)
+                                                @foreach($week as $day)
+                                                    @if($day)
+                                                        @php
+                                                            $date = \Carbon\Carbon::create($selectedYear, $month, $day);
+                                                            $isHoliday = $holidays->contains(function($h) use ($date) {
+                                                                return $h->date->isSameDay($date);
+                                                            });
+                                                            $isToday = $date->isToday();
+                                                            $isSelected = $selectedDate && $selectedDate->isSameDay($date);
+                                                        @endphp
+                                                        <button 
+                                                            wire:click="selectDate('{{ $date->format('Y-m-d') }}')"
+                                                            class="relative text-sm py-1.5 rounded-md transition-colors
+                                                                {{ $isSelected ? 'bg-blue-600 text-white' : ($isHoliday ? 'text-red-500 font-medium' : 'text-gray-900') }}
+                                                                {{ !$isSelected && !$isHoliday ? 'hover:bg-gray-100' : '' }}">
+                                                            {{ $day }}
+                                                            @if($isHoliday && !$isSelected)
+                                                                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-sm"></div>
+                                                            @endif
+                                                        </button>
+                                                    @else
+                                                        <div></div>
+                                                    @endif
+                                                @endforeach
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Selected Date Holiday Details -->
+                        @if($selectedDate && $selectedHoliday)
+                            <div class="p-4 bg-red-50 border border-red-200 rounded-md">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-lg text-red-600">{{ $selectedHoliday->name ?? 'Holiday' }}</h3>
+                                        <p class="text-gray-600 mt-1">Date: {{ $selectedDate->format('l, F j, Y') }}</p>
+                                        @if($selectedHoliday->description)
+                                            <p class="text-sm text-gray-500 mt-2">{{ $selectedHoliday->description }}</p>
+                                        @endif
+                                    </div>
+                                    @if($isAdmin)
+                                        <button wire:click="confirmDelete('{{ $selectedHoliday->id }}')" class="p-1 text-red-500 hover:text-red-700">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>

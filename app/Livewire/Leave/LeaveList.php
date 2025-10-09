@@ -54,7 +54,7 @@ class LeaveList extends Component
     public function mount()
     {
         $user = auth()->user();
-        $this->isAdmin = $user->userLevel->name === 'admin';
+        $this->isAdmin = strtolower($user->userLevel->name) === 'admin';
         $this->isSupervisor = $user->userLevel->name === 'supervisor';
         
         // Load filter options

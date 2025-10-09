@@ -36,7 +36,7 @@ class IndividualReport extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->isAdmin = strtolower(auth()->user()->userLevel->name) === 'admin';
         
         // Set default dates (current month)
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');

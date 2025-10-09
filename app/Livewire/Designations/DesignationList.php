@@ -37,7 +37,7 @@ class DesignationList extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->isAdmin = strtolower(auth()->user()->userLevel->name) === 'admin';
     }
 
     public function updatingSearch()

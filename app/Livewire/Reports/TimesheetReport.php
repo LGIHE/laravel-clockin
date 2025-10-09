@@ -30,7 +30,7 @@ class TimesheetReport extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->isAdmin = strtolower(auth()->user()->userLevel->name) === 'admin';
         
         // Set default to current month and year
         $this->month = Carbon::now()->month;

@@ -33,5 +33,15 @@ class Notice extends Model
         'id',
         'subject',
         'message',
+        'is_active',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 }

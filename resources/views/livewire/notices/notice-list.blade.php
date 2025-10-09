@@ -102,7 +102,7 @@
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <form wire:submit.prevent="{{ $showCreateModal ? 'createNotice' : 'updateNotice' }}">>
+                    <form wire:submit.prevent="{{ $showCreateModal ? 'createNotice' : 'updateNotice' }}">
                         <div class="bg-white px-6 pt-5 pb-4">
                             <div class="flex justify-between items-start mb-4">
                                 <h3 class="text-lg font-medium text-gray-900">{{ $showCreateModal ? 'Create Notice' : 'Edit Notice' }}</h3>

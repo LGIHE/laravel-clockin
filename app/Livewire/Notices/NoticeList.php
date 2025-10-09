@@ -24,6 +24,7 @@ class NoticeList extends Component
     public $noticeId = null;
     public $subject = '';
     public $message = '';
+    public $is_active = true;
     
     public $selectedNotice = null;
     public $isAdmin = false;
@@ -31,6 +32,7 @@ class NoticeList extends Component
     protected $rules = [
         'subject' => 'required|string|max:255',
         'message' => 'required|string',
+        'is_active' => 'boolean',
     ];
 
     protected $messages = [
@@ -41,7 +43,7 @@ class NoticeList extends Component
 
     public function mount()
     {
-        $this->isAdmin = auth()->user()->userLevel->name === 'admin';
+        $this->isAdmin = strtolower(auth()->user()->userLevel->name) === 'admin';
     }
 
     public function updatingSearch()
@@ -96,6 +98,7 @@ class NoticeList extends Component
                 'id' => Str::uuid()->toString(),
                 'subject' => $this->subject,
                 'message' => $this->message,
+                'is_active' => $this->is_active ?? true,
             ]);
 
             $this->dispatch('toast', [
@@ -129,6 +132,7 @@ class NoticeList extends Component
             $this->noticeId = $notice->id;
             $this->subject = $notice->subject;
             $this->message = $notice->message;
+            $this->is_active = $notice->is_active ?? true;
             $this->showEditModal = true;
         }
     }
@@ -157,6 +161,7 @@ class NoticeList extends Component
             $notice->update([
                 'subject' => $this->subject,
                 'message' => $this->message,
+                'is_active' => $this->is_active ?? true,
             ]);
 
             $this->dispatch('toast', [
@@ -244,11 +249,40 @@ class NoticeList extends Component
         $this->selectedNotice = null;
     }
 
+    public function toggleActive($noticeId)
+    {
+        if (!$this->isAdmin) {
+            $this->dispatch('toast', [
+                'message' => 'Unauthorized action',
+                'variant' => 'danger'
+            ]);
+            return;
+        }
+
+        try {
+            $notice = Notice::findOrFail($noticeId);
+            $notice->is_active = !$notice->is_active;
+            $notice->save();
+
+            $this->dispatch('toast', [
+                'message' => 'Notice status updated successfully',
+                'variant' => 'success'
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error updating notice status: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
     private function resetForm()
     {
         $this->noticeId = null;
         $this->subject = '';
         $this->message = '';
+        $this->is_active = true;
         $this->resetErrorBag();
     }
 
