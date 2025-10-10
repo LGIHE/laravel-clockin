@@ -138,10 +138,22 @@
                         </tbody>
                     </table>
                     
+                    <!-- Pagination and Entry Count -->
                     <div class="px-6 py-4 bg-white border-t border-gray-200">
-                        <div class="text-sm text-gray-500">
-                            Showing {{ $designations->count() }} {{ $designations->count() === 1 ? 'entry' : 'entries' }}
-                        </div>
+                        @if($designations->hasPages())
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-500">
+                                    Showing {{ $designations->firstItem() }} to {{ $designations->lastItem() }} of {{ $designations->total() }} {{ $designations->total() === 1 ? 'entry' : 'entries' }}
+                                </div>
+                                <div>
+                                    {{ $designations->links() }}
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500">
+                                Showing {{ $designations->count() }} {{ $designations->count() === 1 ? 'entry' : 'entries' }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -158,23 +170,29 @@
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form wire:submit.prevent="updateDesignation">
                     <div class="bg-white px-6 pt-5 pb-4">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-medium text-gray-900">Edit Designation</h3>
-                        </div>
-
-                        <div class="space-y-4 py-2">
-                            <div class="space-y-2">
-                                <label for="edit-name" class="block text-sm font-medium text-gray-700">
-                                    Name
-                                </label>
-                                <input type="text" 
-                                       id="edit-name"
-                                       wire:model="name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror"
-                                       placeholder="Designation name">
-                                @error('name')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Edit Designation</h3>
+                                <div class="mt-4">
+                                    <div class="space-y-2">
+                                        <label for="edit-name" class="block text-sm font-medium text-gray-700">
+                                            Designation Name <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               id="edit-name"
+                                               wire:model="name"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror"
+                                               placeholder="Enter designation name">
+                                        @error('name')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -182,11 +200,11 @@
                     <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                         <button type="button" 
                                 wire:click="closeEditModal"
-                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors text-sm font-medium">
                             Cancel
                         </button>
                         <button type="submit"
-                                class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
+                                class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors text-sm font-medium">
                             Update
                         </button>
                     </div>
@@ -204,26 +222,54 @@
 
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-6 pt-5 pb-4">
-                    <div class="mb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Delete Designation</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500">
-                                Are you sure you want to delete the designation "{{ $selectedDesignation->name }}"? 
-                                This action cannot be undone and will fail if there are employees with this designation.
-                            </p>
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Delete Designation</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to delete <span class="font-semibold">"{{ $selectedDesignation->name }}"</span>?
+                                </p>
+                                @if($selectedDesignation->users_count > 0)
+                                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                                        <div class="flex items-start">
+                                            <svg class="w-5 h-5 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                            </svg>
+                                            <div class="ml-2">
+                                                <p class="text-sm text-red-800 font-medium">Cannot delete this designation</p>
+                                                <p class="text-sm text-red-700 mt-1">
+                                                    This designation is assigned to {{ $selectedDesignation->users_count }} {{ $selectedDesignation->users_count === 1 ? 'user' : 'users' }}. 
+                                                    Please reassign {{ $selectedDesignation->users_count === 1 ? 'this user' : 'these users' }} before deleting.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-sm text-gray-500 mt-2">
+                                        This action cannot be undone.
+                                    </p>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                     <button wire:click="closeDeleteModal" 
-                            class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                            class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors text-sm font-medium">
                         Cancel
                     </button>
-                    <button wire:click="deleteDesignation" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">
-                        Delete
-                    </button>
+                    @if($selectedDesignation->users_count == 0)
+                        <button wire:click="deleteDesignation" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors text-sm font-medium">
+                            Delete
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
