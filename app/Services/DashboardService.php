@@ -32,6 +32,7 @@ class DashboardService
         // Get attendance status (whether user is currently clocked in) - no cache for real-time data
         $currentAttendance = Attendance::where('user_id', $userId)
             ->whereNull('out_time')
+            ->with(['project', 'task'])
             ->latest('in_time')
             ->first();
         
@@ -39,6 +40,7 @@ class DashboardService
             'clocked_in' => $currentAttendance !== null,
             'in_time' => $currentAttendance ? $currentAttendance->in_time : null,
             'in_message' => $currentAttendance ? $currentAttendance->in_message : null,
+            'attendance' => $currentAttendance,
         ];
         
         // Get recent attendance records (last 7 days)
@@ -372,9 +374,16 @@ class DashboardService
             
             $hours = $workedSeconds > 0 ? round($workedSeconds / 3600, 2) : 0;
             
+            // Log for debugging
+            if (config('app.debug')) {
+                \Log::debug("Chart data for {$dateStr}: {$workedSeconds} seconds = {$hours} hours");
+            }
+            
             $last7Days[] = [
                 'name' => $dayName,
+                'date' => $dateStr,
                 'hours' => $hours,
+                'seconds' => $workedSeconds,
             ];
         }
         

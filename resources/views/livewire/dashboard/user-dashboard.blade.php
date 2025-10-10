@@ -245,21 +245,146 @@
             <div class="p-6 border-b border-gray-200">
                 <h3 class="text-lg font-semibold">Working Hour Analysis</h3>
             </div>
-            <div class="p-6 h-[320px]">
+            <div class="p-6">
                 @if($chartData && count($chartData) > 0)
-                    <!-- Simple Bar Chart -->
-                    <div class="h-full flex items-end justify-between gap-2">
-                        @foreach($chartData as $day)
-                            <div class="flex-1 flex flex-col items-center">
-                                <div class="w-full bg-green-500 rounded-t" style="height: {{ $day['hours'] > 0 ? min(($day['hours'] / 12) * 100, 100) : 5 }}%"></div>
-                                <div class="text-xs text-gray-600 mt-2">{{ $day['name'] }}</div>
-                                <div class="text-xs text-gray-500">{{ number_format($day['hours'], 1) }}h</div>
-                            </div>
-                        @endforeach
+                    @php
+                        $maxHours = max(array_column($chartData, 'hours'));
+                        $totalHours = array_sum(array_column($chartData, 'hours'));
+                        $maxHours = $maxHours > 0 ? ceil($maxHours) : 8; // Round up for better display
+                        
+                        // Calculate SVG points for the line
+                        $pointsCount = count($chartData);
+                        $svgWidth = 100;
+                        $svgHeight = 100;
+                        $points = [];
+                        $pathCoordinates = [];
+                        
+                        foreach ($chartData as $index => $day) {
+                            $x = ($index / ($pointsCount - 1)) * $svgWidth;
+                            $y = $day['hours'] > 0 ? ($svgHeight - (($day['hours'] / $maxHours) * $svgHeight)) : $svgHeight;
+                            $points[] = compact('x', 'y');
+                            $pathCoordinates[] = ($index === 0 ? 'M' : 'L') . " $x,$y";
+                        }
+                        
+                        $linePath = implode(' ', $pathCoordinates);
+                        
+                        // Create area path (same as line but closes at bottom)
+                        $areaPath = $linePath . " L $svgWidth,$svgHeight L 0,$svgHeight Z";
+                    @endphp
+                    
+                    <!-- Chart Container -->
+                    <div class="h-[320px] relative">
+                        <!-- SVG Chart -->
+                        <svg 
+                            viewBox="0 0 100 100" 
+                            preserveAspectRatio="none"
+                            class="absolute inset-0 w-full h-full"
+                            style="height: calc(100% - 40px);"
+                        >
+                            <!-- Grid lines -->
+                            <defs>
+                                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+                                </pattern>
+                                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.05" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <!-- Horizontal grid lines -->
+                            @for($i = 0; $i <= 4; $i++)
+                                @php $yPos = ($i / 4) * 100; @endphp
+                                <line 
+                                    x1="0" 
+                                    y1="{{ $yPos }}" 
+                                    x2="100" 
+                                    y2="{{ $yPos }}" 
+                                    stroke="#e5e7eb" 
+                                    stroke-width="0.3"
+                                    stroke-dasharray="3,3"
+                                />
+                            @endfor
+                            
+                            @if($totalHours > 0)
+                                <!-- Area under the line -->
+                                <path 
+                                    d="{{ $areaPath }}" 
+                                    fill="url(#areaGradient)"
+                                />
+                                
+                                <!-- The line -->
+                                <path 
+                                    d="{{ $linePath }}" 
+                                    fill="none" 
+                                    stroke="#10b981" 
+                                    stroke-width="0.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                                
+                                <!-- Data points -->
+                                @foreach($points as $point)
+                                    <circle 
+                                        cx="{{ $point['x'] }}" 
+                                        cy="{{ $point['y'] }}" 
+                                        r="1.5" 
+                                        fill="#10b981"
+                                        stroke="white"
+                                        stroke-width="0.5"
+                                    />
+                                @endforeach
+                            @endif
+                        </svg>
+                        
+                        <!-- Y-axis labels -->
+                        <div class="absolute left-0 top-0 flex flex-col justify-between text-xs text-gray-500 pr-2" style="height: calc(100% - 40px);">
+                            @for($i = 0; $i <= 4; $i++)
+                                <span class="-mt-2">{{ $maxHours - ($i * ($maxHours / 4)) }}</span>
+                            @endfor
+                        </div>
+                        
+                        <!-- X-axis labels -->
+                        <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-700 font-medium px-8">
+                            @foreach($chartData as $day)
+                                <div class="flex-1 text-center">{{ $day['name'] }}</div>
+                            @endforeach
+                        </div>
+                        
+                        <!-- Interactive overlay for tooltips -->
+                        <div class="absolute inset-0 flex" style="height: calc(100% - 40px); margin-left: 2rem;">
+                            @foreach($chartData as $index => $day)
+                                <div class="flex-1 relative group cursor-pointer">
+                                    @if($day['hours'] > 0)
+                                        <!-- Tooltip -->
+                                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+                                            <div class="bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                                                {{ number_format($day['hours'], 1) }}h
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                                    <div class="border-4 border-transparent border-t-gray-900"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
+                    
+                    @if($totalHours == 0)
+                        <div class="mt-4 text-center text-sm text-gray-500">
+                            <p>No attendance recorded in the last 7 days</p>
+                        </div>
+                    @endif
                 @else
-                    <div class="h-full flex items-center justify-center text-gray-500">
-                        No data available
+                    <div class="h-[320px] flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <p class="text-sm">No data available</p>
+                            <p class="text-xs text-gray-400 mt-1">Start tracking your hours to see the chart</p>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -283,8 +408,8 @@
                             <div class="border-b pb-3 last:border-b-0 hover:bg-gray-50 p-2 rounded transition-colors">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1">
-                                        <h4 class="font-medium text-sm">{{ $notice->title }}</h4>
-                                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ Str::limit($notice->content, 100) }}</p>
+                                        <h4 class="font-medium text-sm">{{ $notice->subject }}</h4>
+                                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ Str::limit($notice->message, 100) }}</p>
                                         <span class="text-xs text-gray-400 mt-1 block">
                                             {{ \Carbon\Carbon::parse($notice->created_at)->format('M d, Y h:i a') }}
                                         </span>
