@@ -58,7 +58,19 @@ class AdminDashboard extends Component
     
     public function loadUserProjects()
     {
-        $this->userProjects = auth()->user()->projects()->where('status', 'ACTIVE')->get();
+        // Load all active projects instead of just assigned ones
+        $this->userProjects = \App\Models\Project::where('status', 'ACTIVE')->get();
+        
+        \Log::info('AdminDashboard loadUserProjects', [
+            'user_id' => auth()->id(),
+            'projects_count' => $this->userProjects->count(),
+            'projects' => $this->userProjects->pluck('name', 'id')->toArray()
+        ]);
+        
+        // If user has only one project, select it by default
+        if ($this->userProjects->count() === 1 && empty($this->selectedProject)) {
+            $this->selectedProject = $this->userProjects->first()->id;
+        }
     }
 
     public function loadUserTasks()
@@ -158,7 +170,17 @@ class AdminDashboard extends Component
 
     public function openPunchOutModal()
     {
+        \Log::info('AdminDashboard openPunchOutModal called', [
+            'user_id' => auth()->id(),
+            'showPunchOutModal_before' => $this->showPunchOutModal,
+            'attendance_status' => $this->attendanceStatus
+        ]);
+        
         $this->showPunchOutModal = true;
+        
+        \Log::info('AdminDashboard openPunchOutModal after setting', [
+            'showPunchOutModal_after' => $this->showPunchOutModal
+        ]);
     }
 
     public function closePunchOutModal()
@@ -170,6 +192,12 @@ class AdminDashboard extends Component
 
     public function confirmClockOut()
     {
+        \Log::info('AdminDashboard confirmClockOut called', [
+            'user_id' => auth()->id(),
+            'clockMessage' => $this->clockMessage,
+            'taskStatus' => $this->taskStatus
+        ]);
+        
         $this->validate([
             'clockMessage' => 'nullable|string|max:500',
             'taskStatus' => 'nullable|in:in-progress,on-hold,completed',

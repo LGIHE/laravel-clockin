@@ -59,7 +59,13 @@ class UserDashboard extends Component
 
     public function loadUserProjects()
     {
-        $this->userProjects = auth()->user()->projects()->where('status', 'ACTIVE')->get();
+        // Load all active projects instead of just assigned ones
+        $this->userProjects = \App\Models\Project::where('status', 'ACTIVE')->get();
+        
+        // If user has only one project, select it by default
+        if ($this->userProjects->count() === 1 && empty($this->selectedProject)) {
+            $this->selectedProject = $this->userProjects->first()->id;
+        }
     }
 
     public function loadUserTasks()

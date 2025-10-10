@@ -123,18 +123,21 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label for="task" class="block text-sm font-medium text-gray-700">
+                            <label for="selectedTask" class="block text-sm font-medium text-gray-700">
                                 Task (Optional)
                             </label>
-                            <input 
-                                type="text" 
-                                id="task"
-                                wire:model="task"
-                                placeholder="Brief task description..."
+                            <select 
+                                id="selectedTask"
+                                wire:model="selectedTask"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 @if($isLoading) disabled @endif
                             >
-                            @error('task') 
+                                <option value="">Select a task...</option>
+                                @foreach($userTasks as $task)
+                                    <option value="{{ $task->id }}">{{ $task->title }}</option>
+                                @endforeach
+                            </select>
+                            @error('selectedTask') 
                                 <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
                             @enderror
                         </div>
@@ -192,7 +195,11 @@
                     @endphp
                     
                     <button
-                        wire:click="{{ $isClockedIn ? 'clockOut' : 'clockIn' }}"
+                        @if($isClockedIn)
+                            wire:click="openPunchOutModal"
+                        @else
+                            wire:click="clockIn"
+                        @endif
                         class="w-full px-4 py-2 text-white rounded-md font-medium transition {{ $isClockedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600' }}"
                         @if($isLoading) disabled @endif
                     >
@@ -357,4 +364,146 @@
     <div class="mt-6 text-center text-sm text-gray-500">
         © 2025 lgf & made with ❤️
     </div>
+
+    <!-- Punch Out Modal -->
+    @if($showPunchOutModal)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closePunchOutModal"></div>
+            
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                                Punch Out
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <!-- Project and Task Info -->
+                                @if(isset($attendanceStatus['attendance']))
+                                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                                        @if($attendanceStatus['attendance']->project)
+                                            <div>
+                                                <span class="font-semibold">Project: </span>
+                                                <span class="text-gray-700">{{ $attendanceStatus['attendance']->project->name }}</span>
+                                            </div>
+                                        @endif
+                                        @if($attendanceStatus['attendance']->task)
+                                            <div>
+                                                <span class="font-semibold">Task: </span>
+                                                <span class="text-gray-700">{{ $attendanceStatus['attendance']->task->title }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <!-- Description Field -->
+                                <div>
+                                    <label for="punchOutMessage" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Description (Optional)
+                                    </label>
+                                    <textarea
+                                        id="punchOutMessage"
+                                        wire:model="clockMessage"
+                                        rows="3"
+                                        placeholder="What did you accomplish today? Add notes about your work..."
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    ></textarea>
+                                    @error('clockMessage') 
+                                        <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                                    @enderror
+                                </div>
+
+                                <!-- Task Status Section -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Was the task completed?
+                                    </label>
+                                    
+                                    @if(isset($attendanceStatus['attendance']) && $attendanceStatus['attendance']->task_id)
+                                        <!-- Show task status options when task exists -->
+                                        <div class="space-y-2">
+                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'completed' ? 'border-green-500 bg-green-50' : '' }}">
+                                                <input 
+                                                    type="radio" 
+                                                    wire:model="taskStatus" 
+                                                    value="completed"
+                                                    class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                                                >
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-gray-900">Completed</span>
+                                                    <p class="text-xs text-gray-500 mt-0.5">Task is finished and delivered</p>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'in-progress' ? 'border-blue-500 bg-blue-50' : '' }}">
+                                                <input 
+                                                    type="radio" 
+                                                    wire:model="taskStatus" 
+                                                    value="in-progress"
+                                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                >
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-gray-900">In Progress</span>
+                                                    <p class="text-xs text-gray-500 mt-0.5">Still working on this task</p>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'on-hold' ? 'border-yellow-500 bg-yellow-50' : '' }}">
+                                                <input 
+                                                    type="radio" 
+                                                    wire:model="taskStatus" 
+                                                    value="on-hold"
+                                                    class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
+                                                >
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-gray-900">On Hold</span>
+                                                    <p class="text-xs text-gray-500 mt-0.5">Task is paused or blocked</p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    @else
+                                        <!-- Show message when no task is selected -->
+                                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center gap-2 text-gray-600">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                <span class="text-sm">No task was selected for this session</span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button 
+                        type="button" 
+                        wire:click="confirmClockOut"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        @if($isLoading) disabled @endif
+                    >
+                        @if($isLoading)
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        @endif
+                        Confirm Punch Out
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="closePunchOutModal"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

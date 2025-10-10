@@ -29,7 +29,22 @@
                         <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
-                                    <h3 class="font-semibold text-lg">{{ $task->title }}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-lg">{{ $task->title }}</h3>
+                                        <!-- Status Badge -->
+                                        @php
+                                            $statusColors = [
+                                                'in-progress' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                                'on-hold' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                'completed' => 'bg-green-100 text-green-800 border-green-200',
+                                            ];
+                                            $statusColor = $statusColors[$task->status] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+                                            $statusLabel = ucfirst(str_replace('-', ' ', $task->status));
+                                        @endphp
+                                        <span class="px-2 py-1 text-xs font-semibold rounded border {{ $statusColor }}">
+                                            {{ $statusLabel }}
+                                        </span>
+                                    </div>
                                     @if($task->description)
                                         <p class="text-sm text-gray-600 mt-1">{{ $task->description }}</p>
                                     @endif

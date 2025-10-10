@@ -87,6 +87,16 @@ class AttendanceService
         // Update task status if provided and attendance has a task
         if ($attendance->task_id && $taskStatus) {
             $updateData['task_status'] = $taskStatus;
+            
+            // Also update the Task model status
+            $task = \App\Models\Task::find($attendance->task_id);
+            if ($task) {
+                $task->update(['status' => $taskStatus]);
+                \Log::info('Task status updated', [
+                    'task_id' => $attendance->task_id,
+                    'new_status' => $taskStatus
+                ]);
+            }
         }
 
         // Update attendance record
