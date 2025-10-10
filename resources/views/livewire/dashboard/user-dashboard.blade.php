@@ -103,6 +103,43 @@
                     @if(!isset($attendanceStatus) || !is_array($attendanceStatus) || !($attendanceStatus['clocked_in'] ?? false))
                         <!-- Punch In View -->
                         <div class="space-y-2">
+                            <label for="selectedProject" class="block text-sm font-medium text-gray-700">
+                                Project <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                id="selectedProject"
+                                wire:model="selectedProject"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @if($isLoading) disabled @endif
+                            >
+                                <option value="">Select a project...</option>
+                                @foreach($userProjects as $project)
+                                    <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('selectedProject') 
+                                <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                            @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="task" class="block text-sm font-medium text-gray-700">
+                                Task (Optional)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="task"
+                                wire:model="task"
+                                placeholder="Brief task description..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @if($isLoading) disabled @endif
+                            >
+                            @error('task') 
+                                <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                            @enderror
+                        </div>
+
+                        <div class="space-y-2">
                             <label for="clockMessage" class="block text-sm font-medium text-gray-700">
                                 Comment (Optional)
                             </label>
@@ -114,6 +151,9 @@
                                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 @if($isLoading) disabled @endif
                             >
+                            @error('clockMessage') 
+                                <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                            @enderror
                         </div>
                     @else
                         <!-- Punch Out View -->

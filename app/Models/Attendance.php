@@ -32,6 +32,9 @@ class Attendance extends Model
     protected $fillable = [
         'id',
         'user_id',
+        'project_id',
+        'task_id',
+        'task_status',
         'in_time',
         'in_message',
         'out_time',
@@ -56,6 +59,22 @@ class Attendance extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the project associated with the attendance.
+     */
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    /**
+     * Get the task associated with the attendance.
+     */
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     /**

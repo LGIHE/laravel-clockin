@@ -14,6 +14,12 @@ class UserDashboard extends Component
     public $holidays;
     public $notices;
     public $clockMessage = '';
+    public $selectedProject = '';
+    public $selectedTask = '';
+    public $taskStatus = 'completed';
+    public $userProjects = [];
+    public $userTasks = [];
+    public $showPunchOutModal = false;
     public $isLoading = false;
 
     protected AttendanceService $attendanceService;
@@ -47,6 +53,20 @@ class UserDashboard extends Component
         $this->notices = collect([]);
         
         $this->loadDashboardData();
+        $this->loadUserProjects();
+        $this->loadUserTasks();
+    }
+
+    public function loadUserProjects()
+    {
+        $this->userProjects = auth()->user()->projects()->where('status', 'ACTIVE')->get();
+    }
+
+    public function loadUserTasks()
+    {
+        $this->userTasks = \App\Models\Task::where('user_id', auth()->id())
+            ->whereIn('status', ['in-progress', 'on-hold'])
+            ->get();
     }
 
     public function loadDashboardData()
@@ -90,12 +110,25 @@ class UserDashboard extends Component
 
     public function clockIn()
     {
+        $this->validate([
+            'selectedProject' => 'required|exists:projects,id',
+            'selectedTask' => 'nullable|exists:tasks,id',
+            'clockMessage' => 'nullable|string|max:500',
+        ]);
+
         $this->isLoading = true;
         
         try {
-            $this->attendanceService->clockIn(auth()->id(), $this->clockMessage);
+            $this->attendanceService->clockIn(
+                auth()->id(), 
+                $this->clockMessage,
+                $this->selectedProject,
+                $this->selectedTask ?: null
+            );
             
             $this->clockMessage = '';
+            $this->selectedProject = '';
+            $this->selectedTask = '';
             $this->loadDashboardData();
             
             $this->dispatch('toast', [
@@ -112,14 +145,37 @@ class UserDashboard extends Component
         }
     }
 
-    public function clockOut()
+    public function openPunchOutModal()
     {
+        $this->showPunchOutModal = true;
+    }
+
+    public function closePunchOutModal()
+    {
+        $this->showPunchOutModal = false;
+        $this->clockMessage = '';
+        $this->taskStatus = 'completed';
+    }
+
+    public function confirmClockOut()
+    {
+        $this->validate([
+            'clockMessage' => 'nullable|string|max:500',
+            'taskStatus' => 'nullable|in:in-progress,on-hold,completed',
+        ]);
+
         $this->isLoading = true;
         
         try {
-            $this->attendanceService->clockOut(auth()->id(), $this->clockMessage);
+            $this->attendanceService->clockOut(
+                auth()->id(), 
+                $this->clockMessage,
+                $this->taskStatus
+            );
             
             $this->clockMessage = '';
+            $this->taskStatus = 'completed';
+            $this->showPunchOutModal = false;
             $this->loadDashboardData();
             
             $this->dispatch('toast', [

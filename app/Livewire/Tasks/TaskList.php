@@ -65,10 +65,10 @@ class TaskList extends Component
             Task::create([
                 'user_id' => auth()->id(),
                 'title' => $this->title,
-                'description' => $this->description,
-                'project_id' => $this->project_id,
+                'description' => $this->description ?: null,
+                'project_id' => $this->project_id ?: null,
                 'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
+                'end_date' => $this->end_date ?: null,
                 'status' => $this->status ?: 'in-progress',
             ]);
 
@@ -137,10 +137,10 @@ class TaskList extends Component
 
             $task->update([
                 'title' => $this->title,
-                'description' => $this->description,
-                'project_id' => $this->project_id,
+                'description' => $this->description ?: null,
+                'project_id' => $this->project_id ?: null,
                 'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
+                'end_date' => $this->end_date ?: null,
                 'status' => $this->status,
             ]);
 

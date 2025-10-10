@@ -15,10 +15,12 @@ class AttendanceService
      *
      * @param string $userId
      * @param string|null $message
+     * @param string|null $projectId
+     * @param string|null $taskId
      * @return Attendance
      * @throws \Exception
      */
-    public function clockIn(string $userId, ?string $message = null): Attendance
+    public function clockIn(string $userId, ?string $message = null, ?string $projectId = null, ?string $taskId = null): Attendance
     {
         // Check if user is already clocked in
         $existingAttendance = Attendance::where('user_id', $userId)
@@ -35,6 +37,9 @@ class AttendanceService
             'user_id' => $userId,
             'in_time' => Carbon::now(),
             'in_message' => $message,
+            'project_id' => $projectId,
+            'task_id' => $taskId,
+            'task_status' => $taskId ? 'in-progress' : null, // Set to in-progress when clocking in with a task
         ]);
 
         // Update user's last_in_time
@@ -54,10 +59,11 @@ class AttendanceService
      *
      * @param string $userId
      * @param string|null $message
+     * @param string|null $taskStatus
      * @return Attendance
      * @throws \Exception
      */
-    public function clockOut(string $userId, ?string $message = null): Attendance
+    public function clockOut(string $userId, ?string $message = null, ?string $taskStatus = null): Attendance
     {
         // Find the active attendance record
         $attendance = Attendance::where('user_id', $userId)
@@ -71,12 +77,20 @@ class AttendanceService
         // Calculate worked hours in seconds
         $workedSeconds = $this->calculateWorkedHours($attendance->in_time, Carbon::now());
 
-        // Update attendance record
-        $attendance->update([
+        // Prepare update data
+        $updateData = [
             'out_time' => Carbon::now(),
             'out_message' => $message,
             'worked' => $workedSeconds,
-        ]);
+        ];
+
+        // Update task status if provided and attendance has a task
+        if ($attendance->task_id && $taskStatus) {
+            $updateData['task_status'] = $taskStatus;
+        }
+
+        // Update attendance record
+        $attendance->update($updateData);
 
         // Invalidate user stats cache
         $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
