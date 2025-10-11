@@ -130,7 +130,7 @@
         </div>
         <div class="header-row">
             <div class="header-label">PROJECT NAME:</div>
-            <div class="header-value">WELLS & ALIVE</div>
+            <div class="header-value">{{ $projectNames }}</div>
         </div>
         <div class="title">TIME SHEET</div>
         <div class="header-row">

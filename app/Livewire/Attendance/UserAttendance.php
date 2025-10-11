@@ -454,7 +454,7 @@ class UserAttendance extends Component
             $row++;
             
             $sheet->setCellValue('A' . $row, 'PROJECT NAME:');
-            $sheet->setCellValue('B' . $row, 'WELLS & ALIVE');
+            $sheet->setCellValue('B' . $row, $this->getFormattedProjects());
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row += 2;
             
@@ -468,7 +468,7 @@ class UserAttendance extends Component
             $row++;
             
             $sheet->setCellValue('A' . $row, 'POSITION:');
-            $sheet->setCellValue('B' . $row, $timesheetData['user']->designation ?? $timesheetData['user']->userLevel->name);
+            $sheet->setCellValue('B' . $row, $timesheetData['user']->designation->name ?? $timesheetData['user']->userLevel->name);
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row++;
             
@@ -516,7 +516,7 @@ class UserAttendance extends Component
             $row++;
             
             // Calculate daily hours and totals
-            $projects = ['WELLS', 'ALIVE'];
+            $projects = $this->getUserProjects();
             $projectDailyHours = [];
             $projectTotalHours = [];
             $sickLeaveDays = [];
@@ -762,6 +762,7 @@ class UserAttendance extends Component
         
         try {
             $timesheetData = $this->generateTimesheetData();
+            $timesheetData['projectNames'] = $this->getFormattedProjects();
             
             $pdf = Pdf::loadView('reports.timesheet_pdf', $timesheetData)
                 ->setPaper('a4', 'landscape')
@@ -905,6 +906,45 @@ class UserAttendance extends Component
                 'publicHolidays' => $publicHolidays,
             ],
         ];
+    }
+
+    /**
+     * Get formatted project names for the user
+     */
+    private function getFormattedProjects()
+    {
+        $projects = $this->user->projects()->pluck('name')->toArray();
+        
+        if (empty($projects)) {
+            return 'N/A';
+        }
+        
+        $count = count($projects);
+        
+        if ($count === 1) {
+            return $projects[0];
+        } elseif ($count === 2) {
+            return $projects[0] . ' & ' . $projects[1];
+        } else {
+            // More than 2 projects: "Project1, Project2, Project3 & Project4"
+            $lastProject = array_pop($projects);
+            return implode(', ', $projects) . ' & ' . $lastProject;
+        }
+    }
+
+    /**
+     * Get array of project names for the user
+     */
+    private function getUserProjects()
+    {
+        $projects = $this->user->projects()->pluck('name')->toArray();
+        
+        // If no projects assigned, return default projects
+        if (empty($projects)) {
+            return ['WELLS', 'ALIVE'];
+        }
+        
+        return $projects;
     }
 
     /**
