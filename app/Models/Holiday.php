@@ -31,6 +31,8 @@ class Holiday extends Model
      */
     protected $fillable = [
         'id',
+        'name',
+        'description',
         'date',
     ];
 

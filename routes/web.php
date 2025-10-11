@@ -40,6 +40,9 @@ Route::middleware('auth')->group(function () {
     // Tasks (accessible to all authenticated users)
     Route::get('/tasks', TaskList::class)->name('tasks.index');
     
+    // Holiday Calendar (accessible to all authenticated users, but only admin can create/edit)
+    Route::get('/holidays', HolidayList::class)->name('holidays.index');
+    
     // Leave Management
     Route::get('/leaves', LeaveList::class)->name('leaves.index');
     Route::get('/leaves/apply', \App\Livewire\Leave\ApplyLeave::class)->name('leaves.apply');
@@ -64,9 +67,6 @@ Route::middleware('auth')->group(function () {
         
         // Leave Category Management
         Route::get('/leave-categories', LeaveCategoryList::class)->name('leave-categories.index');
-        
-        // Holiday Management
-        Route::get('/holidays', HolidayList::class)->name('holidays.index');
     });
     
     // Notice Board (accessible to all authenticated users)

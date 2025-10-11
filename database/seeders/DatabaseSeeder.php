@@ -13,6 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed Uganda public holidays
+        $this->call([
+            UgandaHolidaysSeeder::class,
+        ]);
+        
         // User::factory(10)->create();
 
         User::factory()->create([

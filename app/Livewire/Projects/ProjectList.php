@@ -111,7 +111,7 @@ class ProjectList extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
+                'end_date' => $this->end_date ?: null,
                 'status' => $this->projectStatus,
             ]);
 
@@ -178,7 +178,7 @@ class ProjectList extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
+                'end_date' => $this->end_date ?: null,
                 'status' => $this->projectStatus,
             ]);
 

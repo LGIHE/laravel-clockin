@@ -188,9 +188,9 @@
 
     <!-- Create Modal -->
     @if($showCreateModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showCreateModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeCreateModal"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                     <form wire:submit.prevent="createProject">
@@ -200,7 +200,7 @@
                                     <h3 class="text-lg font-medium text-gray-900">Add New Project</h3>
                                     <p class="text-sm text-gray-500 mt-1">Create a new project to assign employees to.</p>
                                 </div>
-                                <button type="button" @click="open = false" class="text-gray-400 hover:text-gray-500">
+                                <button type="button" wire:click="closeCreateModal" class="text-gray-400 hover:text-gray-500">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -284,7 +284,7 @@
 
                         <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                             <button type="button" 
-                                    @click="open = false"
+                                    wire:click="closeCreateModal"
                                     class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
                                 Cancel
                             </button>
@@ -301,16 +301,16 @@
 
     <!-- Edit Modal -->
     @if($showEditModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showEditModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeEditModal"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                     <form wire:submit.prevent="updateProject">
                         <div class="bg-white px-6 pt-5 pb-4">
                             <div class="flex justify-between items-start mb-4">
                                 <h3 class="text-lg font-medium text-gray-900">Edit Project</h3>
-                                <button type="button" @click="open = false" class="text-gray-400 hover:text-gray-500">
+                                <button type="button" wire:click="closeEditModal" class="text-gray-400 hover:text-gray-500">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -394,7 +394,7 @@
 
                         <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                             <button type="button" 
-                                    @click="open = false"
+                                    wire:click="closeEditModal"
                                     class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
                                 Cancel
                             </button>
@@ -411,9 +411,9 @@
 
     <!-- Assign Users Modal -->
     @if($showAssignUsersModal && $selectedProject)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showAssignUsersModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeAssignUsersModal"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
                     <form wire:submit.prevent="assignUsers">
@@ -423,7 +423,7 @@
                                     <h3 class="text-lg font-medium text-gray-900">Assign Users to Project</h3>
                                     <p class="text-sm text-gray-500 mt-1">{{ $selectedProject->name }}</p>
                                 </div>
-                                <button type="button" @click="open = false" class="text-gray-400 hover:text-gray-500">
+                                <button type="button" wire:click="closeAssignUsersModal" class="text-gray-400 hover:text-gray-500">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -474,7 +474,7 @@
 
                         <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
                             <button type="button" 
-                                    @click="open = false"
+                                    wire:click="closeAssignUsersModal"
                                     class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
                                 Cancel
                             </button>
@@ -491,9 +491,9 @@
 
     <!-- Delete Confirmation Modal -->
     @if($showDeleteModal && $selectedProject)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ open: @entangle('showDeleteModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="open = false"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeDeleteModal"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white px-6 pt-5 pb-4">
@@ -507,7 +507,7 @@
                     </div>
 
                     <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                        <button @click="open = false" 
+                        <button wire:click="closeDeleteModal" 
                                 class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
                             Cancel
                         </button>
