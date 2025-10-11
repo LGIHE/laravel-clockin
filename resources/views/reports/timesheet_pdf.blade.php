@@ -1,174 +1,242 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Timesheet Report</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Monthly Timesheet</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11px;
+            margin: 20px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+        .header-section {
+            margin-bottom: 25px;
         }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
+        .header-row {
+            display: flex;
+            margin-bottom: 8px;
         }
-        .info-section {
-            margin-bottom: 20px;
-        }
-        .info-section table {
-            width: 100%;
-        }
-        .info-section td {
-            padding: 5px;
-        }
-        .info-section td:first-child {
+        .header-label {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
+        }
+        .header-value {
+            flex: 1;
+        }
+        .title {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0;
         }
         .timesheet-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
+            font-size: 10px;
         }
         .timesheet-table th,
         .timesheet-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid #333;
+            padding: 6px 4px;
             text-align: left;
-            font-size: 10px;
         }
         .timesheet-table th {
-            background-color: #f2f2f2;
+            background-color: #e0e0e0;
             font-weight: bold;
+            text-align: center;
         }
-        .status-present {
-            color: green;
+        .timesheet-table td.date-col {
+            width: 100px;
         }
-        .status-absent {
-            color: red;
+        .timesheet-table td.day-col {
+            width: 80px;
         }
-        .statistics {
-            margin-top: 30px;
+        .timesheet-table td.time-col {
+            width: 70px;
+            text-align: center;
+        }
+        .timesheet-table td.hours-col {
+            width: 60px;
+            text-align: center;
+        }
+        .timesheet-table td.status-col {
+            width: 90px;
+            text-align: center;
+        }
+        .summary-section {
+            margin-top: 25px;
             padding: 15px;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
         }
-        .statistics h3 {
-            margin-top: 0;
-        }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
+        .summary-row {
             padding: 5px 0;
+            display: flex;
         }
+        .summary-label {
+            font-weight: bold;
+            width: 200px;
+        }
+        .summary-value {
+            flex: 1;
+        }
+        .signature-section {
+            margin-top: 40px;
+        }
+        .signature-row {
+            margin-bottom: 30px;
+        }
+        .signature-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+        .signature-line {
+            display: inline-block;
+            width: 300px;
+            border-bottom: 1px solid #333;
+            margin-left: 10px;
+        }
+        .signature-name {
+            margin-left: 160px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        .notes-section {
+            margin-top: 40px;
+            font-size: 9px;
+            color: #666;
+        }
+        .notes-section h4 {
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+        .notes-section p {
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+        .status-present { color: #059669; }
+        .status-absent { color: #dc2626; }
+        .status-leave { color: #d97706; }
+        .status-holiday { color: #2563eb; }
+        .status-weekend { color: #6b7280; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Timesheet Report</h1>
-    </div>
-
-    <div class="info-section">
-        <table>
-            <tr>
-                <td>Employee Name:</td>
-                <td>{{ $data['user']['name'] }}</td>
-            </tr>
-            <tr>
-                <td>Email:</td>
-                <td>{{ $data['user']['email'] }}</td>
-            </tr>
-            <tr>
-                <td>Department:</td>
-                <td>{{ $data['user']['department'] ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td>Designation:</td>
-                <td>{{ $data['user']['designation'] ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td>Period:</td>
-                <td>{{ $data['period']['month_name'] }} {{ $data['period']['year'] }}</td>
-            </tr>
-        </table>
+    <div class="header-section">
+        <div class="header-row">
+            <div class="header-label">NAME OF ORGANISATION:</div>
+            <div class="header-value">LUIGI GIUSSANI FOUNDATION</div>
+        </div>
+        <div class="header-row">
+            <div class="header-label">PROJECT NAME:</div>
+            <div class="header-value">WELLS & ALIVE</div>
+        </div>
+        <div class="title">TIME SHEET</div>
+        <div class="header-row">
+            <div class="header-label">NAME OF PERSON:</div>
+            <div class="header-value">{{ $user->name }}</div>
+        </div>
+        <div class="header-row">
+            <div class="header-label">POSITION:</div>
+            <div class="header-value">{{ $user->designation ?? $user->userLevel->name }}</div>
+        </div>
+        <div class="header-row">
+            <div class="header-label">PERIOD COVERED:</div>
+            <div class="header-value">{{ $period }}</div>
+        </div>
     </div>
 
     <table class="timesheet-table">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Day</th>
-                <th>Clock In</th>
-                <th>Clock Out</th>
-                <th>Worked Hours</th>
-                <th>Status</th>
+                <th class="date-col">Date</th>
+                <th class="day-col">Day</th>
+                <th class="time-col">Clock In</th>
+                <th class="time-col">Clock Out</th>
+                <th class="hours-col">Hours</th>
+                <th class="status-col">Status</th>
+                <th>Notes</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($data['daily_records'] as $record)
-                @if(!empty($record['attendances']) && count($record['attendances']) > 0)
-                    @foreach($record['attendances'] as $attendance)
-                        <tr>
-                            <td>{{ $record['date'] }}</td>
-                            <td>{{ $record['day_name'] }}</td>
-                            <td>{{ $attendance['in_time'] ? \Carbon\Carbon::parse($attendance['in_time'])->format('H:i:s') : '' }}</td>
-                            <td>{{ $attendance['out_time'] ? \Carbon\Carbon::parse($attendance['out_time'])->format('H:i:s') : 'Not clocked out' }}</td>
-                            <td>{{ $attendance['worked_hours'] ?? '00:00:00' }}</td>
-                            <td class="status-{{ $record['status'] }}">{{ ucfirst($record['status']) }}</td>
-                        </tr>
-                    @endforeach
-                @else
-                    <tr>
-                        <td>{{ $record['date'] }}</td>
-                        <td>{{ $record['day_name'] }}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>00:00:00</td>
-                        <td class="status-{{ $record['status'] }}">{{ ucfirst($record['status']) }}</td>
-                    </tr>
-                @endif
+            @foreach($entries as $entry)
+                <tr>
+                    <td class="date-col">{{ $entry['date'] }}</td>
+                    <td class="day-col">{{ $entry['day'] }}</td>
+                    <td class="time-col">{{ $entry['clockIn'] }}</td>
+                    <td class="time-col">{{ $entry['clockOut'] }}</td>
+                    <td class="hours-col">{{ $entry['hoursWorked'] }}</td>
+                    <td class="status-col 
+                        @if($entry['status'] === 'Present') status-present
+                        @elseif($entry['status'] === 'Absent') status-absent
+                        @elseif(str_contains($entry['status'], 'Leave')) status-leave
+                        @elseif($entry['status'] === 'Public Holiday') status-holiday
+                        @elseif($entry['status'] === 'Weekend') status-weekend
+                        @endif">
+                        {{ $entry['status'] }}
+                    </td>
+                    <td>{{ $entry['notes'] }}</td>
+                </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div class="statistics">
-        <h3>Monthly Statistics</h3>
-        <div class="stat-row">
-            <span>Total Days:</span>
-            <span>{{ $data['statistics']['total_days'] }}</span>
+    <div class="summary-section">
+        <h3 style="margin-top: 0;">SUMMARY</h3>
+        <div class="summary-row">
+            <div class="summary-label">NUMBER OF DAYS WORKED:</div>
+            <div class="summary-value">{{ $summary['daysWorked'] }}</div>
         </div>
-        <div class="stat-row">
-            <span>Days Present:</span>
-            <span>{{ $data['statistics']['days_present'] }}</span>
+        <div class="summary-row">
+            <div class="summary-label">NUMBER OF HOURS WORKED:</div>
+            <div class="summary-value">{{ $summary['totalHours'] }}</div>
         </div>
-        <div class="stat-row">
-            <span>Days Absent:</span>
-            <span>{{ $data['statistics']['days_absent'] }}</span>
+        <div class="summary-row">
+            <div class="summary-label">SICK LEAVE DAYS:</div>
+            <div class="summary-value">{{ $summary['sickLeaveDays'] }}</div>
         </div>
-        <div class="stat-row">
-            <span>Total Hours:</span>
-            <span>{{ $data['statistics']['total_hours_formatted'] }}</span>
+        <div class="summary-row">
+            <div class="summary-label">ANNUAL LEAVE DAYS:</div>
+            <div class="summary-value">{{ $summary['annualLeaveDays'] }}</div>
         </div>
-        <div class="stat-row">
-            <span>Average Hours/Day:</span>
-            <span>{{ $data['statistics']['average_hours_per_day_formatted'] }}</span>
+        <div class="summary-row">
+            <div class="summary-label">PUBLIC HOLIDAYS:</div>
+            <div class="summary-value">{{ $summary['publicHolidays'] }}</div>
         </div>
-        <div class="stat-row">
-            <span>Late Arrivals:</span>
-            <span>{{ $data['statistics']['late_arrivals'] }}</span>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-row">
+            <span class="signature-label">SIGNED:</span>
+            <span class="signature-line"></span>
+            <div class="signature-name">({{ $user->name }})</div>
+            <div style="margin-top: 15px;">
+                <span class="signature-label">DATE:</span>
+                <span>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</span>
+            </div>
         </div>
-        <div class="stat-row">
-            <span>Early Departures:</span>
-            <span>{{ $data['statistics']['early_departures'] }}</span>
+
+        <div class="signature-row" style="margin-top: 30px;">
+            <span class="signature-label">APPROVED BY:</span>
+            <span class="signature-line"></span>
+            <div class="signature-name">(JOHN MUHANGYI)</div>
+            <div style="margin-top: 15px; margin-left: 0;">
+                <span class="signature-label">POSITION:</span>
+                <span>Deputy Director of Programmes</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <span class="signature-label">DATE:</span>
+                <span class="signature-line" style="width: 200px;"></span>
+            </div>
         </div>
-        <div class="stat-row">
-            <span>Attendance Rate:</span>
-            <span>{{ $data['statistics']['attendance_rate'] }}%</span>
-        </div>
+    </div>
+
+    <div class="notes-section">
+        <h4>Explanatory notes</h4>
+        <p>- This timesheet template is adapted for use in cases where a person is working for several projects or tasks in the same period</p>
+        <p>- To avoid errors, weekends and public holidays are clearly marked</p>
+        <p>- This timesheet includes daily attendance records, approved leaves, and public holidays</p>
     </div>
 </body>
 </html>
