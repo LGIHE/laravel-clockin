@@ -8,6 +8,11 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class UserAttendance extends Component
 {
@@ -427,200 +432,322 @@ class UserAttendance extends Component
         $this->showTimesheetModal = false;
     }
 
-    public function exportTimesheetCsv()
+    public function exportTimesheetExcel()
     {
         $this->closeTimesheetModal();
         
         try {
             $timesheetData = $this->generateTimesheetData();
             
-            $filename = 'timesheet-' . $this->sanitizeFilename($timesheetData['user']->name) . '-' . 
-                       Carbon::parse($this->startDate)->format('Y-m') . '.csv';
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
             
-            $headers = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            ];
-
-            $callback = function() use ($timesheetData) {
-                $file = fopen('php://output', 'w');
+            // Set default font
+            $spreadsheet->getDefaultStyle()->getFont()->setName('Arial')->setSize(11);
+            
+            $row = 1;
+            
+            // Header information
+            $sheet->setCellValue('A' . $row, 'NAME OF ORGANISATION OR ENTITY:');
+            $sheet->setCellValue('B' . $row, 'LUIGI GIUSSANI FOUNDATION');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'PROJECT NAME:');
+            $sheet->setCellValue('B' . $row, 'WELLS & ALIVE');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row += 2;
+            
+            $sheet->setCellValue('A' . $row, 'TIME SHEET');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+            $row += 2;
+            
+            $sheet->setCellValue('A' . $row, 'NAME OF PERSON:');
+            $sheet->setCellValue('B' . $row, $timesheetData['user']->name);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'POSITION:');
+            $sheet->setCellValue('B' . $row, $timesheetData['user']->designation ?? $timesheetData['user']->userLevel->name);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'PERIOD COVERED:');
+            $sheet->setCellValue('B' . $row, $timesheetData['period']);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row += 2;
+            
+            // Prepare table data
+            $startDate = Carbon::parse($timesheetData['startDate']);
+            $endDate = Carbon::parse($timesheetData['endDate']);
+            $daysInMonth = $startDate->daysInMonth;
+            
+            // Build header row
+            $headerRow = $row;
+            $col = 'A';
+            $sheet->setCellValue($col++ . $row, 'Description');
+            $sheet->setCellValue($col++ . $row, 'Hours');
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $sheet->setCellValue($col++ . $row, (string)$day);
+            }
+            $sheet->setCellValue($col . $row, 'LOE');
+            
+            // Style header row
+            $lastCol = $col;
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'E0E0E0']
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ]);
+            
+            $row++;
+            
+            // Calculate daily hours and totals
+            $projects = ['WELLS', 'ALIVE'];
+            $projectDailyHours = [];
+            $projectTotalHours = [];
+            $sickLeaveDays = [];
+            $annualLeaveDays = [];
+            $holidayDays = [];
+            
+            // Initialize project hours
+            foreach ($projects as $project) {
+                $projectDailyHours[$project] = array_fill(1, $daysInMonth, 0);
+                $projectTotalHours[$project] = 0;
+            }
+            
+            // Process each day in the month
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                $dateStr = $currentDate->format('Y-m-d');
                 
-                // Add UTF-8 BOM for Excel compatibility
-                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+                // Find entry for this day
+                $dayEntry = collect($timesheetData['entries'])->firstWhere('date', $currentDate->format('M d, Y'));
                 
-                // Add header information
-                fputcsv($file, ['NAME OF ORGANISATION OR ENTITY:', 'LUIGI GIUSSANI FOUNDATION']);
-                fputcsv($file, ['PROJECT NAME:', 'WELLS & ALIVE']);
-                fputcsv($file, []); // Empty row
-                fputcsv($file, ['TIME SHEET']);
-                fputcsv($file, []); // Empty row
-                fputcsv($file, ['NAME OF PERSON:', $timesheetData['user']->name]);
-                fputcsv($file, ['POSITION:', $timesheetData['user']->designation ?? $timesheetData['user']->userLevel->name]);
-                fputcsv($file, ['PERIOD COVERED:', $timesheetData['period']]);
-                fputcsv($file, []); // Empty row
-                
-                // Prepare table data similar to clockin-node
-                $startDate = Carbon::parse($timesheetData['startDate']);
-                $endDate = Carbon::parse($timesheetData['endDate']);
-                $daysInMonth = $startDate->daysInMonth;
-                
-                // Build header row: Description, Hours, 1, 2, 3, ..., 31, LOE
-                $headerRow = ['Description', 'Hours'];
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $headerRow[] = (string)$day;
-                }
-                $headerRow[] = 'LOE';
-                fputcsv($file, $headerRow);
-                
-                // Calculate daily hours and totals
-                $projects = ['WELLS', 'ALIVE'];
-                $projectDailyHours = [];
-                $projectTotalHours = [];
-                $sickLeaveDays = [];
-                $annualLeaveDays = [];
-                $holidayDays = [];
-                
-                // Initialize project hours
-                foreach ($projects as $project) {
-                    $projectDailyHours[$project] = array_fill(1, $daysInMonth, 0);
-                    $projectTotalHours[$project] = 0;
-                }
-                
-                // Process each day in the month
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
-                    $dateStr = $currentDate->format('Y-m-d');
-                    
-                    // Find entry for this day
-                    $dayEntry = collect($timesheetData['entries'])->firstWhere('date', $currentDate->format('M d, Y'));
-                    
-                    if ($dayEntry) {
-                        if ($dayEntry['status'] === 'Sick Leave') {
-                            $sickLeaveDays[$day] = true;
-                        } elseif ($dayEntry['status'] === 'Annual Leave') {
-                            $annualLeaveDays[$day] = true;
-                        } elseif ($dayEntry['status'] === 'Public Holiday') {
-                            $holidayDays[$day] = true;
-                        } elseif ($dayEntry['status'] === 'Present' && !empty($dayEntry['hoursWorked'])) {
-                            // Distribute hours across projects (for simplicity, split evenly)
-                            $hours = floatval($dayEntry['hoursWorked']);
-                            $hoursPerProject = $hours / count($projects);
-                            foreach ($projects as $project) {
-                                $projectDailyHours[$project][$day] = $hoursPerProject;
-                                $projectTotalHours[$project] += $hoursPerProject;
-                            }
-                        }
-                    }
-                }
-                
-                // Calculate grand total
-                $grandTotal = array_sum($projectTotalHours) + 
-                             (count($sickLeaveDays) * 8) + 
-                             (count($annualLeaveDays) * 8) + 
-                             (count($holidayDays) * 8);
-                
-                // Add project rows
-                foreach ($projects as $project) {
-                    $row = [$project, number_format($projectTotalHours[$project], 1)];
-                    for ($day = 1; $day <= $daysInMonth; $day++) {
-                        $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
-                        if ($currentDate->isWeekend() || isset($sickLeaveDays[$day]) || 
-                            isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
-                            $row[] = '';
-                        } else {
-                            $hours = $projectDailyHours[$project][$day];
-                            $row[] = $hours > 0 ? number_format($hours, 1) : '';
-                        }
-                    }
-                    $loe = $grandTotal > 0 ? round(($projectTotalHours[$project] / $grandTotal) * 100) : 0;
-                    $row[] = $loe . '%';
-                    fputcsv($file, $row);
-                }
-                
-                // Add SICK LEAVE row
-                $sickLeaveHours = count($sickLeaveDays) * 8;
-                $row = ['SICK LEAVE', number_format($sickLeaveHours, 1)];
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $row[] = isset($sickLeaveDays[$day]) ? '8.0' : '';
-                }
-                $loe = $grandTotal > 0 ? round(($sickLeaveHours / $grandTotal) * 100) : 0;
-                $row[] = $loe . '%';
-                fputcsv($file, $row);
-                
-                // Add ANNUAL LEAVE row
-                $annualLeaveHours = count($annualLeaveDays) * 8;
-                $row = ['ANNUAL LEAVE', number_format($annualLeaveHours, 1)];
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $row[] = isset($annualLeaveDays[$day]) ? '8.0' : '';
-                }
-                $loe = $grandTotal > 0 ? round(($annualLeaveHours / $grandTotal) * 100) : 0;
-                $row[] = $loe . '%';
-                fputcsv($file, $row);
-                
-                // Add PUBLIC HOLIDAY row
-                $holidayHours = count($holidayDays) * 8;
-                $row = ['PUBLIC HOLIDAY', number_format($holidayHours, 1)];
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $row[] = isset($holidayDays[$day]) ? '8.0' : '';
-                }
-                $loe = $grandTotal > 0 ? round(($holidayHours / $grandTotal) * 100) : 0;
-                $row[] = $loe . '%';
-                fputcsv($file, $row);
-                
-                // Add Daily total row
-                $row = ['Daily total', number_format($grandTotal, 1)];
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
-                    if ($currentDate->isWeekend()) {
-                        $row[] = '0.0';
-                    } elseif (isset($sickLeaveDays[$day]) || isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
-                        $row[] = '8.0';
-                    } else {
-                        $dayTotal = 0;
+                if ($dayEntry) {
+                    if ($dayEntry['status'] === 'Sick Leave') {
+                        $sickLeaveDays[$day] = true;
+                    } elseif ($dayEntry['status'] === 'Annual Leave') {
+                        $annualLeaveDays[$day] = true;
+                    } elseif ($dayEntry['status'] === 'Public Holiday') {
+                        $holidayDays[$day] = true;
+                    } elseif ($dayEntry['status'] === 'Present' && !empty($dayEntry['hoursWorked'])) {
+                        // Distribute hours across projects
+                        $hours = floatval($dayEntry['hoursWorked']);
+                        $hoursPerProject = $hours / count($projects);
                         foreach ($projects as $project) {
-                            $dayTotal += $projectDailyHours[$project][$day];
+                            $projectDailyHours[$project][$day] = $hoursPerProject;
+                            $projectTotalHours[$project] += $hoursPerProject;
                         }
-                        $row[] = $dayTotal > 0 ? number_format($dayTotal, 1) : '0.0';
                     }
                 }
-                $row[] = '100%';
-                fputcsv($file, $row);
+            }
+            
+            // Calculate grand total
+            $grandTotal = array_sum($projectTotalHours) + 
+                         (count($sickLeaveDays) * 8) + 
+                         (count($annualLeaveDays) * 8) + 
+                         (count($holidayDays) * 8);
+            
+            // Add project rows
+            foreach ($projects as $project) {
+                $col = 'A';
+                $sheet->setCellValue($col++ . $row, $project);
+                $sheet->setCellValue($col++ . $row, number_format($projectTotalHours[$project], 1));
                 
-                fputcsv($file, []); // Empty row
-                
-                // Calculate working days (excluding weekends)
-                $workingDays = 0;
                 for ($day = 1; $day <= $daysInMonth; $day++) {
                     $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
-                    if (!$currentDate->isWeekend()) {
-                        $workingDays++;
+                    if ($currentDate->isWeekend() || isset($sickLeaveDays[$day]) || 
+                        isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
+                        $sheet->setCellValue($col++ . $row, '');
+                    } else {
+                        $hours = $projectDailyHours[$project][$day];
+                        $sheet->setCellValue($col++ . $row, $hours > 0 ? number_format($hours, 1) : '');
                     }
                 }
                 
-                // Add summary
-                fputcsv($file, ['NUMBER OF HOURS WORKED:', number_format($grandTotal, 1)]);
-                fputcsv($file, ['NUMBER OF DAYS WORKED:', $workingDays]);
-                fputcsv($file, []); // Empty row
-                fputcsv($file, ['SIGNED:', '____________________________']);
-                fputcsv($file, ['', '(' . $timesheetData['user']->name . ')']);
-                fputcsv($file, ['DATE:', \Carbon\Carbon::now()->format('d/m/Y')]);
-                fputcsv($file, []); // Empty row
-                fputcsv($file, ['APPROVED BY:', '____________________________']);
-                fputcsv($file, ['', '(JOHN MUHANGYI)']);
-                fputcsv($file, ['POSITION:', 'Deputy Director of Programmes']);
-                fputcsv($file, ['DATE:', '____________________________']);
-                fputcsv($file, []); // Empty row
-                fputcsv($file, ['Explanatory notes']);
-                fputcsv($file, ['- This template is adapted for use in cases where a person is working for several projects or tasks in a same period']);
-                fputcsv($file, ['- To avoid errors, it may be useful to highlight week-ends or public holidays']);
-                fputcsv($file, ['- If you prefer to use timesheets with a periodicity of less than a month (for example weekly or bi-weekly), please adjust the template accordingly']);
+                $loe = $grandTotal > 0 ? round(($projectTotalHours[$project] / $grandTotal) * 100) : 0;
+                $sheet->setCellValue($col . $row, $loe . '%');
                 
-                fclose($file);
-            };
-
-            return response()->stream($callback, 200, $headers);
+                // Style data row
+                $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC']
+                        ]
+                    ]
+                ]);
+                
+                $row++;
+            }
+            
+            // Add SICK LEAVE row
+            $col = 'A';
+            $sickLeaveHours = count($sickLeaveDays) * 8;
+            $sheet->setCellValue($col++ . $row, 'SICK LEAVE');
+            $sheet->setCellValue($col++ . $row, number_format($sickLeaveHours, 1));
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $sheet->setCellValue($col++ . $row, isset($sickLeaveDays[$day]) ? '8.0' : '');
+            }
+            
+            $loe = $grandTotal > 0 ? round(($sickLeaveHours / $grandTotal) * 100) : 0;
+            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
+            ]);
+            $row++;
+            
+            // Add ANNUAL LEAVE row
+            $col = 'A';
+            $annualLeaveHours = count($annualLeaveDays) * 8;
+            $sheet->setCellValue($col++ . $row, 'ANNUAL LEAVE');
+            $sheet->setCellValue($col++ . $row, number_format($annualLeaveHours, 1));
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $sheet->setCellValue($col++ . $row, isset($annualLeaveDays[$day]) ? '8.0' : '');
+            }
+            
+            $loe = $grandTotal > 0 ? round(($annualLeaveHours / $grandTotal) * 100) : 0;
+            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
+            ]);
+            $row++;
+            
+            // Add PUBLIC HOLIDAY row
+            $col = 'A';
+            $holidayHours = count($holidayDays) * 8;
+            $sheet->setCellValue($col++ . $row, 'PUBLIC HOLIDAY');
+            $sheet->setCellValue($col++ . $row, number_format($holidayHours, 1));
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $sheet->setCellValue($col++ . $row, isset($holidayDays[$day]) ? '8.0' : '');
+            }
+            
+            $loe = $grandTotal > 0 ? round(($holidayHours / $grandTotal) * 100) : 0;
+            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
+            ]);
+            $row++;
+            
+            // Add Daily total row
+            $col = 'A';
+            $sheet->setCellValue($col++ . $row, 'Daily total');
+            $sheet->setCellValue($col++ . $row, number_format($grandTotal, 1));
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                if ($currentDate->isWeekend()) {
+                    $sheet->setCellValue($col++ . $row, '0.0');
+                } elseif (isset($sickLeaveDays[$day]) || isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
+                    $sheet->setCellValue($col++ . $row, '8.0');
+                } else {
+                    $dayTotal = 0;
+                    foreach ($projects as $project) {
+                        $dayTotal += $projectDailyHours[$project][$day];
+                    }
+                    $sheet->setCellValue($col++ . $row, $dayTotal > 0 ? number_format($dayTotal, 1) : '0.0');
+                }
+            }
+            
+            $sheet->setCellValue($col . $row, '100%');
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]]
+            ]);
+            
+            $row += 2;
+            
+            // Calculate working days
+            $workingDays = 0;
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                if (!$currentDate->isWeekend()) {
+                    $workingDays++;
+                }
+            }
+            
+            // Add summary
+            $sheet->setCellValue('A' . $row, 'NUMBER OF HOURS WORKED:');
+            $sheet->setCellValue('B' . $row, number_format($grandTotal, 1));
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'NUMBER OF DAYS WORKED:');
+            $sheet->setCellValue('B' . $row, $workingDays);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row += 2;
+            
+            $sheet->setCellValue('A' . $row, 'SIGNED:');
+            $sheet->setCellValue('B' . $row, '____________________________');
+            $row++;
+            
+            $sheet->setCellValue('B' . $row, '(' . $timesheetData['user']->name . ')');
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'DATE:');
+            $sheet->setCellValue('B' . $row, Carbon::now()->format('d/m/Y'));
+            $row += 2;
+            
+            $sheet->setCellValue('A' . $row, 'APPROVED BY:');
+            $sheet->setCellValue('B' . $row, '____________________________');
+            $row++;
+            
+            $sheet->setCellValue('B' . $row, '(JOHN MUHANGYI)');
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'POSITION:');
+            $sheet->setCellValue('B' . $row, 'Deputy Director of Programmes');
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'DATE:');
+            $sheet->setCellValue('B' . $row, '____________________________');
+            $row += 2;
+            
+            $sheet->setCellValue('A' . $row, 'Explanatory notes');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, '- This template is adapted for use in cases where a person is working for several projects or tasks in a same period');
+            $row++;
+            $sheet->setCellValue('A' . $row, '- To avoid errors, it may be useful to highlight week-ends or public holidays');
+            $row++;
+            $sheet->setCellValue('A' . $row, '- If you prefer to use timesheets with a periodicity of less than a month (for example weekly or bi-weekly), please adjust the template accordingly');
+            
+            // Auto-size columns
+            foreach (range('A', $lastCol) as $columnID) {
+                $sheet->getColumnDimension($columnID)->setAutoSize(true);
+            }
+            
+            // Generate filename
+            $filename = 'timesheet-' . $this->sanitizeFilename($timesheetData['user']->name) . '-' . 
+                       Carbon::parse($this->startDate)->format('Y-m') . '.xlsx';
+            
+            // Create Excel file
+            $writer = new Xlsx($spreadsheet);
+            $tempFile = tempnam(sys_get_temp_dir(), 'timesheet_');
+            $writer->save($tempFile);
+            
+            return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+            
         } catch (\Exception $e) {
-            \Log::error('Timesheet CSV export error: ' . $e->getMessage());
+            \Log::error('Timesheet Excel export error: ' . $e->getMessage());
             $this->dispatch('toast', [
                 'message' => 'Failed to generate timesheet: ' . $e->getMessage(),
                 'variant' => 'danger'
