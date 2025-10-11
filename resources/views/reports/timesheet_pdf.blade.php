@@ -120,6 +120,7 @@
         .status-leave { color: #d97706; }
         .status-holiday { color: #2563eb; }
         .status-weekend { color: #6b7280; }
+        .weekend-cell { background-color: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -220,10 +221,10 @@
         <div class="signature-row" style="margin-top: 30px;">
             <span class="signature-label">APPROVED BY:</span>
             <span class="signature-line"></span>
-            <div class="signature-name">(JOHN MUHANGYI)</div>
+            <div class="signature-name">({{ strtoupper($user->supervisor ? $user->supervisor->name : 'N/A') }})</div>
             <div style="margin-top: 15px; margin-left: 0;">
                 <span class="signature-label">POSITION:</span>
-                <span>Deputy Director of Programmes</span>
+                <span>{{ $user->supervisor && $user->supervisor->designation ? $user->supervisor->designation->name : ($user->supervisor && $user->supervisor->userLevel ? $user->supervisor->userLevel->name : 'N/A') }}</span>
             </div>
             <div style="margin-top: 10px;">
                 <span class="signature-label">DATE:</span>

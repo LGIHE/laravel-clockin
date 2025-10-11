@@ -545,12 +545,33 @@ class UserAttendance extends Component
                     } elseif ($dayEntry['status'] === 'Public Holiday') {
                         $holidayDays[$day] = true;
                     } elseif ($dayEntry['status'] === 'Present' && !empty($dayEntry['hoursWorked'])) {
-                        // Distribute hours across projects
-                        $hours = floatval($dayEntry['hoursWorked']);
-                        $hoursPerProject = $hours / count($projects);
-                        foreach ($projects as $project) {
-                            $projectDailyHours[$project][$day] = $hoursPerProject;
-                            $projectTotalHours[$project] += $hoursPerProject;
+                        // Cap hours at 8 per day
+                        $hours = min(8.0, floatval($dayEntry['hoursWorked']));
+                        
+                        // Distribute hours across projects randomly
+                        if (count($projects) === 1) {
+                            $projectDailyHours[$projects[0]][$day] = $hours;
+                            $projectTotalHours[$projects[0]] += $hours;
+                        } else {
+                            // Random distribution that adds up to total hours
+                            $remaining = $hours;
+                            $projectCount = count($projects);
+                            
+                            foreach ($projects as $index => $project) {
+                                if ($index === $projectCount - 1) {
+                                    // Last project gets remaining hours
+                                    $projectHours = $remaining;
+                                } else {
+                                    // Random allocation between 10% and 90% of remaining
+                                    $minAlloc = $remaining * 0.1;
+                                    $maxAlloc = $remaining * 0.9;
+                                    $projectHours = mt_rand($minAlloc * 10, $maxAlloc * 10) / 10;
+                                    $remaining -= $projectHours;
+                                }
+                                
+                                $projectDailyHours[$project][$day] = $projectHours;
+                                $projectTotalHours[$project] += $projectHours;
+                            }
                         }
                     }
                 }
@@ -568,19 +589,34 @@ class UserAttendance extends Component
                 $sheet->setCellValue($col++ . $row, $project);
                 $sheet->setCellValue($col++ . $row, number_format($projectTotalHours[$project], 1));
                 
+                $currentCol = $col;
                 for ($day = 1; $day <= $daysInMonth; $day++) {
                     $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                    $cellRef = $currentCol . $row;
+                    
                     if ($currentDate->isWeekend() || isset($sickLeaveDays[$day]) || 
                         isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
-                        $sheet->setCellValue($col++ . $row, '');
+                        $sheet->setCellValue($cellRef, '');
                     } else {
                         $hours = $projectDailyHours[$project][$day];
-                        $sheet->setCellValue($col++ . $row, $hours > 0 ? number_format($hours, 1) : '');
+                        $sheet->setCellValue($cellRef, $hours > 0 ? number_format($hours, 1) : '');
                     }
+                    
+                    // Color weekends with light grey
+                    if ($currentDate->isWeekend()) {
+                        $sheet->getStyle($cellRef)->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'F0F0F0']
+                            ]
+                        ]);
+                    }
+                    
+                    $currentCol++;
                 }
                 
                 $loe = $grandTotal > 0 ? round(($projectTotalHours[$project] / $grandTotal) * 100) : 0;
-                $sheet->setCellValue($col . $row, $loe . '%');
+                $sheet->setCellValue($currentCol . $row, $loe . '%');
                 
                 // Style data row
                 $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
@@ -601,12 +637,27 @@ class UserAttendance extends Component
             $sheet->setCellValue($col++ . $row, 'SICK LEAVE');
             $sheet->setCellValue($col++ . $row, number_format($sickLeaveHours, 1));
             
+            $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
-                $sheet->setCellValue($col++ . $row, isset($sickLeaveDays[$day]) ? '8.0' : '');
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                $cellRef = $currentCol . $row;
+                $sheet->setCellValue($cellRef, isset($sickLeaveDays[$day]) ? '8.0' : '');
+                
+                // Color weekends with light grey
+                if ($currentDate->isWeekend()) {
+                    $sheet->getStyle($cellRef)->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F0F0F0']
+                        ]
+                    ]);
+                }
+                
+                $currentCol++;
             }
             
             $loe = $grandTotal > 0 ? round(($sickLeaveHours / $grandTotal) * 100) : 0;
-            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->setCellValue($currentCol . $row, $loe . '%');
             $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
             ]);
@@ -618,12 +669,27 @@ class UserAttendance extends Component
             $sheet->setCellValue($col++ . $row, 'ANNUAL LEAVE');
             $sheet->setCellValue($col++ . $row, number_format($annualLeaveHours, 1));
             
+            $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
-                $sheet->setCellValue($col++ . $row, isset($annualLeaveDays[$day]) ? '8.0' : '');
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                $cellRef = $currentCol . $row;
+                $sheet->setCellValue($cellRef, isset($annualLeaveDays[$day]) ? '8.0' : '');
+                
+                // Color weekends with light grey
+                if ($currentDate->isWeekend()) {
+                    $sheet->getStyle($cellRef)->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F0F0F0']
+                        ]
+                    ]);
+                }
+                
+                $currentCol++;
             }
             
             $loe = $grandTotal > 0 ? round(($annualLeaveHours / $grandTotal) * 100) : 0;
-            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->setCellValue($currentCol . $row, $loe . '%');
             $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
             ]);
@@ -635,12 +701,27 @@ class UserAttendance extends Component
             $sheet->setCellValue($col++ . $row, 'PUBLIC HOLIDAY');
             $sheet->setCellValue($col++ . $row, number_format($holidayHours, 1));
             
+            $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
-                $sheet->setCellValue($col++ . $row, isset($holidayDays[$day]) ? '8.0' : '');
+                $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                $cellRef = $currentCol . $row;
+                $sheet->setCellValue($cellRef, isset($holidayDays[$day]) ? '8.0' : '');
+                
+                // Color weekends with light grey
+                if ($currentDate->isWeekend()) {
+                    $sheet->getStyle($cellRef)->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F0F0F0']
+                        ]
+                    ]);
+                }
+                
+                $currentCol++;
             }
             
             $loe = $grandTotal > 0 ? round(($holidayHours / $grandTotal) * 100) : 0;
-            $sheet->setCellValue($col . $row, $loe . '%');
+            $sheet->setCellValue($currentCol . $row, $loe . '%');
             $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]]
             ]);
@@ -651,22 +732,37 @@ class UserAttendance extends Component
             $sheet->setCellValue($col++ . $row, 'Daily total');
             $sheet->setCellValue($col++ . $row, number_format($grandTotal, 1));
             
+            $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
+                $cellRef = $currentCol . $row;
+                
                 if ($currentDate->isWeekend()) {
-                    $sheet->setCellValue($col++ . $row, '0.0');
+                    $sheet->setCellValue($cellRef, '0.0');
                 } elseif (isset($sickLeaveDays[$day]) || isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
-                    $sheet->setCellValue($col++ . $row, '8.0');
+                    $sheet->setCellValue($cellRef, '8.0');
                 } else {
                     $dayTotal = 0;
                     foreach ($projects as $project) {
                         $dayTotal += $projectDailyHours[$project][$day];
                     }
-                    $sheet->setCellValue($col++ . $row, $dayTotal > 0 ? number_format($dayTotal, 1) : '0.0');
+                    $sheet->setCellValue($cellRef, $dayTotal > 0 ? number_format($dayTotal, 1) : '0.0');
                 }
+                
+                // Color weekends with light grey
+                if ($currentDate->isWeekend()) {
+                    $sheet->getStyle($cellRef)->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F0F0F0']
+                        ]
+                    ]);
+                }
+                
+                $currentCol++;
             }
             
-            $sheet->setCellValue($col . $row, '100%');
+            $sheet->setCellValue($currentCol . $row, '100%');
             $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
                 'font' => ['bold' => true],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]]
@@ -709,11 +805,17 @@ class UserAttendance extends Component
             $sheet->setCellValue('B' . $row, '____________________________');
             $row++;
             
-            $sheet->setCellValue('B' . $row, '(JOHN MUHANGYI)');
+            $supervisorName = $timesheetData['user']->supervisor ? $timesheetData['user']->supervisor->name : 'N/A';
+            $sheet->setCellValue('B' . $row, '(' . strtoupper($supervisorName) . ')');
             $row++;
             
             $sheet->setCellValue('A' . $row, 'POSITION:');
-            $sheet->setCellValue('B' . $row, 'Deputy Director of Programmes');
+            $supervisorPosition = $timesheetData['user']->supervisor && $timesheetData['user']->supervisor->designation 
+                ? $timesheetData['user']->supervisor->designation->name 
+                : ($timesheetData['user']->supervisor && $timesheetData['user']->supervisor->userLevel 
+                    ? $timesheetData['user']->supervisor->userLevel->name 
+                    : 'N/A');
+            $sheet->setCellValue('B' . $row, $supervisorPosition);
             $row++;
             
             $sheet->setCellValue('A' . $row, 'DATE:');
@@ -763,6 +865,10 @@ class UserAttendance extends Component
         try {
             $timesheetData = $this->generateTimesheetData();
             $timesheetData['projectNames'] = $this->getFormattedProjects();
+            
+            // Load supervisor relationship
+            $this->user->load('supervisor.designation', 'supervisor.userLevel');
+            $timesheetData['user'] = $this->user;
             
             $pdf = Pdf::loadView('reports.timesheet_pdf', $timesheetData)
                 ->setPaper('a4', 'landscape')
@@ -869,6 +975,8 @@ class UserAttendance extends Component
                     
                     if ($secondsWorked > 0) {
                         $hoursWorked = $secondsWorked / 3600;
+                        // Cap at 8 hours per day
+                        $hoursWorked = min(8.0, $hoursWorked);
                         $entry['hoursWorked'] = number_format($hoursWorked, 1);
                         $totalHours += $hoursWorked;
                         $entry['status'] = 'Present';
