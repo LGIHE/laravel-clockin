@@ -439,6 +439,25 @@ class UserAttendance extends Component
         try {
             $timesheetData = $this->generateTimesheetData();
             
+            // Load user relationships
+            $this->user->load('supervisor.designation', 'supervisor.userLevel', 'designation', 'userLevel');
+            
+            // Create sanitized user object
+            $userPosition = $this->user->designation ? 
+                $this->sanitizeUtf8($this->user->designation->name) : 
+                ($this->user->userLevel ? $this->sanitizeUtf8($this->user->userLevel->name) : 'N/A');
+            
+            $supervisorName = $this->user->supervisor ? 
+                $this->sanitizeUtf8($this->user->supervisor->name) : 'N/A';
+            
+            $supervisorPosition = 'N/A';
+            if ($this->user->supervisor) {
+                $supervisorPosition = $this->user->supervisor->designation ? 
+                    $this->sanitizeUtf8($this->user->supervisor->designation->name) : 
+                    ($this->user->supervisor->userLevel ? 
+                        $this->sanitizeUtf8($this->user->supervisor->userLevel->name) : 'N/A');
+            }
+            
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             
@@ -454,7 +473,7 @@ class UserAttendance extends Component
             $row++;
             
             $sheet->setCellValue('A' . $row, 'PROJECT NAME:');
-            $sheet->setCellValue('B' . $row, $this->getFormattedProjects());
+            $sheet->setCellValue('B' . $row, $this->sanitizeUtf8($this->getFormattedProjects()));
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row += 2;
             
@@ -463,12 +482,12 @@ class UserAttendance extends Component
             $row += 2;
             
             $sheet->setCellValue('A' . $row, 'NAME OF PERSON:');
-            $sheet->setCellValue('B' . $row, $timesheetData['user']->name);
+            $sheet->setCellValue('B' . $row, $this->sanitizeUtf8($timesheetData['user']->name));
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row++;
             
             $sheet->setCellValue('A' . $row, 'POSITION:');
-            $sheet->setCellValue('B' . $row, $timesheetData['user']->designation->name ?? $timesheetData['user']->userLevel->name);
+            $sheet->setCellValue('B' . $row, $userPosition);
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row++;
             
@@ -795,7 +814,7 @@ class UserAttendance extends Component
             $sheet->setCellValue('B' . $row, '____________________________');
             $row++;
             
-            $sheet->setCellValue('B' . $row, '(' . $timesheetData['user']->name . ')');
+            $sheet->setCellValue('B' . $row, '(' . $this->sanitizeUtf8($timesheetData['user']->name) . ')');
             $row++;
             
             $sheet->setCellValue('A' . $row, 'DATE:');
@@ -806,16 +825,10 @@ class UserAttendance extends Component
             $sheet->setCellValue('B' . $row, '____________________________');
             $row++;
             
-            $supervisorName = $timesheetData['user']->supervisor ? $timesheetData['user']->supervisor->name : 'N/A';
             $sheet->setCellValue('B' . $row, '(' . strtoupper($supervisorName) . ')');
             $row++;
             
             $sheet->setCellValue('A' . $row, 'POSITION:');
-            $supervisorPosition = $timesheetData['user']->supervisor && $timesheetData['user']->supervisor->designation 
-                ? $timesheetData['user']->supervisor->designation->name 
-                : ($timesheetData['user']->supervisor && $timesheetData['user']->supervisor->userLevel 
-                    ? $timesheetData['user']->supervisor->userLevel->name 
-                    : 'N/A');
             $sheet->setCellValue('B' . $row, $supervisorPosition);
             $row++;
             
@@ -840,7 +853,7 @@ class UserAttendance extends Component
             }
             
             // Generate filename
-            $filename = 'timesheet-' . $this->sanitizeFilename($timesheetData['user']->name) . '-' . 
+            $filename = 'timesheet-' . $this->sanitizeFilename($this->user->name) . '-' . 
                        Carbon::parse($this->startDate)->format('Y-m') . '.xlsx';
             
             // Create Excel file
