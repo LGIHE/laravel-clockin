@@ -544,11 +544,11 @@ class UserAttendance extends Component
                         $annualLeaveDays[$day] = true;
                     } elseif ($dayEntry['status'] === 'Public Holiday') {
                         $holidayDays[$day] = true;
-                    } elseif ($dayEntry['status'] === 'Present' && !empty($dayEntry['hoursWorked'])) {
-                        // Cap hours at 8 per day and convert to whole number
-                        $hours = min(8, floor(floatval($dayEntry['hoursWorked'])));
+                    } elseif ($dayEntry['status'] === 'Present') {
+                        // Always count as 8 hours if they clocked in (regardless of actual hours worked)
+                        $hours = 8;
                         
-                        // Distribute hours across projects randomly (whole numbers only)
+                        // Distribute 8 hours across projects randomly (whole numbers only)
                         if (count($projects) === 1) {
                             $projectDailyHours[$projects[0]][$day] = $hours;
                             $projectTotalHours[$projects[0]] += $hours;
@@ -951,7 +951,8 @@ class UserAttendance extends Component
             if ($holiday) {
                 $entry['status'] = 'Public Holiday';
                 $entry['notes'] = $this->sanitizeUtf8($holiday->name ?? '');
-                $entry['hoursWorked'] = '8.0';
+                $entry['hoursWorked'] = '8';
+                $totalHours += 8;
                 $publicHolidays++;
             } elseif ($leave) {
                 $leaveType = strtolower($leave->category->name ?? '');
@@ -963,26 +964,19 @@ class UserAttendance extends Component
                     $annualLeaveDays++;
                 }
                 $entry['notes'] = $this->sanitizeUtf8($leave->description ?? '');
-                $entry['hoursWorked'] = '8.0';
+                $entry['hoursWorked'] = '8';
+                $totalHours += 8;
             } elseif ($attendance) {
                 $entry['clockIn'] = Carbon::parse($attendance->in_time)->format('H:i:s');
                 $entry['clockOut'] = $attendance->out_time ? 
                     Carbon::parse($attendance->out_time)->format('H:i:s') : 'Not clocked out';
                 
+                // Always count as 8 hours if they clocked in (paid day)
                 if ($attendance->out_time) {
-                    $inTime = Carbon::parse($attendance->in_time);
-                    $outTime = Carbon::parse($attendance->out_time);
-                    $secondsWorked = $outTime->timestamp - $inTime->timestamp;
-                    
-                    if ($secondsWorked > 0) {
-                        $hoursWorked = $secondsWorked / 3600;
-                        // Cap at 8 hours per day
-                        $hoursWorked = min(8.0, $hoursWorked);
-                        $entry['hoursWorked'] = number_format($hoursWorked, 1);
-                        $totalHours += $hoursWorked;
-                        $entry['status'] = 'Present';
-                        $daysWorked++;
-                    }
+                    $entry['hoursWorked'] = '8';
+                    $totalHours += 8;
+                    $entry['status'] = 'Present';
+                    $daysWorked++;
                 } else {
                     $entry['status'] = 'In Progress';
                 }
@@ -1009,7 +1003,7 @@ class UserAttendance extends Component
             'entries' => $entries,
             'summary' => [
                 'daysWorked' => $daysWorked,
-                'totalHours' => number_format($totalHours, 1),
+                'totalHours' => (string)$totalHours,
                 'sickLeaveDays' => $sickLeaveDays,
                 'annualLeaveDays' => $annualLeaveDays,
                 'publicHolidays' => $publicHolidays,
