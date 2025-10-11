@@ -545,15 +545,15 @@ class UserAttendance extends Component
                     } elseif ($dayEntry['status'] === 'Public Holiday') {
                         $holidayDays[$day] = true;
                     } elseif ($dayEntry['status'] === 'Present' && !empty($dayEntry['hoursWorked'])) {
-                        // Cap hours at 8 per day
-                        $hours = min(8.0, floatval($dayEntry['hoursWorked']));
+                        // Cap hours at 8 per day and convert to whole number
+                        $hours = min(8, floor(floatval($dayEntry['hoursWorked'])));
                         
-                        // Distribute hours across projects randomly
+                        // Distribute hours across projects randomly (whole numbers only)
                         if (count($projects) === 1) {
                             $projectDailyHours[$projects[0]][$day] = $hours;
                             $projectTotalHours[$projects[0]] += $hours;
                         } else {
-                            // Random distribution that adds up to total hours
+                            // Random distribution in whole numbers that adds up to total hours
                             $remaining = $hours;
                             $projectCount = count($projects);
                             
@@ -562,10 +562,11 @@ class UserAttendance extends Component
                                     // Last project gets remaining hours
                                     $projectHours = $remaining;
                                 } else {
-                                    // Random allocation between 10% and 90% of remaining
-                                    $minAlloc = $remaining * 0.1;
-                                    $maxAlloc = $remaining * 0.9;
-                                    $projectHours = mt_rand($minAlloc * 10, $maxAlloc * 10) / 10;
+                                    // Random allocation between 1 and (remaining - remaining projects)
+                                    // Ensure each remaining project gets at least 1 hour
+                                    $remainingProjects = $projectCount - $index - 1;
+                                    $maxForThisProject = max(1, $remaining - $remainingProjects);
+                                    $projectHours = mt_rand(1, $maxForThisProject);
                                     $remaining -= $projectHours;
                                 }
                                 
@@ -587,7 +588,7 @@ class UserAttendance extends Component
             foreach ($projects as $project) {
                 $col = 'A';
                 $sheet->setCellValue($col++ . $row, $project);
-                $sheet->setCellValue($col++ . $row, number_format($projectTotalHours[$project], 1));
+                $sheet->setCellValue($col++ . $row, number_format($projectTotalHours[$project], 0));
                 
                 $currentCol = $col;
                 for ($day = 1; $day <= $daysInMonth; $day++) {
@@ -599,7 +600,7 @@ class UserAttendance extends Component
                         $sheet->setCellValue($cellRef, '');
                     } else {
                         $hours = $projectDailyHours[$project][$day];
-                        $sheet->setCellValue($cellRef, $hours > 0 ? number_format($hours, 1) : '');
+                        $sheet->setCellValue($cellRef, $hours > 0 ? number_format($hours, 0) : '');
                     }
                     
                     // Color weekends with light grey
@@ -635,13 +636,13 @@ class UserAttendance extends Component
             $col = 'A';
             $sickLeaveHours = count($sickLeaveDays) * 8;
             $sheet->setCellValue($col++ . $row, 'SICK LEAVE');
-            $sheet->setCellValue($col++ . $row, number_format($sickLeaveHours, 1));
+            $sheet->setCellValue($col++ . $row, number_format($sickLeaveHours, 0));
             
             $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
                 $cellRef = $currentCol . $row;
-                $sheet->setCellValue($cellRef, isset($sickLeaveDays[$day]) ? '8.0' : '');
+                $sheet->setCellValue($cellRef, isset($sickLeaveDays[$day]) ? '8' : '');
                 
                 // Color weekends with light grey
                 if ($currentDate->isWeekend()) {
@@ -667,13 +668,13 @@ class UserAttendance extends Component
             $col = 'A';
             $annualLeaveHours = count($annualLeaveDays) * 8;
             $sheet->setCellValue($col++ . $row, 'ANNUAL LEAVE');
-            $sheet->setCellValue($col++ . $row, number_format($annualLeaveHours, 1));
+            $sheet->setCellValue($col++ . $row, number_format($annualLeaveHours, 0));
             
             $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
                 $cellRef = $currentCol . $row;
-                $sheet->setCellValue($cellRef, isset($annualLeaveDays[$day]) ? '8.0' : '');
+                $sheet->setCellValue($cellRef, isset($annualLeaveDays[$day]) ? '8' : '');
                 
                 // Color weekends with light grey
                 if ($currentDate->isWeekend()) {
@@ -699,13 +700,13 @@ class UserAttendance extends Component
             $col = 'A';
             $holidayHours = count($holidayDays) * 8;
             $sheet->setCellValue($col++ . $row, 'PUBLIC HOLIDAY');
-            $sheet->setCellValue($col++ . $row, number_format($holidayHours, 1));
+            $sheet->setCellValue($col++ . $row, number_format($holidayHours, 0));
             
             $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($startDate->year, $startDate->month, $day);
                 $cellRef = $currentCol . $row;
-                $sheet->setCellValue($cellRef, isset($holidayDays[$day]) ? '8.0' : '');
+                $sheet->setCellValue($cellRef, isset($holidayDays[$day]) ? '8' : '');
                 
                 // Color weekends with light grey
                 if ($currentDate->isWeekend()) {
@@ -730,7 +731,7 @@ class UserAttendance extends Component
             // Add Daily total row
             $col = 'A';
             $sheet->setCellValue($col++ . $row, 'Daily total');
-            $sheet->setCellValue($col++ . $row, number_format($grandTotal, 1));
+            $sheet->setCellValue($col++ . $row, number_format($grandTotal, 0));
             
             $currentCol = $col;
             for ($day = 1; $day <= $daysInMonth; $day++) {
@@ -738,15 +739,15 @@ class UserAttendance extends Component
                 $cellRef = $currentCol . $row;
                 
                 if ($currentDate->isWeekend()) {
-                    $sheet->setCellValue($cellRef, '0.0');
+                    $sheet->setCellValue($cellRef, '0');
                 } elseif (isset($sickLeaveDays[$day]) || isset($annualLeaveDays[$day]) || isset($holidayDays[$day])) {
-                    $sheet->setCellValue($cellRef, '8.0');
+                    $sheet->setCellValue($cellRef, '8');
                 } else {
                     $dayTotal = 0;
                     foreach ($projects as $project) {
                         $dayTotal += $projectDailyHours[$project][$day];
                     }
-                    $sheet->setCellValue($cellRef, $dayTotal > 0 ? number_format($dayTotal, 1) : '0.0');
+                    $sheet->setCellValue($cellRef, $dayTotal > 0 ? (string)$dayTotal : '0');
                 }
                 
                 // Color weekends with light grey
@@ -781,7 +782,7 @@ class UserAttendance extends Component
             
             // Add summary
             $sheet->setCellValue('A' . $row, 'NUMBER OF HOURS WORKED:');
-            $sheet->setCellValue('B' . $row, number_format($grandTotal, 1));
+            $sheet->setCellValue('B' . $row, number_format($grandTotal, 0));
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
             $row++;
             
