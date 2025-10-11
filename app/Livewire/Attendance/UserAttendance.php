@@ -1039,8 +1039,14 @@ class UserAttendance extends Component
             $currentDate->addDay();
         }
         
+        // Create a sanitized user object
+        $sanitizedUser = (object)[
+            'id' => $this->user->id,
+            'name' => $this->sanitizeUtf8($this->user->name),
+        ];
+        
         return [
-            'user' => $this->user,
+            'user' => $sanitizedUser,
             'period' => $startDate->format('F Y'),
             'startDate' => $startDate->format('Y-m-d'),
             'endDate' => $endDate->format('Y-m-d'),
