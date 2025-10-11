@@ -865,11 +865,40 @@ class UserAttendance extends Component
         
         try {
             $timesheetData = $this->generateTimesheetData();
-            $timesheetData['projectNames'] = $this->getFormattedProjects();
+            
+            // Sanitize all text data for UTF-8 encoding
+            $timesheetData['projectNames'] = $this->sanitizeUtf8($this->getFormattedProjects());
             
             // Load supervisor relationship
             $this->user->load('supervisor.designation', 'supervisor.userLevel');
-            $timesheetData['user'] = $this->user;
+            
+            // Create a sanitized user object for the PDF
+            $sanitizedUser = (object)[
+                'name' => $this->sanitizeUtf8($this->user->name),
+                'designation' => $this->user->designation ? 
+                    (object)['name' => $this->sanitizeUtf8($this->user->designation->name)] : null,
+                'userLevel' => $this->user->userLevel ? 
+                    (object)['name' => $this->sanitizeUtf8($this->user->userLevel->name)] : null,
+                'supervisor' => null,
+            ];
+            
+            // Add supervisor info if exists
+            if ($this->user->supervisor) {
+                $sanitizedUser->supervisor = (object)[
+                    'name' => $this->sanitizeUtf8($this->user->supervisor->name),
+                    'designation' => $this->user->supervisor->designation ? 
+                        (object)['name' => $this->sanitizeUtf8($this->user->supervisor->designation->name)] : null,
+                    'userLevel' => $this->user->supervisor->userLevel ? 
+                        (object)['name' => $this->sanitizeUtf8($this->user->supervisor->userLevel->name)] : null,
+                ];
+            }
+            
+            $timesheetData['user'] = $sanitizedUser;
+            
+            // Sanitize all entries
+            foreach ($timesheetData['entries'] as &$entry) {
+                $entry['notes'] = $this->sanitizeUtf8($entry['notes']);
+            }
             
             $pdf = Pdf::loadView('reports.timesheet_pdf', $timesheetData)
                 ->setPaper('a4', 'landscape')
@@ -879,9 +908,10 @@ class UserAttendance extends Component
                     'isRemoteEnabled' => true,
                 ]);
             
-            return $pdf->download('timesheet-' . $this->sanitizeFilename($timesheetData['user']->name) . '-' . 
+            return $pdf->download('timesheet-' . $this->sanitizeFilename($this->user->name) . '-' . 
                                  Carbon::parse($this->startDate)->format('Y-m') . '.pdf');
         } catch (\Exception $e) {
+            \Log::error('Timesheet PDF export error: ' . $e->getMessage());
             $this->dispatch('toast', [
                 'message' => 'Failed to generate timesheet: ' . $e->getMessage(),
                 'variant' => 'danger'
@@ -1059,14 +1089,29 @@ class UserAttendance extends Component
             return '';
         }
         
-        // Convert to UTF-8 if not already
-        $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+        // Convert to string if it's not already
+        $string = (string)$string;
+        
+        // Check if string is already valid UTF-8
+        if (!mb_check_encoding($string, 'UTF-8')) {
+            // Try to detect and convert encoding
+            $encoding = mb_detect_encoding($string, ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'], true);
+            if ($encoding) {
+                $string = mb_convert_encoding($string, 'UTF-8', $encoding);
+            } else {
+                // Fallback: force UTF-8 conversion
+                $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+            }
+        }
         
         // Remove any invalid UTF-8 characters
         $string = mb_scrub($string, 'UTF-8');
         
         // Remove control characters except newlines and tabs
         $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $string);
+        
+        // Remove any remaining problematic characters
+        $string = preg_replace('/[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $string);
         
         return $string;
     }
