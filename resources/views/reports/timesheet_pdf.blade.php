@@ -140,7 +140,7 @@
         </div>
         <div class="header-row">
             <div class="header-label">POSITION:</div>
-            <div class="header-value">{{ $user->designation ?? $user->userLevel->name }}</div>
+            <div class="header-value">{{ $user->position }}</div>
         </div>
         <div class="header-row">
             <div class="header-label">PERIOD COVERED:</div>
@@ -224,7 +224,7 @@
             <div class="signature-name">({{ strtoupper($user->supervisor ? $user->supervisor->name : 'N/A') }})</div>
             <div style="margin-top: 15px; margin-left: 0;">
                 <span class="signature-label">POSITION:</span>
-                <span>{{ $user->supervisor && $user->supervisor->designation ? $user->supervisor->designation->name : ($user->supervisor && $user->supervisor->userLevel ? $user->supervisor->userLevel->name : 'N/A') }}</span>
+                <span>{{ $user->supervisor ? $user->supervisor->position : 'N/A' }}</span>
             </div>
             <div style="margin-top: 10px;">
                 <span class="signature-label">DATE:</span>

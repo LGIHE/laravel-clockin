@@ -870,26 +870,27 @@ class UserAttendance extends Component
             $timesheetData['projectNames'] = $this->sanitizeUtf8($this->getFormattedProjects());
             
             // Load supervisor relationship
-            $this->user->load('supervisor.designation', 'supervisor.userLevel');
+            $this->user->load('supervisor.designation', 'supervisor.userLevel', 'designation', 'userLevel');
             
-            // Create a sanitized user object for the PDF
+            // Create a sanitized user object for the PDF with simple string properties
             $sanitizedUser = (object)[
                 'name' => $this->sanitizeUtf8($this->user->name),
-                'designation' => $this->user->designation ? 
-                    (object)['name' => $this->sanitizeUtf8($this->user->designation->name)] : null,
-                'userLevel' => $this->user->userLevel ? 
-                    (object)['name' => $this->sanitizeUtf8($this->user->userLevel->name)] : null,
+                'position' => $this->user->designation ? 
+                    $this->sanitizeUtf8($this->user->designation->name) : 
+                    ($this->user->userLevel ? $this->sanitizeUtf8($this->user->userLevel->name) : 'N/A'),
                 'supervisor' => null,
             ];
             
             // Add supervisor info if exists
             if ($this->user->supervisor) {
+                $supervisorPosition = $this->user->supervisor->designation ? 
+                    $this->sanitizeUtf8($this->user->supervisor->designation->name) : 
+                    ($this->user->supervisor->userLevel ? 
+                        $this->sanitizeUtf8($this->user->supervisor->userLevel->name) : 'N/A');
+                
                 $sanitizedUser->supervisor = (object)[
                     'name' => $this->sanitizeUtf8($this->user->supervisor->name),
-                    'designation' => $this->user->supervisor->designation ? 
-                        (object)['name' => $this->sanitizeUtf8($this->user->supervisor->designation->name)] : null,
-                    'userLevel' => $this->user->supervisor->userLevel ? 
-                        (object)['name' => $this->sanitizeUtf8($this->user->supervisor->userLevel->name)] : null,
+                    'position' => $supervisorPosition,
                 ];
             }
             
