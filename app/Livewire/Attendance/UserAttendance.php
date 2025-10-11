@@ -730,9 +730,10 @@ class UserAttendance extends Component
             $row++;
             $sheet->setCellValue('A' . $row, '- If you prefer to use timesheets with a periodicity of less than a month (for example weekly or bi-weekly), please adjust the template accordingly');
             
-            // Auto-size columns
-            foreach (range('A', $lastCol) as $columnID) {
-                $sheet->getColumnDimension($columnID)->setAutoSize(true);
+            // Auto-size columns - iterate through all columns used
+            $columnIterator = $sheet->getColumnIterator();
+            foreach ($columnIterator as $column) {
+                $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
             }
             
             // Generate filename
