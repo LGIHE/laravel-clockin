@@ -19,6 +19,7 @@ use App\Livewire\LeaveCategories\LeaveCategoryList;
 use App\Livewire\Holidays\HolidayList;
 use App\Livewire\Notices\NoticeList;
 use App\Livewire\Tasks\TaskList;
+use App\Http\Controllers\SystemSettingsController;
 
 // Guest routes (authentication)
 Route::middleware('guest')->group(function () {
@@ -67,6 +68,17 @@ Route::middleware('auth')->group(function () {
         
         // Leave Category Management
         Route::get('/leave-categories', LeaveCategoryList::class)->name('leave-categories.index');
+        
+        // System Settings
+        Route::get('/settings', [SystemSettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings/general', [SystemSettingsController::class, 'updateGeneral'])->name('settings.update.general');
+        Route::put('/settings/email', [SystemSettingsController::class, 'updateEmail'])->name('settings.update.email');
+        Route::put('/settings/system', [SystemSettingsController::class, 'updateSystem'])->name('settings.update.system');
+        Route::put('/settings/notification', [SystemSettingsController::class, 'updateNotification'])->name('settings.update.notification');
+        Route::get('/settings/logs', [SystemSettingsController::class, 'logs'])->name('settings.logs');
+        Route::delete('/settings/logs', [SystemSettingsController::class, 'clearLogs'])->name('settings.logs.clear');
+        Route::get('/settings/stats', [SystemSettingsController::class, 'stats'])->name('settings.stats');
+        Route::post('/settings/cache/clear', [SystemSettingsController::class, 'clearCache'])->name('settings.cache.clear');
     });
     
     // Notice Board (accessible to all authenticated users)
