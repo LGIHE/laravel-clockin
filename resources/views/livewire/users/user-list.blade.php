@@ -903,18 +903,37 @@
                                     </div>
 
                                     <div class="space-y-2 col-span-2">
-                                        <label for="editUserSupervisor" class="block text-sm font-medium text-gray-700">Supervisor</label>
+                                        <label for="editUserSupervisors" class="block text-sm font-medium text-gray-700">Supervisors (Multiple Selection)</label>
                                         <select 
-                                            id="editUserSupervisor"
-                                            wire:model="editUser.supervisor_id"
+                                            id="editUserSupervisors"
+                                            wire:model.defer="editUser.supervisor_ids"
+                                            multiple
+                                            size="5"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         >
-                                            <option value="">No Supervisor</option>
                                             @foreach($supervisors as $supervisor)
-                                                <option value="{{ $supervisor->id }}">{{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})</option>
+                                                <option value="{{ $supervisor->id }}" {{ in_array($supervisor->id, $editUser['supervisor_ids'] ?? []) ? 'selected' : '' }}>
+                                                    {{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})
+                                                </option>
                                             @endforeach
                                         </select>
-                                        @error('editUser.supervisor_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                        <p class="mt-1 text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple supervisors</p>
+                                        @error('editUser.supervisor_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                        
+                                        @if(!empty($editUser['supervisor_ids']))
+                                            <div class="mt-2">
+                                                <p class="text-xs font-medium text-gray-700">Currently Selected:</p>
+                                                <div class="flex flex-wrap gap-2 mt-1">
+                                                    @foreach($supervisors as $supervisor)
+                                                        @if(in_array($supervisor->id, $editUser['supervisor_ids'] ?? []))
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                                {{ $supervisor->name }}
+                                                            </span>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -1047,24 +1066,43 @@
                         <form wire:submit.prevent="saveChangeSupervisor" class="space-y-4">
                             <div>
                                 <p class="text-sm text-gray-600 mb-2">User: <strong>{{ $changeSupervisorData['user_name'] }}</strong></p>
-                                <p class="text-sm text-gray-600 mb-4">Current Supervisor: <strong>{{ $changeSupervisorData['current_supervisor'] }}</strong></p>
+                                <p class="text-sm text-gray-600 mb-4">Current Supervisors: <strong>{{ $changeSupervisorData['current_supervisor'] }}</strong></p>
                             </div>
 
                             <div>
-                                <label for="newSupervisor" class="block text-sm font-medium text-gray-700">New Supervisor</label>
+                                <label for="newSupervisors" class="block text-sm font-medium text-gray-700">Supervisors (Multiple Selection)</label>
                                 <select 
-                                    id="newSupervisor"
-                                    wire:model="changeSupervisorData.new_supervisor_id"
+                                    id="newSupervisors"
+                                    wire:model.defer="changeSupervisorData.new_supervisor_ids"
+                                    multiple
+                                    size="6"
                                     class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    <option value="">No Supervisor</option>
                                     @foreach($supervisors as $supervisor)
-                                        <option value="{{ $supervisor->id }}">{{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})</option>
+                                        <option value="{{ $supervisor->id }}" {{ in_array($supervisor->id, $changeSupervisorData['new_supervisor_ids'] ?? []) ? 'selected' : '' }}>
+                                            {{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})
+                                        </option>
                                     @endforeach
                                 </select>
-                                @error('changeSupervisorData.new_supervisor_id') 
+                                <p class="mt-1 text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple supervisors. Deselect all for no supervisor.</p>
+                                @error('changeSupervisorData.new_supervisor_ids') 
                                     <span class="text-red-500 text-xs">{{ $message }}</span> 
                                 @enderror
+                                
+                                @if(!empty($changeSupervisorData['new_supervisor_ids']))
+                                    <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <p class="text-xs font-medium text-blue-900 mb-2">Selected Supervisors:</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($supervisors as $supervisor)
+                                                @if(in_array($supervisor->id, $changeSupervisorData['new_supervisor_ids'] ?? []))
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-200 text-blue-900">
+                                                        {{ $supervisor->name }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
