@@ -54,7 +54,7 @@
                 
                 <!-- Profile Settings Link -->
                 <a 
-                    href="{{ route('attendance.index') }}" 
+                    href="{{ route('profile') }}" 
                     class="flex w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     wire:navigate
                 >

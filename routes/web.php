@@ -91,6 +91,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/timesheet', \App\Livewire\Reports\TimesheetReport::class)->name('reports.timesheet');
     Route::get('/reports/export', [\App\Http\Controllers\ReportController::class, 'export'])->name('reports.export');
     
+    // Profile page
+    Route::get('/profile', \App\Livewire\ProfilePage::class)->name('profile');
+
     Route::post('/logout', function () {
         auth()->logout();
         session()->invalidate();
