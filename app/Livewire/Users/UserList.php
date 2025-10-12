@@ -788,6 +788,26 @@ class UserList extends Component
         }
     }
 
+    public function removeEditUserSupervisor($supervisorId)
+    {
+        $this->editUser['supervisor_ids'] = array_values(
+            array_filter(
+                $this->editUser['supervisor_ids'] ?? [],
+                fn($id) => $id !== $supervisorId
+            )
+        );
+    }
+
+    public function removeChangeSupervisor($supervisorId)
+    {
+        $this->changeSupervisorData['new_supervisor_ids'] = array_values(
+            array_filter(
+                $this->changeSupervisorData['new_supervisor_ids'] ?? [],
+                fn($id) => $id !== $supervisorId
+            )
+        );
+    }
+
     public function updateUser()
     {
         $rules = [
