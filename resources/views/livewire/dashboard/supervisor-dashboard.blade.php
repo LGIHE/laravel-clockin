@@ -128,21 +128,22 @@
                 @else
                     <div class="space-y-3 max-h-96 overflow-y-auto">
                         @foreach($teamAttendance['attendance_records'] as $attendance)
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2">
-                                        <p class="text-sm font-medium text-gray-900">
-                                            {{ $attendance->user->name }}
-                                        </p>
-                                        @if($attendance->out_time)
-                                            <x-ui.badge variant="default" size="sm">Clocked Out</x-ui.badge>
-                                        @else
-                                            <x-ui.badge variant="success" size="sm">Clocked In</x-ui.badge>
-                                        @endif
-                                    </div>
-                                    <div class="flex items-center space-x-4 mt-1 text-xs text-gray-600">
-                                        <span>In: {{ \Carbon\Carbon::parse($attendance->in_time)->format('h:i A') }}</span>
-                                        @if($attendance->out_time)
+                            @if($attendance->user)
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ $attendance->user->name }}
+                                            </p>
+                                            @if($attendance->out_time)
+                                                <x-ui.badge variant="default" size="sm">Clocked Out</x-ui.badge>
+                                            @else
+                                                <x-ui.badge variant="success" size="sm">Clocked In</x-ui.badge>
+                                            @endif
+                                        </div>
+                                        <div class="flex items-center space-x-4 mt-1 text-xs text-gray-600">
+                                            <span>In: {{ \Carbon\Carbon::parse($attendance->in_time)->format('h:i A') }}</span>
+                                            @if($attendance->out_time)
                                             <span>Out: {{ \Carbon\Carbon::parse($attendance->out_time)->format('h:i A') }}</span>
                                         @endif
                                     </div>
@@ -159,6 +160,7 @@
                                     </div>
                                 @endif
                             </div>
+                            @endif
                         @endforeach
                     </div>
                 @endif
