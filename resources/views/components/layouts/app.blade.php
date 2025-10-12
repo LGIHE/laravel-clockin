@@ -10,7 +10,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title }} - {{ config('app.name', 'ClockIn') }}</title>
+    <title>{{ $title }} - {{ settings('app_name', config('app.name', 'ClockIn')) }}</title>
+
+    <!-- Favicon -->
+    @php
+        $favicon = settings('app_logo');
+    @endphp
+    @if($favicon)
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $favicon) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . $favicon) }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

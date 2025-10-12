@@ -134,12 +134,21 @@
     <!-- Sidebar Header with Logo -->
     <div class="p-4 border-b border-gray-200">
         <a href="{{ route(match($userRole) { 'ADMIN' => 'admin.dashboard', 'SUPERVISOR' => 'supervisor.dashboard', default => 'dashboard' }) }}" class="flex items-center gap-2">
-            <div class="bg-lgf-blue text-white font-bold p-2 rounded">
-                <span class="text-lg">LGF</span>
-            </div>
+            @php
+                $appLogo = settings('app_logo');
+                $appName = settings('app_name', 'Luigi Giussani Foundation');
+            @endphp
+            
+            @if($appLogo)
+                <img src="{{ asset('storage/' . $appLogo) }}" alt="{{ $appName }}" class="h-10 w-auto">
+            @else
+                <div class="bg-lgf-blue text-white font-bold p-2 rounded">
+                    <span class="text-lg">LGF</span>
+                </div>
+            @endif
+            
             <div class="text-gray-700 font-medium leading-tight">
-                <div class="text-xs uppercase">Luigi</div>
-                <div class="text-xs uppercase">Giussani Foundation</div>
+                <div class="text-sm font-semibold">{{ $appName }}</div>
             </div>
         </a>
     </div>

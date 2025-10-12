@@ -1,4 +1,22 @@
 <div>
+    <!-- Logo -->
+    <div class="flex justify-center mb-6">
+        @php
+            $appLogo = settings('app_logo');
+            $appName = settings('app_name', 'Luigi Giussani Foundation');
+        @endphp
+        
+        @if($appLogo)
+            <img src="{{ asset('storage/' . $appLogo) }}" alt="{{ $appName }}" class="h-16 w-auto">
+        @else
+            <div class="flex items-center gap-2">
+                <div class="bg-lgf-blue text-white font-bold p-2 rounded">
+                    <span class="text-lg">LGF</span>
+                </div>
+            </div>
+        @endif
+    </div>
+    
     <div class="mb-6">
         <h2 class="text-2xl font-bold text-gray-900">Create new password</h2>
         <p class="mt-2 text-sm text-gray-600">

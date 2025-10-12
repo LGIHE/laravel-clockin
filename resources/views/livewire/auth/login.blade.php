@@ -1,16 +1,25 @@
 <div>
     <!-- Logo and Title -->
     <div class="flex flex-col items-center mb-8">
+        @php
+            $appLogo = settings('app_logo');
+            $appName = settings('app_name', 'Luigi Giussani Foundation');
+        @endphp
+        
         <div class="flex items-center gap-2 mb-4">
-            <div class="bg-lgf-blue text-white font-bold p-2 rounded">
-                <span class="text-lg">LGF</span>
-            </div>
-            <div class="text-gray-700 font-medium leading-tight">
-                <div class="text-xs uppercase">Luigi</div>
-                <div class="text-xs uppercase">Giussani Foundation</div>
-            </div>
+            @if($appLogo)
+                <img src="{{ asset('storage/' . $appLogo) }}" alt="{{ $appName }}" class="h-16 w-auto">
+            @else
+                <div class="bg-lgf-blue text-white font-bold p-2 rounded">
+                    <span class="text-lg">LGF</span>
+                </div>
+                <div class="text-gray-700 font-medium leading-tight">
+                    <div class="text-xs uppercase">Luigi</div>
+                    <div class="text-xs uppercase">Giussani Foundation</div>
+                </div>
+            @endif
         </div>
-        <h1 class="text-2xl font-semibold text-gray-900 mt-2">LGF Clockin</h1>
+        <h1 class="text-2xl font-semibold text-gray-900 mt-2">{{ $appName }}</h1>
         <p class="text-gray-500 text-sm mt-1">Login to continue.</p>
     </div>
 
