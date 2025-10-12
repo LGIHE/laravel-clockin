@@ -27,7 +27,8 @@ class ProfilePage extends Component
 
     public function mount()
     {
-        $user = Auth::user();
+        // Load user with all required relationships
+        $user = Auth::user()->load(['userLevel', 'department', 'designation', 'supervisors', 'projects']);
         
         // Basic Information
         $this->name = $user->name;

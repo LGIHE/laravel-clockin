@@ -183,12 +183,12 @@
                         Supervisors (Multiple Selection)
                     </label>
                     <select id="selectedSupervisors" 
-                            wire:model="selectedSupervisors"
+                            wire:model.defer="selectedSupervisors"
                             multiple
                             size="5"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('selectedSupervisors') border-red-500 @enderror">
                         @foreach($supervisors as $supervisor)
-                            <option value="{{ $supervisor->id }}">
+                            <option value="{{ $supervisor->id }}" {{ in_array($supervisor->id, $selectedSupervisors ?? []) ? 'selected' : '' }}>
                                 {{ $supervisor->name }} 
                                 @if($supervisor->userLevel)
                                     ({{ ucfirst($supervisor->userLevel->name) }})
@@ -200,6 +200,21 @@
                     @error('selectedSupervisors')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                    
+                    @if(!empty($selectedSupervisors))
+                        <div class="mt-2">
+                            <p class="text-xs font-medium text-gray-700">Currently Selected:</p>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                @foreach($supervisors as $supervisor)
+                                    @if(in_array($supervisor->id, $selectedSupervisors))
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ $supervisor->name }}
+                                        </span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
