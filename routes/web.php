@@ -86,3 +86,22 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('login');
     })->name('logout');
 });
+
+// Utility routes (Admin only - for maintenance)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/clear-cache', function () {
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Application cache cleared successfully!',
+            'details' => [
+                'config' => 'Configuration cache cleared',
+                'routes' => 'Route cache cleared',
+                'views' => 'Compiled views cleared',
+                'events' => 'Cached events cleared',
+                'cache' => 'Application cache cleared',
+            ]
+        ]);
+    })->name('cache.clear');
+});
