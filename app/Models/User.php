@@ -116,7 +116,8 @@ class User extends Authenticatable
     public function supervisors()
     {
         return $this->belongsToMany(User::class, 'user_supervisor', 'user_id', 'supervisor_id')
-                    ->withTimestamps();
+                    ->withTimestamps()
+                    ->withPivot('id');
     }
 
     /**
@@ -125,7 +126,8 @@ class User extends Authenticatable
     public function supervisedUsers()
     {
         return $this->belongsToMany(User::class, 'user_supervisor', 'supervisor_id', 'user_id')
-                    ->withTimestamps();
+                    ->withTimestamps()
+                    ->withPivot('id');
     }
     
     /**
