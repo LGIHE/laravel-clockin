@@ -9,7 +9,7 @@ use Livewire\Component;
 class SupervisorDashboard extends Component
 {
     public $dashboardData;
-    public $teamAttendance;
+    public $teamAttendance = [];
     public $pendingLeaves;
     public $teamStats;
     public $teamMembers;
@@ -38,11 +38,17 @@ class SupervisorDashboard extends Component
     {
         try {
             $this->dashboardData = $this->dashboardService->getSupervisorDashboard(auth()->id());
-            $this->teamAttendance = $this->dashboardData['team_attendance'];
-            $this->pendingLeaves = $this->dashboardData['pending_leaves'];
-            $this->teamStats = $this->dashboardData['team_stats'];
-            $this->teamMembers = $this->dashboardData['team_members'];
+            $this->teamAttendance = $this->dashboardData['team_attendance'] ?? [];
+            $this->pendingLeaves = $this->dashboardData['pending_leaves'] ?? collect();
+            $this->teamStats = $this->dashboardData['team_stats'] ?? [];
+            $this->teamMembers = $this->dashboardData['team_members'] ?? collect();
         } catch (\Exception $e) {
+            // Initialize with empty values on error
+            $this->teamAttendance = [];
+            $this->pendingLeaves = collect();
+            $this->teamStats = [];
+            $this->teamMembers = collect();
+            
             $this->dispatch('toast', [
                 'message' => 'Failed to load dashboard data: ' . $e->getMessage(),
                 'variant' => 'danger'

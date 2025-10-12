@@ -120,7 +120,7 @@
                     <p class="text-sm text-gray-600">Current attendance status</p>
                 </div>
                 
-                @if($teamAttendance['attendance_records']->isEmpty())
+                @if(!$teamAttendance || !isset($teamAttendance['attendance_records']) || $teamAttendance['attendance_records']->isEmpty())
                     <x-ui.empty-state 
                         title="No attendance records"
                         description="No team members have clocked in today"
