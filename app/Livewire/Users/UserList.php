@@ -1137,7 +1137,7 @@ class UserList extends Component
 
     public function render()
     {
-        $query = User::with(['userLevel', 'department', 'designation']);
+        $query = User::with(['userLevel', 'department', 'designation', 'supervisors']);
 
         // Apply search filter
         if (!empty($this->search)) {
