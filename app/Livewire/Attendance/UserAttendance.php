@@ -440,22 +440,24 @@ class UserAttendance extends Component
             $timesheetData = $this->generateTimesheetData();
             
             // Load user relationships
-            $this->user->load('supervisor.designation', 'supervisor.userLevel', 'designation', 'userLevel');
+            $this->user->load('supervisors.designation', 'supervisors.userLevel', 'designation', 'userLevel');
             
             // Create sanitized user object
             $userPosition = $this->user->designation ? 
                 $this->sanitizeUtf8($this->user->designation->name) : 
                 ($this->user->userLevel ? $this->sanitizeUtf8($this->user->userLevel->name) : 'N/A');
             
-            $supervisorName = $this->user->supervisor ? 
-                $this->sanitizeUtf8($this->user->supervisor->name) : 'N/A';
+            // Get primary supervisor (first one) or N/A
+            $primarySupervisor = $this->user->supervisors->first();
+            $supervisorName = $primarySupervisor ? 
+                $this->sanitizeUtf8($primarySupervisor->name) : 'N/A';
             
             $supervisorPosition = 'N/A';
-            if ($this->user->supervisor) {
-                $supervisorPosition = $this->user->supervisor->designation ? 
-                    $this->sanitizeUtf8($this->user->supervisor->designation->name) : 
-                    ($this->user->supervisor->userLevel ? 
-                        $this->sanitizeUtf8($this->user->supervisor->userLevel->name) : 'N/A');
+            if ($primarySupervisor) {
+                $supervisorPosition = $primarySupervisor->designation ? 
+                    $this->sanitizeUtf8($primarySupervisor->designation->name) : 
+                    ($primarySupervisor->userLevel ? 
+                        $this->sanitizeUtf8($primarySupervisor->userLevel->name) : 'N/A');
             }
             
             $spreadsheet = new Spreadsheet();
@@ -883,7 +885,7 @@ class UserAttendance extends Component
             $timesheetData['projectNames'] = $this->sanitizeUtf8($this->getFormattedProjects());
             
             // Load supervisor relationship
-            $this->user->load('supervisor.designation', 'supervisor.userLevel', 'designation', 'userLevel');
+            $this->user->load('supervisors.designation', 'supervisors.userLevel', 'designation', 'userLevel');
             
             // Create a sanitized user object for the PDF with simple string properties
             $sanitizedUser = (object)[
@@ -894,15 +896,16 @@ class UserAttendance extends Component
                 'supervisor' => null,
             ];
             
-            // Add supervisor info if exists
-            if ($this->user->supervisor) {
-                $supervisorPosition = $this->user->supervisor->designation ? 
-                    $this->sanitizeUtf8($this->user->supervisor->designation->name) : 
-                    ($this->user->supervisor->userLevel ? 
-                        $this->sanitizeUtf8($this->user->supervisor->userLevel->name) : 'N/A');
+            // Add primary supervisor info if exists
+            $primarySupervisor = $this->user->supervisors->first();
+            if ($primarySupervisor) {
+                $supervisorPosition = $primarySupervisor->designation ? 
+                    $this->sanitizeUtf8($primarySupervisor->designation->name) : 
+                    ($primarySupervisor->userLevel ? 
+                        $this->sanitizeUtf8($primarySupervisor->userLevel->name) : 'N/A');
                 
                 $sanitizedUser->supervisor = (object)[
-                    'name' => $this->sanitizeUtf8($this->user->supervisor->name),
+                    'name' => $this->sanitizeUtf8($primarySupervisor->name),
                     'position' => $supervisorPosition,
                 ];
             }

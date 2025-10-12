@@ -111,9 +111,9 @@ class UserService
             Cache::forget("user:{$userId}");
             Cache::forget('admin_system_stats');
             
-            // Invalidate supervisor team cache if supervisor changed
-            if ($user->supervisor_id) {
-                Cache::forget("supervisor_team:{$user->supervisor_id}");
+            // Invalidate supervisor team caches
+            foreach ($user->supervisors as $supervisor) {
+                Cache::forget("supervisor_team:{$supervisor->id}");
             }
 
             DB::commit();
@@ -126,31 +126,45 @@ class UserService
     }
 
     /**
-     * Assign a supervisor to a user.
+     * Assign supervisors to a user.
      *
      * @param string $userId
-     * @param string|null $supervisorId
+     * @param array $supervisorIds
      * @return User
      * @throws \Exception
      */
-    public function assignSupervisor(string $userId, ?string $supervisorId): User
+    public function assignSupervisor(string $userId, array $supervisorIds = []): User
     {
         $user = User::findOrFail($userId);
 
-        if ($supervisorId) {
-            // Verify supervisor exists
-            User::findOrFail($supervisorId);
+        // Validate that supervisorIds is an array
+        if (!is_array($supervisorIds)) {
+            $supervisorIds = [];
         }
 
-        $user->update(['supervisor_id' => $supervisorId]);
+        // Remove empty values and the user's own ID to prevent self-supervision
+        $supervisorIds = array_filter($supervisorIds, function($id) use ($userId) {
+            return !empty($id) && $id !== $userId;
+        });
+
+        // Verify all supervisors exist
+        if (!empty($supervisorIds)) {
+            $existingCount = User::whereIn('id', $supervisorIds)->count();
+            if ($existingCount !== count($supervisorIds)) {
+                throw new \Exception('One or more supervisor IDs are invalid');
+            }
+        }
+
+        // Sync supervisors
+        $user->supervisors()->sync($supervisorIds);
 
         // Invalidate caches
         Cache::forget("user:{$userId}");
-        if ($supervisorId) {
+        foreach ($supervisorIds as $supervisorId) {
             Cache::forget("supervisor_team:{$supervisorId}");
         }
 
-        return $user->fresh(['userLevel', 'department', 'designation']);
+        return $user->fresh(['userLevel', 'department', 'designation', 'supervisors']);
     }
 
     /**
@@ -190,8 +204,8 @@ class UserService
         // Invalidate caches
         Cache::forget("user:{$userId}");
         Cache::forget('admin_system_stats');
-        if ($user->supervisor_id) {
-            Cache::forget("supervisor_team:{$user->supervisor_id}");
+        foreach ($user->supervisors as $supervisor) {
+            Cache::forget("supervisor_team:{$supervisor->id}");
         }
 
         return $user->fresh(['userLevel', 'department', 'designation']);
@@ -292,8 +306,8 @@ class UserService
         // Invalidate caches
         Cache::forget("user:{$userId}");
         Cache::forget('admin_system_stats');
-        if ($user->supervisor_id) {
-            Cache::forget("supervisor_team:{$user->supervisor_id}");
+        foreach ($user->supervisors as $supervisor) {
+            Cache::forget("supervisor_team:{$supervisor->id}");
         }
         
         return $result;

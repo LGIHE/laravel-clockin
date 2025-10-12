@@ -186,11 +186,12 @@ class UserController extends Controller
     public function assignSupervisor(AssignSupervisorRequest $request, string $id): JsonResponse
     {
         try {
-            $user = $this->userService->assignSupervisor($id, $request->input('supervisor_id'));
+            $supervisorIds = $request->input('supervisor_ids', []);
+            $user = $this->userService->assignSupervisor($id, $supervisorIds);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Supervisor assigned successfully',
+                'message' => 'Supervisors assigned successfully',
                 'data' => new UserResource($user),
             ], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -201,7 +202,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while assigning supervisor',
+                'message' => 'An error occurred while assigning supervisors',
                 'error' => $e->getMessage(),
             ], 500);
         }

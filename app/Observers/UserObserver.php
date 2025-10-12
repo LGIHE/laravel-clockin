@@ -43,9 +43,9 @@ class UserObserver
         // Clear admin stats
         Cache::forget('admin_system_stats');
         
-        // Clear supervisor team cache if user has a supervisor
-        if ($user->supervisor_id) {
-            Cache::forget("supervisor_team:{$user->supervisor_id}");
+        // Clear supervisor team caches for all supervisors
+        foreach ($user->supervisors as $supervisor) {
+            Cache::forget("supervisor_team:{$supervisor->id}");
         }
         
         // Clear department cache if user belongs to a department

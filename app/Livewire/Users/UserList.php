@@ -75,7 +75,7 @@ class UserList extends Component
         'user_level_id' => '',
         'department_id' => '',
         'designation_id' => '',
-        'supervisor_id' => '',
+        'supervisor_ids' => [],
         'status' => 1,
         'password' => '',
         'password_confirmation' => '',
@@ -98,7 +98,7 @@ class UserList extends Component
         'user_id' => '',
         'user_name' => '',
         'current_supervisor' => '',
-        'new_supervisor_id' => '',
+        'new_supervisor_ids' => [],
     ];
 
     // For IP Restriction Modal
@@ -170,9 +170,8 @@ class UserList extends Component
 
     public function loadSupervisors()
     {
-        $this->supervisors = User::whereHas('userLevel', function($query) {
-            $query->whereIn('name', ['admin', 'supervisor', 'super_admin']);
-        })->orderBy('name')->get();
+        // Load all users as potential supervisors (any user can be a supervisor)
+        $this->supervisors = User::orderBy('name')->get();
     }
 
     public function loadFilteredUsersForBulk()
@@ -381,10 +380,36 @@ class UserList extends Component
         }
         
         try {
-            // Update supervisor for selected users
-            User::whereIn('id', $this->selectedUserIds)->update([
-                'supervisor_id' => $this->selectedSupervisor
-            ]);
+            $supervisorId = $this->selectedSupervisor;
+            
+            // Check if trying to assign a user as their own supervisor
+            if (in_array($supervisorId, $this->selectedUserIds)) {
+                $this->dispatch('toast', [
+                    'message' => 'A user cannot be their own supervisor',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+            
+            // Attach supervisor to selected users (many-to-many)
+            foreach ($this->selectedUserIds as $userId) {
+                $user = User::find($userId);
+                
+                // Check if this would create a circular relationship
+                if ($this->wouldCreateCircularRelationship($userId, $supervisorId)) {
+                    $userName = $user->name;
+                    $this->dispatch('toast', [
+                        'message' => "Cannot assign supervisor to {$userName}: This would create a circular supervisory relationship",
+                        'variant' => 'danger'
+                    ]);
+                    continue;
+                }
+                
+                // Attach supervisor if not already attached
+                if (!$user->supervisors()->where('supervisor_id', $supervisorId)->exists()) {
+                    $user->supervisors()->attach($supervisorId);
+                }
+            }
             
             $this->dispatch('toast', [
                 'message' => "Assigned supervisor to " . count($this->selectedUserIds) . " user(s) successfully",
@@ -426,13 +451,16 @@ class UserList extends Component
     public function changeSupervisor($userId)
     {
         try {
-            $user = User::with('supervisor')->findOrFail($userId);
+            $user = User::with('supervisors')->findOrFail($userId);
+            
+            $supervisorNames = $user->supervisors->pluck('name')->toArray();
+            $currentSupervisor = !empty($supervisorNames) ? implode(', ', $supervisorNames) : 'No Supervisors';
             
             $this->changeSupervisorData = [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'current_supervisor' => $user->supervisor ? $user->supervisor->name : 'No Supervisor',
-                'new_supervisor_id' => $user->supervisor_id ?? '',
+                'current_supervisor' => $currentSupervisor,
+                'new_supervisor_ids' => $user->supervisors->pluck('id')->toArray(),
             ];
             
             $this->showChangeSupervisorModal = true;
@@ -442,6 +470,62 @@ class UserList extends Component
                 'variant' => 'danger'
             ]);
         }
+    }
+    
+    /**
+     * Check if assigning a supervisor would create a circular relationship
+     * A user cannot be a supervisor of their own supervisor
+     */
+    private function wouldCreateCircularRelationship($userId, $supervisorId)
+    {
+        // Get the user who would become the supervisor
+        $supervisor = User::with('supervisors')->find($supervisorId);
+        
+        if (!$supervisor) {
+            return false;
+        }
+        
+        // Check if the user is already supervising the would-be supervisor (directly)
+        $isSupervisorOfSupervisor = $supervisor->supervisors()
+            ->where('supervisor_id', $userId)
+            ->exists();
+            
+        if ($isSupervisorOfSupervisor) {
+            return true;
+        }
+        
+        // Check recursively for indirect relationships
+        return $this->isIndirectSupervisor($userId, $supervisorId);
+    }
+    
+    /**
+     * Check if userId is an indirect supervisor of potentialSupervisorId
+     */
+    private function isIndirectSupervisor($userId, $potentialSupervisorId, $visited = [])
+    {
+        // Prevent infinite loops
+        if (in_array($potentialSupervisorId, $visited)) {
+            return false;
+        }
+        
+        $visited[] = $potentialSupervisorId;
+        
+        // Get all supervisors of the potential supervisor
+        $supervisors = User::find($potentialSupervisorId)->supervisors;
+        
+        foreach ($supervisors as $supervisor) {
+            // If we find the user as a supervisor, we have a circular relationship
+            if ($supervisor->id === $userId) {
+                return true;
+            }
+            
+            // Recursively check this supervisor's supervisors
+            if ($this->isIndirectSupervisor($userId, $supervisor->id, $visited)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     public function ipRestriction($userId)
@@ -645,7 +729,7 @@ class UserList extends Component
     public function openEditUserModal($userId)
     {
         try {
-            $user = User::with(['userLevel', 'department', 'designation', 'supervisor', 'projects'])->find($userId);
+            $user = User::with(['userLevel', 'department', 'designation', 'supervisors', 'projects'])->find($userId);
             
             if ($user) {
                 $this->editUser = [
@@ -657,7 +741,7 @@ class UserList extends Component
                     'user_level_id' => $user->user_level_id,
                     'department_id' => $user->department_id ?? '',
                     'designation_id' => $user->designation_id ?? '',
-                    'supervisor_id' => $user->supervisor_id ?? '',
+                    'supervisor_ids' => $user->supervisors ? $user->supervisors->pluck('id')->toArray() : [],
                     'status' => $user->status,
                     'password' => '',
                     'password_confirmation' => '',
@@ -686,7 +770,7 @@ class UserList extends Component
             'user_level_id' => '',
             'department_id' => '',
             'designation_id' => '',
-            'supervisor_id' => '',
+            'supervisor_ids' => [],
             'status' => 1,
             'password' => '',
             'password_confirmation' => '',
@@ -714,7 +798,8 @@ class UserList extends Component
             'editUser.user_level_id' => 'required|exists:user_levels,id',
             'editUser.department_id' => 'nullable|exists:departments,id',
             'editUser.designation_id' => 'nullable|exists:designations,id',
-            'editUser.supervisor_id' => 'nullable|exists:users,id',
+            'editUser.supervisor_ids' => 'nullable|array',
+            'editUser.supervisor_ids.*' => 'exists:users,id',
             'editUser.status' => 'required|in:0,1',
         ];
 
@@ -729,6 +814,28 @@ class UserList extends Component
         try {
             $user = User::findOrFail($this->editUser['id']);
             
+            // Check if user is trying to be their own supervisor
+            $supervisorIds = $this->editUser['supervisor_ids'] ?? [];
+            if (in_array($user->id, $supervisorIds)) {
+                $this->dispatch('toast', [
+                    'message' => 'A user cannot be their own supervisor',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+            
+            // Check for circular relationships
+            foreach ($supervisorIds as $supervisorId) {
+                if ($this->wouldCreateCircularRelationship($user->id, $supervisorId)) {
+                    $supervisor = User::find($supervisorId);
+                    $this->dispatch('toast', [
+                        'message' => "Cannot assign {$supervisor->name} as supervisor: This would create a circular supervisory relationship",
+                        'variant' => 'danger'
+                    ]);
+                    return;
+                }
+            }
+            
             // Convert empty strings to null for nullable foreign keys
             $updateData = [
                 'name' => $this->editUser['name'],
@@ -738,7 +845,6 @@ class UserList extends Component
                 'user_level_id' => $this->editUser['user_level_id'],
                 'department_id' => $this->editUser['department_id'] ?: null,
                 'designation_id' => $this->editUser['designation_id'] ?: null,
-                'supervisor_id' => $this->editUser['supervisor_id'] ?: null,
                 'status' => $this->editUser['status'],
             ];
 
@@ -749,6 +855,9 @@ class UserList extends Component
 
             $user->update($updateData);
 
+            // Sync supervisors (many-to-many)
+            $user->supervisors()->sync($supervisorIds);
+            
             // Sync projects
             $user->projects()->sync($this->editUserProjects);
             
@@ -807,22 +916,47 @@ class UserList extends Component
     public function saveChangeSupervisor()
     {
         $this->validate([
-            'changeSupervisorData.new_supervisor_id' => 'nullable|exists:users,id',
+            'changeSupervisorData.new_supervisor_ids' => 'nullable|array',
+            'changeSupervisorData.new_supervisor_ids.*' => 'exists:users,id',
         ]);
 
         try {
             $user = User::findOrFail($this->changeSupervisorData['user_id']);
-            $user->update(['supervisor_id' => $this->changeSupervisorData['new_supervisor_id'] ?: null]);
+            $newSupervisorIds = $this->changeSupervisorData['new_supervisor_ids'] ?? [];
+            
+            // Check if user is trying to be their own supervisor
+            if (in_array($user->id, $newSupervisorIds)) {
+                $this->dispatch('toast', [
+                    'message' => 'A user cannot be their own supervisor',
+                    'variant' => 'danger'
+                ]);
+                return;
+            }
+            
+            // Check for circular relationships
+            foreach ($newSupervisorIds as $supervisorId) {
+                if ($this->wouldCreateCircularRelationship($user->id, $supervisorId)) {
+                    $supervisor = User::find($supervisorId);
+                    $this->dispatch('toast', [
+                        'message' => "Cannot assign {$supervisor->name} as supervisor: This would create a circular supervisory relationship",
+                        'variant' => 'danger'
+                    ]);
+                    return;
+                }
+            }
+            
+            // Sync supervisors (this will remove old ones and add new ones)
+            $user->supervisors()->sync($newSupervisorIds);
 
             $this->dispatch('toast', [
-                'message' => 'Supervisor changed successfully',
+                'message' => 'Supervisors updated successfully',
                 'variant' => 'success'
             ]);
 
             $this->closeChangeSupervisorModal();
         } catch (\Exception $e) {
             $this->dispatch('toast', [
-                'message' => 'Failed to change supervisor: ' . $e->getMessage(),
+                'message' => 'Failed to change supervisors: ' . $e->getMessage(),
                 'variant' => 'danger'
             ]);
         }
@@ -835,7 +969,7 @@ class UserList extends Component
             'user_id' => '',
             'user_name' => '',
             'current_supervisor' => '',
-            'new_supervisor_id' => '',
+            'new_supervisor_ids' => [],
         ];
         $this->resetErrorBag();
     }

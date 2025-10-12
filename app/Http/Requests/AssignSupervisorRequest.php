@@ -21,8 +21,19 @@ class AssignSupervisorRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->route('id');
+        
         return [
-            'supervisor_id' => 'nullable|string|exists:users,id',
+            'supervisor_ids' => 'nullable|array',
+            'supervisor_ids.*' => [
+                'string',
+                'exists:users,id',
+                function ($attribute, $value, $fail) use ($userId) {
+                    if ($value === $userId) {
+                        $fail('A user cannot supervise themselves.');
+                    }
+                },
+            ],
         ];
     }
 
@@ -34,7 +45,8 @@ class AssignSupervisorRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supervisor_id.exists' => 'Invalid supervisor ID',
+            'supervisor_ids.*.exists' => 'One or more supervisor IDs are invalid',
+            'supervisor_ids.array' => 'Supervisor IDs must be an array',
         ];
     }
 }

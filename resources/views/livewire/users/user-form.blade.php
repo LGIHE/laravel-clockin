@@ -177,20 +177,27 @@
                     @enderror
                 </div>
 
-                <!-- Supervisor -->
+                <!-- Supervisors (Multiple Selection) -->
                 <div class="md:col-span-2">
-                    <label for="supervisorId" class="block text-sm font-medium text-gray-700 mb-1">
-                        Supervisor
+                    <label for="selectedSupervisors" class="block text-sm font-medium text-gray-700 mb-1">
+                        Supervisors (Multiple Selection)
                     </label>
-                    <select id="supervisorId" 
-                            wire:model="supervisorId"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('supervisorId') border-red-500 @enderror">
-                        <option value="">No Supervisor</option>
+                    <select id="selectedSupervisors" 
+                            wire:model="selectedSupervisors"
+                            multiple
+                            size="5"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('selectedSupervisors') border-red-500 @enderror">
                         @foreach($supervisors as $supervisor)
-                            <option value="{{ $supervisor->id }}">{{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})</option>
+                            <option value="{{ $supervisor->id }}">
+                                {{ $supervisor->name }} 
+                                @if($supervisor->userLevel)
+                                    ({{ ucfirst($supervisor->userLevel->name) }})
+                                @endif
+                            </option>
                         @endforeach
                     </select>
-                    @error('supervisorId')
+                    <p class="mt-1 text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple supervisors. Users cannot supervise themselves.</p>
+                    @error('selectedSupervisors')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>

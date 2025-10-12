@@ -25,7 +25,7 @@ class UserPolicy
         // Admins can view all users
         return $user->role === 'ADMIN' 
             || $user->id === $model->id
-            || ($user->role === 'SUPERVISOR' && $model->supervisor_id === $user->id);
+            || ($user->role === 'SUPERVISOR' && $model->supervisors->contains($user->id));
     }
 
     /**

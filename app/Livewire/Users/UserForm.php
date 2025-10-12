@@ -22,7 +22,7 @@ class UserForm extends Component
     public $userLevelId = '';
     public $departmentId = '';
     public $designationId = '';
-    public $supervisorId = '';
+    public $selectedSupervisors = [];
     public $selectedProjects = [];
     public $status = 1;
     
@@ -60,10 +60,12 @@ class UserForm extends Component
         $this->designations = Designation::orderBy('name')->get();
         $this->projects = Project::where('status', 'ACTIVE')->orderBy('name')->get();
         
-        // Load potential supervisors (users with supervisor or admin role)
-        $supervisorLevelIds = UserLevel::whereIn('name', ['supervisor', 'admin'])->pluck('id');
-        $this->supervisors = User::whereIn('user_level_id', $supervisorLevelIds)
-            ->where('status', 1)
+        // Load all active users as potential supervisors (excluding the current user)
+        $this->supervisors = User::where('status', 1)
+            ->when($this->userId, function($query) {
+                // Exclude the current user from the supervisor list
+                $query->where('id', '!=', $this->userId);
+            })
             ->orderBy('name')
             ->get();
     }
@@ -71,14 +73,14 @@ class UserForm extends Component
     public function loadUser($userId)
     {
         try {
-            $user = User::with(['userLevel', 'department', 'designation'])->findOrFail($userId);
+            $user = User::with(['userLevel', 'department', 'designation', 'supervisors'])->findOrFail($userId);
             
             $this->name = $user->name;
             $this->email = $user->email;
             $this->userLevelId = $user->user_level_id;
             $this->departmentId = $user->department_id;
             $this->designationId = $user->designation_id;
-            $this->supervisorId = $user->supervisor_id;
+            $this->selectedSupervisors = $user->supervisors->pluck('id')->toArray();
             $this->status = $user->status;
             
             // Load project assignments
@@ -109,7 +111,8 @@ class UserForm extends Component
             'userLevelId' => 'required|exists:user_levels,id',
             'departmentId' => 'nullable|exists:departments,id',
             'designationId' => 'nullable|exists:designations,id',
-            'supervisorId' => 'nullable|exists:users,id',
+            'selectedSupervisors' => 'nullable|array',
+            'selectedSupervisors.*' => 'exists:users,id',
             'selectedProjects' => 'nullable|array',
             'selectedProjects.*' => 'exists:projects,id',
             'status' => 'required|in:0,1',
@@ -162,10 +165,8 @@ class UserForm extends Component
                 
                 $user = $this->userService->updateUser($this->userId, $data);
                 
-                // Update supervisor separately if changed
-                if ($this->supervisorId !== $user->supervisor_id) {
-                    $this->userService->assignSupervisor($this->userId, $this->supervisorId ?: null);
-                }
+                // Update supervisors
+                $this->userService->assignSupervisor($this->userId, $this->selectedSupervisors);
                 
                 $message = 'User updated successfully';
             } else {
@@ -174,9 +175,9 @@ class UserForm extends Component
                 
                 $user = $this->userService->createUser($data);
                 
-                // Assign supervisor if provided
-                if ($this->supervisorId) {
-                    $this->userService->assignSupervisor($user->id, $this->supervisorId);
+                // Assign supervisors if provided
+                if (!empty($this->selectedSupervisors)) {
+                    $this->userService->assignSupervisor($user->id, $this->selectedSupervisors);
                 }
                 
                 $message = 'User created successfully';
@@ -194,7 +195,7 @@ class UserForm extends Component
                 $this->reset([
                     'name', 'email', 'password', 'password_confirmation',
                     'userLevelId', 'departmentId', 'designationId',
-                    'supervisorId', 'selectedProjects', 'status'
+                    'selectedSupervisors', 'selectedProjects', 'status'
                 ]);
                 $this->status = 1;
             }

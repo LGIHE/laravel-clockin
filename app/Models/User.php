@@ -52,7 +52,6 @@ class User extends Authenticatable
         'designation_id',
         'department_id',
         'project_id',
-        'supervisor_id',
         'name',
         'email',
         'phone',
@@ -112,19 +111,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the supervisor of the user.
+     * Get the supervisors of the user.
      */
-    public function supervisor()
+    public function supervisors()
     {
-        return $this->belongsTo(User::class, 'supervisor_id');
+        return $this->belongsToMany(User::class, 'user_supervisor', 'user_id', 'supervisor_id')
+                    ->withTimestamps();
     }
 
     /**
-     * Get the users supervised by this user.
+     * Get the users supervised by this user (inverse of supervisors).
      */
     public function supervisedUsers()
     {
-        return $this->hasMany(User::class, 'supervisor_id');
+        return $this->belongsToMany(User::class, 'user_supervisor', 'supervisor_id', 'user_id')
+                    ->withTimestamps();
+    }
+    
+    /**
+     * Get the primary/first supervisor of the user.
+     * Useful for legacy code that expects a single supervisor.
+     */
+    public function supervisor()
+    {
+        return $this->supervisors()->first();
     }
 
     /**
