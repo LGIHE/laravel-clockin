@@ -68,6 +68,12 @@ class NotificationService
             // Notify all supervisors of the applicant
             $supervisors = $applicant->supervisors;
 
+            // Check if user has supervisors
+            if (!$supervisors || $supervisors->isEmpty()) {
+                Log::info('No supervisors found for user', ['user_id' => $applicant->id]);
+                return;
+            }
+
             $startDate = is_string($leave->start_date) ? $leave->start_date : ($leave->start_date ? $leave->start_date->format('Y-m-d') : '');
             $endDate = is_string($leave->end_date) ? $leave->end_date : ($leave->end_date ? $leave->end_date->format('Y-m-d') : '');
             $leaveDate = is_string($leave->date) ? $leave->date : ($leave->date ? $leave->date->format('Y-m-d') : '');
@@ -76,6 +82,11 @@ class NotificationService
             $dateDisplay = $startDate && $endDate ? "from {$startDate} to {$endDate}" : "for {$leaveDate}";
 
             foreach ($supervisors as $supervisor) {
+                if (!$supervisor || !$supervisor->id) {
+                    Log::warning('Invalid supervisor object', ['supervisor' => $supervisor]);
+                    continue;
+                }
+                
                 $this->create(
                     $supervisor->id,
                     'leave_pending',

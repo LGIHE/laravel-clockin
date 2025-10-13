@@ -47,9 +47,18 @@ class LeaveService
         ]);
 
         // Notify supervisors about new leave request
-        $applicant = User::with('supervisors')->find($userId);
-        if ($applicant) {
-            $this->notificationService->notifyLeaveRequest($leave, $applicant);
+        try {
+            $applicant = User::with('supervisors')->find($userId);
+            if ($applicant && $applicant->supervisors) {
+                $this->notificationService->notifyLeaveRequest($leave, $applicant);
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail the leave creation if notification fails
+            \Log::warning('Failed to send leave request notification', [
+                'error' => $e->getMessage(),
+                'leave_id' => $leave->id,
+                'user_id' => $userId
+            ]);
         }
 
         return $leave->load(['user', 'category', 'status']);
