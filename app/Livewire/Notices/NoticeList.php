@@ -3,6 +3,7 @@
 namespace App\Livewire\Notices;
 
 use App\Models\Notice;
+use App\Services\NotificationService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Str;
@@ -94,12 +95,16 @@ class NoticeList extends Component
         $this->validate();
 
         try {
-            Notice::create([
+            $notice = Notice::create([
                 'id' => Str::uuid()->toString(),
                 'subject' => $this->subject,
                 'message' => $this->message,
                 'is_active' => $this->is_active ?? true,
             ]);
+
+            // Send notifications to all users
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyNewNotice($notice->id, $notice->subject, auth()->id());
 
             $this->dispatch('toast', [
                 'message' => 'Notice created successfully',

@@ -24,9 +24,8 @@ class NotificationDropdown extends Component
 
         // Get unread notifications
         $this->notifications = DB::table('notifications')
-            ->where('notifiable_id', $user->id)
-            ->where('notifiable_type', 'App\Models\User')
-            ->whereNull('read_at')
+            ->where('user_id', $user->id)
+            ->where('read', false)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -35,17 +34,17 @@ class NotificationDropdown extends Component
                 return (object) [
                     'id' => $notification->id,
                     'type' => $notification->type,
-                    'title' => $data['title'] ?? 'Notification',
-                    'message' => $data['message'] ?? '',
+                    'title' => $notification->title ?? 'Notification',
+                    'message' => $notification->message ?? '',
+                    'action_url' => $notification->action_url,
                     'created_at' => $notification->created_at,
-                    'read_at' => $notification->read_at,
+                    'read' => $notification->read,
                 ];
             });
 
         $this->unreadCount = DB::table('notifications')
-            ->where('notifiable_id', $user->id)
-            ->where('notifiable_type', 'App\Models\User')
-            ->whereNull('read_at')
+            ->where('user_id', $user->id)
+            ->where('read', false)
             ->count();
     }
 
@@ -55,8 +54,9 @@ class NotificationDropdown extends Component
 
         DB::table('notifications')
             ->where('id', $notificationId)
-            ->where('notifiable_id', $user->id)
+            ->where('user_id', $user->id)
             ->update([
+                'read' => true,
                 'read_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -74,10 +74,10 @@ class NotificationDropdown extends Component
         $user = auth()->user();
 
         DB::table('notifications')
-            ->where('notifiable_id', $user->id)
-            ->where('notifiable_type', 'App\Models\User')
-            ->whereNull('read_at')
+            ->where('user_id', $user->id)
+            ->where('read', false)
             ->update([
+                'read' => true,
                 'read_at' => now(),
                 'updated_at' => now(),
             ]);

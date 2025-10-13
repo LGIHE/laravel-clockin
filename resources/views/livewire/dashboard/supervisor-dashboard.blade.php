@@ -396,4 +396,4 @@
     <div class="mt-6 text-center text-sm text-gray-500">
         © 2025 lgf & made with ❤️
     </div>
-</div>
+

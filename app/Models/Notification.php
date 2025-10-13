@@ -10,30 +10,18 @@ class Notification extends Model
     use HasFactory;
 
     /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'id',
-        'notifiable_id',
+        'user_id',
         'type',
-        'notifiable_type',
+        'title',
+        'message',
         'data',
+        'action_url',
+        'read',
         'read_at',
     ];
 
@@ -43,27 +31,53 @@ class Notification extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'read_at' => 'datetime',
         'data' => 'array',
+        'read' => 'boolean',
+        'read_at' => 'datetime',
     ];
 
     /**
-     * Get the title attribute from data.
-     *
-     * @return string|null
+     * Get the user that owns the notification.
      */
-    public function getTitleAttribute(): ?string
+    public function user()
     {
-        return $this->data['title'] ?? null;
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
-     * Get the message attribute from data.
-     *
-     * @return string|null
+     * Mark the notification as read.
      */
-    public function getMessageAttribute(): ?string
+    public function markAsRead()
     {
-        return $this->data['message'] ?? null;
+        if (!$this->read) {
+            $this->update([
+                'read' => true,
+                'read_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Scope a query to only include unread notifications.
+     */
+    public function scopeUnread($query)
+    {
+        return $query->where('read', false);
+    }
+
+    /**
+     * Scope a query to only include read notifications.
+     */
+    public function scopeRead($query)
+    {
+        return $query->where('read', true);
+    }
+
+    /**
+     * Scope a query for a specific user.
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

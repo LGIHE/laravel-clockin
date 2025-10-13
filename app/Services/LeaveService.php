@@ -11,6 +11,12 @@ use Illuminate\Support\Str;
 
 class LeaveService
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * Apply for leave.
      *
@@ -39,6 +45,12 @@ class LeaveService
             'date' => $data['date'],
             'description' => $data['description'] ?? null,
         ]);
+
+        // Notify supervisors about new leave request
+        $applicant = User::with('supervisors')->find($userId);
+        if ($applicant) {
+            $this->notificationService->notifyLeaveRequest($leave, $applicant);
+        }
 
         return $leave->load(['user', 'category', 'status']);
     }
@@ -72,8 +84,12 @@ class LeaveService
         $leave->leave_status_id = $approvedStatus->id;
         $leave->save();
 
-        // Create notification for the user
-        $this->createLeaveNotification($leave, 'approved', $reviewerId, $comments);
+        // Notify the applicant
+        $applicant = User::find($leave->user_id);
+        $approver = User::find($reviewerId);
+        if ($applicant && $approver) {
+            $this->notificationService->notifyLeaveApproved($leave, $applicant, $approver);
+        }
 
         return $leave->load(['user', 'category', 'status']);
     }
@@ -107,8 +123,12 @@ class LeaveService
         $leave->leave_status_id = $rejectedStatus->id;
         $leave->save();
 
-        // Create notification for the user
-        $this->createLeaveNotification($leave, 'rejected', $reviewerId, $comments);
+        // Notify the applicant
+        $applicant = User::find($leave->user_id);
+        $rejector = User::find($reviewerId);
+        if ($applicant && $rejector) {
+            $this->notificationService->notifyLeaveRejected($leave, $applicant, $rejector);
+        }
 
         return $leave->load(['user', 'category', 'status']);
     }
@@ -165,42 +185,6 @@ class LeaveService
             'used' => $usedLeaves,
             'remaining' => $category->max_in_year - $usedLeaves,
         ];
-    }
-
-    /**
-     * Create notification for leave action.
-     *
-     * @param Leave $leave
-     * @param string $action
-     * @param string $reviewerId
-     * @param string|null $comments
-     * @return void
-     */
-    private function createLeaveNotification(Leave $leave, string $action, string $reviewerId, ?string $comments = null): void
-    {
-        $reviewer = User::find($reviewerId);
-        $message = "Your leave request for {$leave->date->format('Y-m-d')} has been {$action}";
-        
-        if ($comments) {
-            $message .= ". Comments: {$comments}";
-        }
-
-        DB::table('notifications')->insert([
-            'id' => Str::uuid()->toString(),
-            'notifiable_id' => $leave->user_id,
-            'notifiable_type' => 'App\Models\User',
-            'type' => 'leave_' . $action,
-            'data' => json_encode([
-                'title' => 'Leave ' . ucfirst($action),
-                'message' => $message,
-                'leave_id' => $leave->id,
-                'reviewer' => $reviewer ? $reviewer->name : 'System',
-                'comments' => $comments,
-            ]),
-            'read_at' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 }
 

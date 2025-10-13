@@ -100,7 +100,7 @@
                                 </div>
 
                                 <!-- Unread Indicator -->
-                                @if(!$notification->read_at)
+                                @if(!$notification->read)
                                     <div class="flex-shrink-0">
                                         <span class="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
                                     </div>
