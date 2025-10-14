@@ -194,10 +194,10 @@
                                         </label>
                                         <input type="text" 
                                                id="edit-name"
-                                               wire:model="name"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror"
+                                               wire:model="editName"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('editName') border-red-500 @enderror"
                                                placeholder="Enter designation name">
-                                        @error('name')
+                                        @error('editName')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>

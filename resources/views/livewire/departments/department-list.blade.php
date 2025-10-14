@@ -69,7 +69,8 @@
                                                      x-transition
                                                      class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                                                     <div class="py-1">
-                                                        <button wire:click="openEditModal('{{ $department->id }}')"
+                                                        <button type="button"
+                                                                wire:click.prevent="openEditModal('{{ $department->id }}')"
                                                                 @click="open = false"
                                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +78,8 @@
                                                             </svg>
                                                             Edit
                                                         </button>
-                                                        <button wire:click="confirmDelete('{{ $department->id }}')"
+                                                        <button type="button"
+                                                                wire:click.prevent="confirmDelete('{{ $department->id }}')"
                                                                 @click="open = false"
                                                                 class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2">
                                                             <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

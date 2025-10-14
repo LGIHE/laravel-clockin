@@ -22,6 +22,7 @@ class DesignationList extends Component
     
     public $designationId = null;
     public $name = '';
+    public $editName = '';
     
     public $selectedDesignation = null;
     public $isAdmin = false;
@@ -121,7 +122,7 @@ class DesignationList extends Component
         
         if ($designation) {
             $this->designationId = $designation->id;
-            $this->name = $designation->name;
+            $this->editName = $designation->name;
             $this->showEditModal = true;
         }
     }
@@ -142,23 +143,25 @@ class DesignationList extends Component
             return;
         }
 
-        $this->validate();
+        $this->validate([
+            'editName' => 'required|string|max:255',
+        ]);
 
         try {
             $designation = Designation::findOrFail($this->designationId);
 
             // Check for duplicate name (excluding current designation)
-            $exists = Designation::where('name', $this->name)
+            $exists = Designation::where('name', $this->editName)
                 ->where('id', '!=', $this->designationId)
                 ->exists();
             
             if ($exists) {
-                $this->addError('name', 'A designation with this name already exists');
+                $this->addError('editName', 'A designation with this name already exists');
                 return;
             }
 
             $designation->update([
-                'name' => $this->name,
+                'name' => $this->editName,
             ]);
 
             $this->dispatch('toast', [
@@ -245,6 +248,7 @@ class DesignationList extends Component
     {
         $this->designationId = null;
         $this->name = '';
+        $this->editName = '';
         $this->resetErrorBag();
     }
 
