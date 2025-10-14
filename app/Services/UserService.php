@@ -291,7 +291,8 @@ class UserService
     }
 
     /**
-     * Delete a user (soft delete).
+     * Delete a user permanently (hard delete with cascade).
+     * All related records (attendances, leaves, notifications, etc.) will be deleted automatically.
      *
      * @param string $userId
      * @return bool
