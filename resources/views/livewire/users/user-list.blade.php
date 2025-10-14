@@ -75,6 +75,47 @@
                         </select>
                         <span class="ml-2 text-sm">entries</span>
                     </div>
+
+                    <div class="flex items-center ml-4">
+                        <label for="statusFilter" class="mr-2 text-sm">Status</label>
+                        <select 
+                            id="statusFilter" 
+                            wire:model.live="userStatusFilter"
+                            class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="active">Active</option>
+                            <option value="deactivated">Deactivated</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center ml-4">
+                        <label for="departmentFilter" class="mr-2 text-sm">Department</label>
+                        <select 
+                            id="departmentFilter" 
+                            wire:model.live="departmentId"
+                            class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">All Departments</option>
+                            @foreach($departments as $department)
+                                <option value="{{ $department->id }}">{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex items-center ml-4">
+                        <label for="designationFilter" class="mr-2 text-sm">Designation</label>
+                        <select 
+                            id="designationFilter" 
+                            wire:model.live="designationId"
+                            class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">All Designations</option>
+                            @foreach($designations as $designation)
+                                <option value="{{ $designation->id }}">{{ $designation->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     
                     <div class="ml-auto relative">
                         <svg class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,12 +295,21 @@
                                                         
                                                         <div class="border-t border-gray-100"></div>
                                                         
-                                                        <button wire:click="confirmDelete('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 text-left" role="menuitem">
-                                                            <svg class="mr-3 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                            </svg>
-                                                            Delete
-                                                        </button>
+                                                        @if($userStatusFilter === 'archived')
+                                                            <button wire:click="unarchiveUser('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100 text-left" role="menuitem">
+                                                                <svg class="mr-3 h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                                </svg>
+                                                                Unarchive
+                                                            </button>
+                                                        @else
+                                                            <button wire:click="confirmDelete('{{ $user->id }}')" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 text-left" role="menuitem">
+                                                                <svg class="mr-3 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                                                                </svg>
+                                                                Archive
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -430,10 +480,10 @@
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900">Delete User</h3>
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Archive User</h3>
                                 <div class="mt-2">
                                     <p class="text-sm text-gray-500">
-                                        Are you sure you want to delete <strong>{{ $selectedUser->name }}</strong>? This action cannot be undone.
+                                        Are you sure you want to archive <strong>{{ $selectedUser->name }}</strong>? The user will be hidden from the active list but can be restored later.
                                     </p>
                                 </div>
                             </div>
@@ -447,7 +497,7 @@
                         </button>
                         <button wire:click="deleteUser" 
                                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                            Delete
+                            Archive
                         </button>
                     </div>
                 </div>

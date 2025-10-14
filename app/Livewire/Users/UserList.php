@@ -17,7 +17,9 @@ class UserList extends Component
 
     public $search = '';
     public $status = '';
+    public $userStatusFilter = 'active'; // Filter for active/deactivated/archived
     public $departmentId = '';
+    public $designationId = '';
     public $userLevelId = '';
     public $sortBy = 'created_at';
     public $sortOrder = 'desc';
@@ -325,11 +327,29 @@ class UserList extends Component
             $this->userService->deleteUser($this->selectedUser->id);
             
             $this->dispatch('toast', [
-                'message' => 'User deleted successfully',
+                'message' => 'User archived successfully',
                 'variant' => 'success'
             ]);
             
             $this->closeDeleteModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function unarchiveUser($userId)
+    {
+        try {
+            $this->userService->unarchiveUser($userId);
+            
+            $this->dispatch('toast', [
+                'message' => 'User unarchived successfully',
+                'variant' => 'success'
+            ]);
             
         } catch (\Exception $e) {
             $this->dispatch('toast', [
@@ -1159,6 +1179,9 @@ class UserList extends Component
     {
         $query = User::with(['userLevel', 'department', 'designation', 'supervisors']);
 
+        // Apply user status filter (active/deactivated/archived)
+        $query->byStatus($this->userStatusFilter);
+
         // Apply search filter
         if (!empty($this->search)) {
             $query->where(function ($q) {
@@ -1175,6 +1198,11 @@ class UserList extends Component
         // Apply department filter
         if (!empty($this->departmentId)) {
             $query->where('department_id', $this->departmentId);
+        }
+
+        // Apply designation filter
+        if (!empty($this->designationId)) {
+            $query->where('designation_id', $this->designationId);
         }
 
         // Apply user level filter

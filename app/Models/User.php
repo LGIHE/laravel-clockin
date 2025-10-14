@@ -60,6 +60,7 @@ class User extends Authenticatable
         'ip',
         'last_in_time',
         'auto_punch_out_time',
+        'archived_at',
     ];
 
     /**
@@ -81,6 +82,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_in_time' => 'datetime',
         'auto_punch_out_time' => 'datetime',
+        'archived_at' => 'datetime',
         'status' => 'integer',
         'password' => 'hashed',
     ];
@@ -177,5 +179,66 @@ class User extends Authenticatable
     public function getRoleAttribute()
     {
         return $this->userLevel ? strtoupper($this->userLevel->name) : null;
+    }
+
+    /**
+     * Scope a query to only include active users (not archived).
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    /**
+     * Scope a query to only include archived users.
+     */
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    /**
+     * Scope a query to filter by status.
+     */
+    public function scopeByStatus($query, $status)
+    {
+        if ($status === 'active') {
+            return $query->where('status', 1)->whereNull('archived_at');
+        } elseif ($status === 'deactivated') {
+            return $query->where('status', 0)->whereNull('archived_at');
+        } elseif ($status === 'archived') {
+            return $query->whereNotNull('archived_at');
+        }
+        return $query;
+    }
+
+    /**
+     * Archive the user (also deactivates the user).
+     */
+    public function archive()
+    {
+        $this->update([
+            'archived_at' => now(),
+            'status' => 0
+        ]);
+    }
+
+    /**
+     * Unarchive the user (also reactivates the user).
+     */
+    public function unarchive()
+    {
+        $this->update([
+            'archived_at' => null,
+            'status' => 1
+        ]);
+    }
+
+    /**
+     * Check if user is archived.
+     */
+    public function isArchived()
+    {
+        return !is_null($this->archived_at);
     }
 }

@@ -291,8 +291,8 @@ class UserService
     }
 
     /**
-     * Delete a user permanently (hard delete with cascade).
-     * All related records (attendances, leaves, notifications, etc.) will be deleted automatically.
+     * Archive a user instead of deleting.
+     * Archived users are hidden from normal views but data is preserved.
      *
      * @param string $userId
      * @return bool
@@ -302,7 +302,9 @@ class UserService
     {
         $user = User::findOrFail($userId);
         
-        $result = $user->delete();
+        // Archive the user instead of deleting
+        $user->archive();
+        $result = true;
 
         // Invalidate caches
         Cache::forget("user:{$userId}");
@@ -312,6 +314,26 @@ class UserService
         }
         
         return $result;
+    }
+
+    /**
+     * Unarchive a user (restore from archive).
+     *
+     * @param string $userId
+     * @return bool
+     * @throws \Exception
+     */
+    public function unarchiveUser(string $userId): bool
+    {
+        $user = User::findOrFail($userId);
+        
+        $user->unarchive();
+
+        // Invalidate caches
+        Cache::forget("user:{$userId}");
+        Cache::forget('admin_system_stats');
+        
+        return true;
     }
 }
 
