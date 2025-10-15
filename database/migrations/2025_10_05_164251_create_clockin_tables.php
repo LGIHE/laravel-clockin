@@ -137,19 +137,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
-
-        // Create notifications table
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->char('id', 36)->primary();
-            $table->char('notifiable_id', 36);
-            $table->string('type');
-            $table->string('notifiable_type');
-            $table->text('data');
-            $table->timestamp('read_at')->nullable();
-            $table->timestamps();
-
-            $table->index('notifiable_id');
-        });
     }
 
     /**
@@ -157,7 +144,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notifications');
         Schema::dropIfExists('notices');
         Schema::dropIfExists('holidays');
         Schema::dropIfExists('projects');
