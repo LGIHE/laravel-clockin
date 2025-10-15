@@ -28,6 +28,7 @@ class UserList extends Component
     public $selectedUser = null;
     public $showDetailModal = false;
     public $showDeleteModal = false;
+    public $showDeleteConfirmationModal = false;
     public $showBulkAssignModal = false;
     public $showAddUserModal = false;
     public $showEditUserModal = false;
@@ -339,6 +340,68 @@ class UserList extends Component
                 'variant' => 'danger'
             ]);
         }
+    }
+
+    public function openDeleteConfirmationModal($userId)
+    {
+        $this->selectedUser = User::find($userId);
+        $this->showDeleteConfirmationModal = true;
+    }
+
+    public function confirmArchiveUser()
+    {
+        try {
+            if (!$this->selectedUser) {
+                throw new \Exception('User not found');
+            }
+            
+            $this->userService->deleteUser($this->selectedUser->id);
+            
+            $this->dispatch('toast', [
+                'message' => 'User archived successfully',
+                'variant' => 'success'
+            ]);
+            
+            $this->closeDeleteConfirmationModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function confirmPermanentDelete()
+    {
+        try {
+            if (!$this->selectedUser) {
+                throw new \Exception('User not found');
+            }
+            
+            $userName = $this->selectedUser->name;
+            
+            $this->userService->permanentDeleteUser($this->selectedUser->id);
+            
+            $this->dispatch('toast', [
+                'message' => "User '{$userName}' and all associated records have been permanently deleted",
+                'variant' => 'success'
+            ]);
+            
+            $this->closeDeleteConfirmationModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function closeDeleteConfirmationModal()
+    {
+        $this->showDeleteConfirmationModal = false;
+        $this->selectedUser = null;
     }
 
     public function unarchiveUser($userId)
