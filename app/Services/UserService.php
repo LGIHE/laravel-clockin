@@ -47,13 +47,29 @@ class UserService
             $user = User::create($userData);
 
             // Send welcome email with credentials
+            \Log::info('Attempting to send welcome email to new user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name
+            ]);
+            
             try {
                 Mail::to($user->email)->send(
                     new NewUserAccountMail($user->name, $user->email, $plainPassword)
                 );
+                
+                \Log::info('Welcome email sent successfully', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
             } catch (\Exception $e) {
-                // Log the error but don't fail the user creation
-                \Log::error('Failed to send new user email: ' . $e->getMessage());
+                // Log the detailed error
+                \Log::error('Failed to send new user email', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
 
             // Invalidate relevant caches
