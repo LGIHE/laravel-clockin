@@ -37,11 +37,14 @@ class TestEmail extends Command
         $this->info("MAIL_FROM_ADDRESS: " . config('mail.from.address'));
         
         try {
+            // Generate a test setup URL
+            $testSetupUrl = url('/account-setup/test-token-' . time());
+            
             Mail::to($email)->send(
                 new NewUserAccountMail(
                     'Test User',
                     $email,
-                    'TestPassword123'
+                    $testSetupUrl
                 )
             );
             

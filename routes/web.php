@@ -5,6 +5,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\FirstLoginPasswordChange;
+use App\Livewire\AccountSetup;
 use App\Livewire\Dashboard\UserDashboard;
 use App\Livewire\Dashboard\SupervisorDashboard;
 use App\Livewire\Dashboard\AdminDashboard;
@@ -28,6 +29,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
     Route::get('/forgot-password', ForgotPassword::class)->name('forgot-password');
     Route::get('/reset-password/{token}', ResetPassword::class)->name('reset-password');
+    Route::get('/account-setup/{token}', AccountSetup::class)->name('account.setup');
 });
 
 // Password change route (requires authentication but bypasses password change check)

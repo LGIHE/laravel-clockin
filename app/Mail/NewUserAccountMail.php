@@ -15,18 +15,16 @@ class NewUserAccountMail extends Mailable
 
     public $name;
     public $email;
-    public $password;
-    public $loginUrl;
+    public $setupUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name, $email, $password, $loginUrl = null)
+    public function __construct($name, $email, $setupUrl)
     {
         $this->name = $name;
         $this->email = $email;
-        $this->password = $password;
-        $this->loginUrl = $loginUrl ?? url('/login');
+        $this->setupUrl = $setupUrl;
     }
 
     /**
@@ -35,7 +33,7 @@ class NewUserAccountMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to ClockIn - Your Account Has Been Created',
+            subject: 'Welcome to ClockIn - Complete Your Account Setup',
         );
     }
 

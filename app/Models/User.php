@@ -57,6 +57,8 @@ class User extends Authenticatable
         'employee_code',
         'password',
         'password_change_required',
+        'setup_token',
+        'setup_token_expires_at',
         'status',
         'ip',
         'last_in_time',

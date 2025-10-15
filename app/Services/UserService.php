@@ -24,19 +24,22 @@ class UserService
         DB::beginTransaction();
         
         try {
-            // Store the plain password to send in email
-            $plainPassword = $data['password'];
+            // Generate unique setup token
+            $setupToken = Str::random(64);
+            $setupTokenExpiresAt = now()->addHours(24);
             
             $userData = [
                 'id' => Str::uuid()->toString(),
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => Hash::make($plainPassword),
+                'password' => Hash::make(Str::random(32)), // Random password, user will set their own
                 'user_level_id' => $data['user_level_id'],
                 'designation_id' => $data['designation_id'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
                 'status' => $data['status'] ?? 1,
-                'password_change_required' => true, // Require password change on first login
+                'setup_token' => $setupToken,
+                'setup_token_expires_at' => $setupTokenExpiresAt,
+                'password_change_required' => false, // Not needed since they'll set password via token
             ];
 
             // Handle project assignment if provided
@@ -46,25 +49,29 @@ class UserService
 
             $user = User::create($userData);
 
-            // Send welcome email with credentials
-            \Log::info('Attempting to send welcome email to new user', [
+            // Generate setup URL
+            $setupUrl = url('/account-setup/' . $setupToken);
+
+            // Send account setup email
+            \Log::info('Attempting to send account setup email to new user', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'name' => $user->name
+                'name' => $user->name,
+                'setup_url' => $setupUrl
             ]);
             
             try {
                 Mail::to($user->email)->send(
-                    new NewUserAccountMail($user->name, $user->email, $plainPassword)
+                    new NewUserAccountMail($user->name, $user->email, $setupUrl)
                 );
                 
-                \Log::info('Welcome email sent successfully', [
+                \Log::info('Account setup email sent successfully', [
                     'user_id' => $user->id,
                     'email' => $user->email
                 ]);
             } catch (\Exception $e) {
                 // Log the detailed error
-                \Log::error('Failed to send new user email', [
+                \Log::error('Failed to send account setup email', [
                     'user_id' => $user->id,
                     'email' => $user->email,
                     'error' => $e->getMessage(),
