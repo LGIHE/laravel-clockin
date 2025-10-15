@@ -1,0 +1,26 @@
+---
+deployment:
+  tasks:
+    # Install/update Composer dependencies (production, optimized)
+    - export COMPOSER_HOME=/home/$USER/.config/composer
+    - /usr/local/bin/ea-php83 /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader --no-interaction
+
+    # Clear and cache Laravel configurations for production
+    - /usr/local/bin/ea-php83 artisan config:cache
+    - /usr/local/bin/ea-php83 artisan route:cache
+    - /usr/local/bin/ea-php83 artisan view:cache
+    
+    # Run database migrations (use --force for production)
+    - /usr/local/bin/ea-php83 artisan migrate --force
+    
+    # Set proper permissions for storage and cache
+    - chmod -R 775 storage bootstrap/cache
+    
+    # Clear application cache
+    - /usr/local/bin/ea-php83 artisan cache:clear
+    
+    # Link storage directory
+    - /usr/local/bin/ea-php83 artisan storage:link
+    
+    # Optimize for production
+    - /usr/local/bin/ea-php83 artisan optimize
