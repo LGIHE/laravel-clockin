@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'password.change.required' => \App\Http\Middleware\CheckPasswordChangeRequired::class,
+        ]);
+        
+        // Apply password change check to web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckPasswordChangeRequired::class,
         ]);
         
         // Configure rate limiting for API routes

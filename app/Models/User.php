@@ -56,6 +56,7 @@ class User extends Authenticatable
         'phone',
         'employee_code',
         'password',
+        'password_change_required',
         'status',
         'ip',
         'last_in_time',

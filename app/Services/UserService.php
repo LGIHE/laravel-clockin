@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Mail\NewUserAccountMail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -22,15 +24,19 @@ class UserService
         DB::beginTransaction();
         
         try {
+            // Store the plain password to send in email
+            $plainPassword = $data['password'];
+            
             $userData = [
                 'id' => Str::uuid()->toString(),
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'password' => Hash::make($plainPassword),
                 'user_level_id' => $data['user_level_id'],
                 'designation_id' => $data['designation_id'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
                 'status' => $data['status'] ?? 1,
+                'password_change_required' => true, // Require password change on first login
             ];
 
             // Handle project assignment if provided
@@ -39,6 +45,16 @@ class UserService
             }
 
             $user = User::create($userData);
+
+            // Send welcome email with credentials
+            try {
+                Mail::to($user->email)->send(
+                    new NewUserAccountMail($user->name, $user->email, $plainPassword)
+                );
+            } catch (\Exception $e) {
+                // Log the error but don't fail the user creation
+                \Log::error('Failed to send new user email: ' . $e->getMessage());
+            }
 
             // Invalidate relevant caches
             Cache::forget('admin_system_stats');
