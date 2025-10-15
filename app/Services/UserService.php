@@ -335,5 +335,49 @@ class UserService
         
         return true;
     }
+
+    /**
+     * Permanently delete a user and all associated records.
+     * This action cannot be undone.
+     *
+     * @param string $userId
+     * @return bool
+     * @throws \Exception
+     */
+    public function permanentDeleteUser(string $userId): bool
+    {
+        $user = User::findOrFail($userId);
+        
+        // Delete all related records
+        // 1. Delete attendances
+        $user->attendances()->delete();
+        
+        // 2. Delete leaves
+        $user->leaves()->delete();
+        
+        // 3. Detach from projects (many-to-many)
+        $user->projects()->detach();
+        
+        // 4. Remove as supervisor from other users (pivot table)
+        \DB::table('user_supervisor')->where('supervisor_id', $userId)->delete();
+        
+        // 5. Remove this user from being supervised by others (pivot table)
+        \DB::table('user_supervisor')->where('user_id', $userId)->delete();
+        
+        // 6. Delete the user
+        $user->forceDelete();
+
+        // Invalidate all related caches
+        Cache::forget("user:{$userId}");
+        Cache::forget('admin_system_stats');
+        Cache::forget("supervisor_team:{$userId}");
+        
+        // Clear cache for users who had this person as supervisor
+        foreach ($user->supervisors as $supervisor) {
+            Cache::forget("supervisor_team:{$supervisor->id}");
+        }
+        
+        return true;
+    }
 }
 
