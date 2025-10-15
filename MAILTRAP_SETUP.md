@@ -19,11 +19,16 @@ Mailtrap is an email testing service that captures all outgoing emails in a safe
    ```
    Host: sandbox.smtp.mailtrap.io
    Port: 2525
-   Username: [your_username]
-   Password: [your_password]
+   Username: [your_api_key]  # This is your API token
+   Password: [your_api_key]  # Same as username for API auth
    Auth: PLAIN
    TLS: Optional (but recommended)
    ```
+
+**Note for API Token Authentication:**
+- Mailtrap's newer API uses a single API key for both username and password
+- Format: Just use the API key directly (e.g., `1ce4c248e317111a4205be195527b0b1`)
+- Do NOT add `api:` prefix in Laravel - just use the key itself
 
 ### Step 3: Update Your .env File
 
@@ -33,22 +38,38 @@ Replace the placeholder values in your `.env` file with your actual Mailtrap cre
 MAIL_MAILER=smtp
 MAIL_HOST=sandbox.smtp.mailtrap.io
 MAIL_PORT=2525
-MAIL_USERNAME=your_actual_mailtrap_username
-MAIL_PASSWORD=your_actual_mailtrap_password
+MAIL_USERNAME=your_api_key_here
+MAIL_PASSWORD=your_api_key_here
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS="noreply@clockin.test"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-**Important:** Replace `your_actual_mailtrap_username` and `your_actual_mailtrap_password` with the real credentials from your Mailtrap inbox.
+**Important Notes:**
+- Both `MAIL_USERNAME` and `MAIL_PASSWORD` should be the SAME API key
+- Use `sandbox.smtp.mailtrap.io` for testing (NOT `live.smtp.mailtrap.io`)
+- Port should be `2525` for sandbox
+- Encryption should be `tls` (NOT `ssl`)
+- Don't include quotes around the API key unless it contains spaces
 
 ### Step 4: Clear Configuration Cache
 
 After updating `.env`, clear Laravel's configuration cache:
 
 ```bash
-php artisan config:clear
-php artisan cache:clear
+php artisan optimize:clear
+```
+
+**CRITICAL:** If you have `php artisan serve` running, you MUST restart it!
+The server loads environment variables on startup and keeps them in memory.
+
+```bash
+# Stop the running server (Ctrl+C in the terminal where it's running)
+# Or kill it:
+ps aux | grep "artisan serve" | grep -v grep | awk '{print $2}' | xargs kill
+
+# Then restart it:
+php artisan serve --host=0.0.0.0
 ```
 
 ### Step 5: Test Email Sending
@@ -164,10 +185,20 @@ php artisan email:test test@example.com
 
 ### Configuration not updating
 ```bash
-# Clear all caches
-php artisan config:clear
-php artisan cache:clear
-php artisan config:cache
+# 1. Clear all caches
+php artisan optimize:clear
+
+# 2. CRITICAL: Restart php artisan serve if it's running!
+# The server caches environment variables in memory on startup
+
+# Find and kill the server:
+ps aux | grep "artisan serve" | grep -v grep | awk '{print $2}' | xargs kill
+
+# Or just Ctrl+C in the terminal where it's running, then restart:
+php artisan serve --host=0.0.0.0
+
+# 3. Test again
+php artisan email:test test@example.com
 ```
 
 ## Free Tier Limits
