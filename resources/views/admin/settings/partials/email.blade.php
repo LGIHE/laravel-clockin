@@ -20,6 +20,7 @@
                     <option value="smtp" {{ old('mail_mailer', \App\Models\SystemSetting::get('mail_mailer', 'smtp')) == 'smtp' ? 'selected' : '' }}>SMTP</option>
                     <option value="sendmail" {{ old('mail_mailer', \App\Models\SystemSetting::get('mail_mailer')) == 'sendmail' ? 'selected' : '' }}>Sendmail</option>
                     <option value="mailgun" {{ old('mail_mailer', \App\Models\SystemSetting::get('mail_mailer')) == 'mailgun' ? 'selected' : '' }}>Mailgun</option>
+                    <option value="mailtrap" {{ old('mail_mailer', \App\Models\SystemSetting::get('mail_mailer')) == 'mailtrap' ? 'selected' : '' }}>Mailtrap</option>
                     <option value="ses" {{ old('mail_mailer', \App\Models\SystemSetting::get('mail_mailer')) == 'ses' ? 'selected' : '' }}>Amazon SES</option>
                 </select>
             </div>

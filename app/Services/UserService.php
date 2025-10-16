@@ -49,6 +49,12 @@ class UserService
 
             $user = User::create($userData);
 
+            \Log::info('User created in database, preparing to send email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name
+            ]);
+
             // Generate setup URL
             $setupUrl = url('/account-setup/' . $setupToken);
 
@@ -57,7 +63,9 @@ class UserService
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'name' => $user->name,
-                'setup_url' => $setupUrl
+                'setup_url' => $setupUrl,
+                'mail_mailer' => config('mail.default'),
+                'from_address' => config('mail.from.address')
             ]);
             
             try {
@@ -75,8 +83,13 @@ class UserService
                     'user_id' => $user->id,
                     'email' => $user->email,
                     'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                     'trace' => $e->getTraceAsString()
                 ]);
+                
+                // Re-throw to make it visible
+                // throw $e;
             }
 
             // Invalidate relevant caches

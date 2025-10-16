@@ -30,11 +30,24 @@ class TestEmail extends Command
         $email = $this->argument('email');
         
         $this->info("Attempting to send test email to: {$email}");
-        $this->info("MAIL_HOST: " . config('mail.mailers.smtp.host'));
-        $this->info("MAIL_PORT: " . config('mail.mailers.smtp.port'));
-        $this->info("MAIL_USERNAME: " . config('mail.mailers.smtp.username'));
-        $this->info("MAIL_ENCRYPTION: " . config('mail.mailers.smtp.encryption'));
+        $this->info("");
+        
+        $mailer = config('mail.default');
+        $this->info("📧 Mail Configuration:");
+        $this->info("MAIL_MAILER: " . $mailer);
+        
+        if ($mailer === 'mailtrap') {
+            $apiKey = config('mail.mailers.mailtrap.api_key');
+            $this->info("MAILTRAP_API_KEY: " . ($apiKey ? substr($apiKey, 0, 8) . '...' : 'NOT SET'));
+        } else {
+            $this->info("MAIL_HOST: " . config('mail.mailers.smtp.host'));
+            $this->info("MAIL_PORT: " . config('mail.mailers.smtp.port'));
+            $this->info("MAIL_USERNAME: " . config('mail.mailers.smtp.username'));
+            $this->info("MAIL_ENCRYPTION: " . config('mail.mailers.smtp.encryption'));
+        }
+        
         $this->info("MAIL_FROM_ADDRESS: " . config('mail.from.address'));
+        $this->info("");
         
         try {
             // Generate a test setup URL
