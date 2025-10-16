@@ -34,7 +34,7 @@
                 </p>
                 <button 
                     wire:click="redirectToDashboard"
-                    class="mt-6 px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg transform transition hover:scale-105"
+                    class="mt-6 px-8 py-3 bg-lgf-blue hover:bg-blue-600 text-white rounded-md font-semibold shadow-lg transform transition hover:scale-105"
                 >
                     Go to Dashboard
                 </button>
@@ -108,7 +108,7 @@
 
                         <button 
                             type="submit"
-                            class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg transform transition hover:scale-105"
+                            class="w-full px-4 py-3 bg-lgf-blue hover:bg-blue-600 text-white rounded-md font-semibold shadow-lg transform transition hover:scale-105"
                         >
                             Complete Setup & Login
                         </button>

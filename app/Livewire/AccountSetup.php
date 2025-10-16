@@ -74,7 +74,7 @@ class AccountSetup extends Component
 
     public function render()
     {
-        return view('livewire.account-setup')->layout('layouts.guest');
+        return view('livewire.account-setup')->layout('components.layouts.guest');
     }
 }
 

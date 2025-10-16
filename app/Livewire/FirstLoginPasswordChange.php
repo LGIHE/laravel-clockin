@@ -65,6 +65,6 @@ class FirstLoginPasswordChange extends Component
     public function render()
     {
         return view('livewire.first-login-password-change')
-            ->layout('layouts.guest');
+            ->layout('components.layouts.guest');
     }
 }
