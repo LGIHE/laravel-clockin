@@ -1496,34 +1496,57 @@
                             </div>
 
                             <div>
-                                <label for="autoPunchOutTime" class="block text-sm font-medium text-gray-700">Auto Punch Out Time *</label>
+                                <label for="autoPunchOutTime" class="block text-sm font-medium text-gray-700">Auto Punch Out Time</label>
                                 <input 
                                     type="time"
                                     id="autoPunchOutTime"
                                     wire:model="autoPunchOutData.auto_punch_out_time"
                                     class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    required
                                 />
-                                <p class="mt-1 text-xs text-gray-500">User will be automatically punched out at this time if they forget</p>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Set a specific time for this user, or leave empty to use the global setting
+                                </p>
                                 @error('autoPunchOutData.auto_punch_out_time') 
                                     <span class="text-red-500 text-xs">{{ $message }}</span> 
                                 @enderror
                             </div>
 
-                            <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div class="text-xs text-gray-700">
+                                        <strong>Note:</strong> If no time is set, this user will be automatically clocked out at the 
+                                        <strong>global auto clock-out time</strong> configured in System Settings.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 px-6 py-3 flex justify-between items-center -mx-6 -mb-4 mt-6">
                                 <button 
                                     type="button"
-                                    wire:click="closeAutoPunchOutModal"
-                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                    wire:click="removeAutoPunchOut"
+                                    class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors text-sm font-medium"
+                                    wire:confirm="Are you sure you want to remove the auto punch out time for this user? They will use the global setting instead."
                                 >
-                                    Cancel
+                                    Remove Setting
                                 </button>
-                                <button 
-                                    type="submit"
-                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                                >
-                                    Save Changes
-                                </button>
+                                <div class="flex space-x-3">
+                                    <button 
+                                        type="button"
+                                        wire:click="closeAutoPunchOutModal"
+                                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>

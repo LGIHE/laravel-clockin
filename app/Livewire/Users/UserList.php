@@ -710,10 +710,15 @@ class UserList extends Component
         try {
             $user = User::findOrFail($userId);
             
+            // Format the time properly for the time input (HH:mm)
+            $autoTime = $user->auto_punch_out_time 
+                ? $user->auto_punch_out_time->format('H:i') 
+                : '18:00';
+            
             $this->autoPunchOutData = [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'auto_punch_out_time' => $user->auto_punch_out_time ?? '18:00',
+                'auto_punch_out_time' => $autoTime,
             ];
             
             $this->showAutoPunchOutModal = true;
@@ -1213,17 +1218,27 @@ class UserList extends Component
     public function saveAutoPunchOut()
     {
         $this->validate([
-            'autoPunchOutData.auto_punch_out_time' => ['required', 'regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/'],
+            'autoPunchOutData.auto_punch_out_time' => ['nullable', 'regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/'],
         ], [
             'autoPunchOutData.auto_punch_out_time.regex' => 'The auto punch out time must be a valid time format (HH:MM).',
         ]);
 
         try {
             $user = User::findOrFail($this->autoPunchOutData['user_id']);
-            $user->update(['auto_punch_out_time' => $this->autoPunchOutData['auto_punch_out_time']]);
+            
+            // If auto_punch_out_time is empty, set it to null to remove the setting
+            $autoTime = !empty($this->autoPunchOutData['auto_punch_out_time']) 
+                ? $this->autoPunchOutData['auto_punch_out_time'] 
+                : null;
+            
+            $user->update(['auto_punch_out_time' => $autoTime]);
+
+            $message = $autoTime 
+                ? "Auto punch out time set to {$autoTime}" 
+                : 'Auto punch out time removed - user will use global setting';
 
             $this->dispatch('toast', [
-                'message' => 'Auto punch out time updated successfully',
+                'message' => $message,
                 'variant' => 'success'
             ]);
 
@@ -1231,6 +1246,26 @@ class UserList extends Component
         } catch (\Exception $e) {
             $this->dispatch('toast', [
                 'message' => 'Failed to update auto punch out time: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+
+    public function removeAutoPunchOut()
+    {
+        try {
+            $user = User::findOrFail($this->autoPunchOutData['user_id']);
+            $user->update(['auto_punch_out_time' => null]);
+
+            $this->dispatch('toast', [
+                'message' => 'Auto punch out time removed - user will use global setting',
+                'variant' => 'success'
+            ]);
+
+            $this->closeAutoPunchOutModal();
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Failed to remove auto punch out time: ' . $e->getMessage(),
                 'variant' => 'danger'
             ]);
         }
