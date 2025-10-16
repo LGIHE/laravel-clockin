@@ -138,10 +138,26 @@ Successfully tested the implementation:
    php artisan optimize:clear
    ```
 
-4. **Set Up Cron Job** (Production Server)
+4. **⚠️ CRITICAL: Set Up Scheduler** 
+   
+   **The auto clock-out will NOT work without this step!**
+   
+   **Option A - Production (Recommended):**
+   Add this cron job to your server:
    ```bash
+   crontab -e
+   # Add this line:
    * * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
    ```
+   
+   **Option B - Development:**
+   Run the scheduler manually:
+   ```bash
+   php artisan schedule:work
+   ```
+   
+   **Option C - Production with Supervisor:**
+   See `SCHEDULER_SETUP_GUIDE.md` for supervisor configuration
 
 5. **Configure Global Time**
    - Login as admin
@@ -152,6 +168,13 @@ Successfully tested the implementation:
 6. **Verify Schedule**
    ```bash
    php artisan schedule:list
+   # Should show: */5 * * * * php artisan attendance:auto-clockout
+   ```
+
+7. **Test Execution**
+   ```bash
+   php artisan attendance:auto-clockout
+   # Should show current status and any clock-outs performed
    ```
 
 ## Files Modified

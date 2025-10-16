@@ -42,6 +42,8 @@ The system runs an automated check every 5 minutes to:
 
 ### Scheduled Task Setup
 
+⚠️ **CRITICAL: The scheduler MUST be running for auto clock-out to work!**
+
 The auto clock-out command runs automatically every 5 minutes via Laravel's scheduler.
 
 #### For Production Servers
@@ -53,6 +55,18 @@ Add the following cron entry to your server:
 
 This single cron entry will handle all scheduled tasks, including the auto clock-out.
 
+**To add the cron job:**
+```bash
+# Open crontab editor
+crontab -e
+
+# Add the line above (replace /path-to-your-project with actual path)
+# Save and exit
+
+# Verify it was added
+crontab -l
+```
+
 #### For Development/Local
 You can run the scheduler manually:
 
@@ -60,10 +74,25 @@ You can run the scheduler manually:
 php artisan schedule:work
 ```
 
-Or test the command directly:
+This will keep the scheduler running in the foreground. Keep the terminal window open.
 
+**Background mode:**
 ```bash
-php artisan attendance:auto-clockout
+nohup php artisan schedule:work > storage/logs/scheduler.log 2>&1 &
+```
+
+#### Verify Scheduler is Running
+
+**Development:**
+```bash
+ps aux | grep "schedule:work"
+# Should show a PHP process running
+```
+
+**Production:**
+```bash
+crontab -l
+# Should show your cron entry
 ```
 
 ### How It Determines Clock-Out Time
