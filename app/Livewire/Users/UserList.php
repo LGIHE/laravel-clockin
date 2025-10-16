@@ -770,6 +770,11 @@ class UserList extends Component
     
     public function createUser()
     {
+        \Log::info('🔥 UserList::createUser() called!', [
+            'name' => $this->newUser['name'] ?? null,
+            'email' => $this->newUser['email'] ?? null,
+        ]);
+        
         $this->validate([
             'newUser.name' => 'required|string|max:255',
             'newUser.email' => 'required|email|unique:users,email',
@@ -781,8 +786,11 @@ class UserList extends Component
             'newUser.password' => 'required|string|min:8',
         ]);
         
+        \Log::info('✅ UserList validation passed!');
+        
         try {
-            User::create([
+            // Use UserService to create user (which will send setup email)
+            $userData = [
                 'name' => $this->newUser['name'],
                 'email' => $this->newUser['email'],
                 'phone' => $this->newUser['phone'] ?: null,
@@ -790,18 +798,34 @@ class UserList extends Component
                 'user_level_id' => $this->newUser['user_level_id'],
                 'department_id' => $this->newUser['department_id'],
                 'designation_id' => $this->newUser['designation_id'] ?: null,
-                'password' => bcrypt($this->newUser['password']),
+                'password' => $this->newUser['password'], // UserService will hash it
                 'status' => 1, // Active by default
+            ];
+            
+            \Log::info('📧 Calling UserService::createUser() from UserList', [
+                'email' => $userData['email']
+            ]);
+            
+            $user = $this->userService->createUser($userData);
+            
+            \Log::info('✅ User created successfully via UserList', [
+                'user_id' => $user->id,
+                'email' => $user->email
             ]);
             
             $this->dispatch('toast', [
-                'message' => 'User created successfully',
+                'message' => 'User created successfully. Account setup email sent!',
                 'variant' => 'success'
             ]);
             
             $this->closeAddUserModal();
             $this->resetPage();
         } catch (\Exception $e) {
+            \Log::error('❌ Failed to create user in UserList', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->dispatch('toast', [
                 'message' => 'Failed to create user: ' . $e->getMessage(),
                 'variant' => 'danger'

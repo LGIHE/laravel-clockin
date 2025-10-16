@@ -144,7 +144,16 @@ class UserForm extends Component
 
     public function save()
     {
+        \Log::info('🔥 UserForm save() method called!', [
+            'isEditMode' => $this->isEditMode,
+            'name' => $this->name,
+            'email' => $this->email,
+            'has_password' => !empty($this->password)
+        ]);
+        
         $this->validate();
+        
+        \Log::info('✅ Validation passed!');
 
         try {
             $data = [
@@ -171,9 +180,20 @@ class UserForm extends Component
                 $message = 'User updated successfully';
             } else {
                 // Create new user
+                \Log::info('UserForm: Creating new user via UI', [
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'user_level_id' => $this->userLevelId
+                ]);
+                
                 $data['password'] = $this->password;
                 
                 $user = $this->userService->createUser($data);
+                
+                \Log::info('UserForm: User created successfully via UI', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
                 
                 // Assign supervisors if provided
                 if (!empty($this->selectedSupervisors)) {
