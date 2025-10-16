@@ -86,13 +86,23 @@ class SettingsService
     }
 
     /**
-     * Get auto punch out time
+     * Get auto punch out time (deprecated - use globalAutoClockOutTime)
      *
      * @return string
      */
     public function autoPunchOutTime(): string
     {
         return $this->get('auto_punch_out_time', '18:00');
+    }
+
+    /**
+     * Get global auto clock out time
+     *
+     * @return string
+     */
+    public function globalAutoClockOutTime(): string
+    {
+        return $this->get('global_auto_clockout_time', '18:00');
     }
 
     /**

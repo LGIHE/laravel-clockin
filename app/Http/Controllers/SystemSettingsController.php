@@ -92,13 +92,13 @@ class SystemSettingsController extends Controller
     public function updateSystem(Request $request)
     {
         $request->validate([
-            'auto_punch_out_time' => 'nullable|date_format:H:i',
+            'global_auto_clockout_time' => 'nullable|date_format:H:i',
             'timezone' => 'required|string',
             'date_format' => 'required|string',
             'time_format' => 'required|string',
         ]);
 
-        SystemSetting::set('auto_punch_out_time', $request->auto_punch_out_time, 'string', 'system', 'Auto Punch Out Time');
+        SystemSetting::set('global_auto_clockout_time', $request->global_auto_clockout_time, 'string', 'system', 'Global Auto Clock Out Time');
         SystemSetting::set('timezone', $request->timezone, 'string', 'system', 'Application Timezone');
         SystemSetting::set('date_format', $request->date_format, 'string', 'system', 'Date Format');
         SystemSetting::set('time_format', $request->time_format, 'string', 'system', 'Time Format');

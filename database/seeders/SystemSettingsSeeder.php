@@ -104,11 +104,18 @@ class SystemSettingsSeeder extends Seeder
 
             // System Settings
             [
+                'key' => 'global_auto_clockout_time',
+                'value' => '18:00',
+                'type' => 'string',
+                'group' => 'system',
+                'description' => 'Global Auto Clock Out Time - applies to all users without individual settings'
+            ],
+            [
                 'key' => 'auto_punch_out_time',
                 'value' => '18:00',
                 'type' => 'string',
                 'group' => 'system',
-                'description' => 'Auto Punch Out Time'
+                'description' => 'Auto Punch Out Time (deprecated - use global_auto_clockout_time)'
             ],
             [
                 'key' => 'timezone',

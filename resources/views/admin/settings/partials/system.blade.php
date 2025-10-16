@@ -6,19 +6,41 @@
         @method('PUT')
         
         <div class="space-y-6">
-            <!-- Auto Punch Out Time -->
-            <div>
-                <label for="auto_punch_out_time" class="block text-sm font-medium text-gray-700 mb-2">
-                    Auto Punch Out Time
-                </label>
-                <input 
-                    type="time" 
-                    name="auto_punch_out_time" 
-                    id="auto_punch_out_time" 
-                    value="{{ old('auto_punch_out_time', \App\Models\SystemSetting::get('auto_punch_out_time', '18:00')) }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                <p class="mt-1 text-sm text-gray-500">Automatically punch out users at this time if they haven't done so manually.</p>
+            <!-- Global Auto Punch Out Time -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Auto Clock Out Settings
+                </h4>
+                
+                <div class="space-y-4">
+                    <!-- Global Auto Clock Out Time -->
+                    <div>
+                        <label for="global_auto_clockout_time" class="block text-sm font-medium text-gray-700 mb-2">
+                            Global Auto Clock Out Time
+                        </label>
+                        <input 
+                            type="time" 
+                            name="global_auto_clockout_time" 
+                            id="global_auto_clockout_time" 
+                            value="{{ old('global_auto_clockout_time', \App\Models\SystemSetting::get('global_auto_clockout_time', '18:00')) }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        <p class="mt-1 text-sm text-gray-600">
+                            <strong>Global setting:</strong> Automatically clock out all users at this time if they haven't done so manually. 
+                            This applies to all users unless they have an individual auto clock-out time set.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white rounded p-3 border border-blue-100">
+                        <p class="text-sm text-gray-600">
+                            <strong>Note:</strong> Individual user auto clock-out times (set in User Management) will take priority over this global setting. 
+                            This global time will only apply to users who don't have a personal auto clock-out time configured.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- Timezone -->
