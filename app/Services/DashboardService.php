@@ -58,7 +58,7 @@ class DashboardService
             ->get();
         
         // Get unread notifications
-        $notifications = Notification::where('notifiable_id', $userId)
+        $notifications = Notification::where('user_id', $userId)
             ->whereNull('read_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)

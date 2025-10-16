@@ -208,6 +208,13 @@ class UserDashboard extends Component
         ]);
     }
 
+    public function getIsClockedInProperty()
+    {
+        return isset($this->attendanceStatus) && 
+               is_array($this->attendanceStatus) && 
+               ($this->attendanceStatus['clocked_in'] ?? false);
+    }
+
     public function render()
     {
         return view('livewire.dashboard.user-dashboard')
