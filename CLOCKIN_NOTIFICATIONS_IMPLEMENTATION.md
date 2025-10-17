@@ -22,10 +22,15 @@ Added three new system settings:
 - **Purpose**: Send daily clockin reminder emails to configured recipients
 - **Features**:
   - Validates email and attendance notifications are enabled
+  - **Checks if today is a public holiday** (exits early if true)
   - Retrieves recipients from system settings
-  - Sends personalized emails to each recipient
-  - Comprehensive logging of all activities
+  - **Excludes users on approved leave** (Granted status) for the current day
+  - Sends personalized emails to eligible recipients only
+  - Comprehensive logging of all activities (sent, skipped, failed)
   - Error handling with detailed error messages
+- **Smart Exclusions**:
+  - Public holidays: Skips all reminders
+  - Users on leave: Individual exclusion per user
 
 ### 2. Mailable: `app/Mail/ClockinReminderMail.php`
 - **Purpose**: Email class for clockin reminders
@@ -124,10 +129,26 @@ Check: Email Notifications Enabled?
     ↓
 Check: Attendance Notifications Enabled?
     ↓
+Check: Is Today a Public Holiday?
+    → YES: Skip all reminders, log reason, exit
+    → NO: Continue
+    ↓
 Get Recipients from SystemSetting
+    ↓
+Get Users on Approved Leave Today
     ↓
 For each active recipient:
     ↓
+Check: Is user on leave today?
+    → YES: Skip user, log reason, continue to next
+    → NO: Proceed
+    ↓
+Create ClockinReminderMail instance
+    ↓
+Send via Mail facade
+    ↓
+Log success/failure
+```
 Create ClockinReminderMail instance
     ↓
 Send via Mail facade

@@ -63,9 +63,18 @@ Recipients will receive a professional email containing:
 1. The system uses Laravel's task scheduler
 2. Every day at the configured time, the system:
    - Checks if Email and Attendance notifications are enabled
+   - **Checks if today is a public holiday** (skips all reminders if true)
    - Gets the list of selected recipients
-   - Sends personalized emails to each recipient
+   - **Excludes users who are on approved leave today**
+   - Sends personalized emails to eligible recipients
    - Logs all activities for audit purposes
+
+### Smart Exclusions
+The system automatically skips sending reminders to:
+- ✋ Users on **approved leave** (Granted status) for the current day
+- ✋ **All users** if today is a **public holiday**
+
+This ensures employees don't receive unnecessary reminders when they're not expected to work.
 
 ### Requirements
 Both toggles must be ON for reminders to be sent:
@@ -123,7 +132,26 @@ Logged information includes:
 }
 ```
 
-### Sample Log Entry (Skipped)
+### Sample Log Entry (Skipped - User on Leave)
+```
+[2025-10-16 08:00:00] local.INFO: Clockin reminder skipped - user on leave
+{
+  "user_id": "abc-123-def",
+  "user_name": "John Doe",
+  "date": "2025-10-16"
+}
+```
+
+### Sample Log Entry (Skipped - Public Holiday)
+```
+[2025-10-16 08:00:00] local.INFO: Clockin reminders skipped - public holiday
+{
+  "holiday_name": "Independence Day",
+  "date": "2025-10-16"
+}
+```
+
+### Sample Log Entry (Disabled)
 ```
 [2025-10-16 08:00:00] local.INFO: Clockin reminders skipped - attendance notifications disabled
 ```

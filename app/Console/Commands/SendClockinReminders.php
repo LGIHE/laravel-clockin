@@ -3,8 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Mail\ClockinReminderMail;
+use App\Models\Holiday;
+use App\Models\Leave;
+use App\Models\LeaveStatus;
 use App\Models\SystemSetting;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -63,10 +67,34 @@ class SendClockinReminders extends Command
         // Get the clockin reminder time
         $clockinTime = SystemSetting::get('clockin_reminder_time', '08:00');
         
+        // Check if today is a public holiday
+        $today = Carbon::today();
+        $isPublicHoliday = Holiday::whereDate('date', $today)->exists();
+        
+        if ($isPublicHoliday) {
+            $holiday = Holiday::whereDate('date', $today)->first();
+            $this->warn("Today is a public holiday: {$holiday->name}. Skipping all reminders.");
+            Log::channel('daily')->info('Clockin reminders skipped - public holiday', [
+                'holiday_name' => $holiday->name,
+                'date' => $today->format('Y-m-d'),
+            ]);
+            return 0;
+        }
+        
         $this->info("Sending reminders to " . count($recipientIds) . " recipient(s)...");
+        
+        // Get the "Granted" leave status ID
+        $grantedStatusId = LeaveStatus::where('name', 'Granted')->value('id');
+        
+        // Get users who are on approved leave today
+        $usersOnLeave = Leave::where('leave_status_id', $grantedStatusId)
+            ->whereDate('date', $today)
+            ->pluck('user_id')
+            ->toArray();
         
         $sentCount = 0;
         $failedCount = 0;
+        $skippedCount = 0;
         
         // Get all recipient users
         $recipients = User::whereIn('id', $recipientIds)
@@ -74,6 +102,20 @@ class SendClockinReminders extends Command
             ->get();
         
         foreach ($recipients as $user) {
+            // Skip if user is on leave today
+            if (in_array($user->id, $usersOnLeave)) {
+                $skippedCount++;
+                $this->info("⊘ Skipped: {$user->name} (on approved leave)");
+                
+                Log::channel('daily')->info('Clockin reminder skipped - user on leave', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'date' => $today->format('Y-m-d'),
+                ]);
+                
+                continue;
+            }
+            
             try {
                 // Send the reminder email
                 Mail::to($user->email)->send(new ClockinReminderMail($user, $clockinTime));
@@ -101,8 +143,12 @@ class SendClockinReminders extends Command
             }
         }
         
-        $this->info("\nClackin reminder process completed.");
+        $this->info("\nClockin reminder process completed.");
         $this->info("✓ Successfully sent: {$sentCount}");
+        
+        if ($skippedCount > 0) {
+            $this->info("⊘ Skipped (on leave): {$skippedCount}");
+        }
         
         if ($failedCount > 0) {
             $this->warn("✗ Failed: {$failedCount}");
@@ -111,6 +157,7 @@ class SendClockinReminders extends Command
         Log::channel('daily')->info('Clockin reminder batch completed', [
             'total_recipients' => count($recipientIds),
             'sent' => $sentCount,
+            'skipped' => $skippedCount,
             'failed' => $failedCount,
         ]);
         
