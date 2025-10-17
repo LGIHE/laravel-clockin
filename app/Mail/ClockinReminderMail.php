@@ -72,6 +72,3 @@ class ClockinReminderMail extends Mailable
         return [];
     }
 }
-        return [];
-    }
-}
