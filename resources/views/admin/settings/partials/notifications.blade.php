@@ -109,9 +109,14 @@
 
                 <!-- Clockin Notification Recipients -->
                 <div class="mt-4 pt-4 border-t border-blue-200">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Clockin Reminder Recipients
-                    </label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Clockin Reminder Recipients
+                        </label>
+                        <span id="recipient-count" class="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                            {{ count($selectedRecipients ?? []) }} selected
+                        </span>
+                    </div>
                     <p class="text-sm text-gray-500 mb-3">
                         Select staff members who should receive daily clockin reminder emails.
                     </p>
@@ -123,34 +128,118 @@
                             $selectedRecipients = [];
                         }
                         $allUsers = \App\Models\User::where('status', 1)->orderBy('name')->get();
+                        
+                        // Separate selected and unselected users for better visibility
+                        $selectedUsers = $allUsers->filter(function($user) use ($selectedRecipients) {
+                            return in_array($user->id, $selectedRecipients);
+                        });
+                        $unselectedUsers = $allUsers->filter(function($user) use ($selectedRecipients) {
+                            return !in_array($user->id, $selectedRecipients);
+                        });
                     @endphp
+
+                    <!-- Quick Actions -->
+                    <div class="flex gap-2 mb-3">
+                        <button 
+                            type="button" 
+                            onclick="selectAllRecipients()" 
+                            class="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                        >
+                            Select All
+                        </button>
+                        <button 
+                            type="button" 
+                            onclick="deselectAllRecipients()" 
+                            class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                        >
+                            Deselect All
+                        </button>
+                    </div>
 
                     <div class="max-h-64 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
                         <div class="space-y-2">
-                            @forelse($allUsers as $user)
-                                <label class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        name="clockin_notification_recipients[]" 
-                                        value="{{ $user->id }}"
-                                        {{ in_array($user->id, $selectedRecipients) ? 'checked' : '' }}
-                                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    >
-                                    <span class="ml-3 text-sm text-gray-700">
-                                        {{ $user->name }}
-                                        <span class="text-gray-500">({{ $user->email }})</span>
-                                    </span>
-                                </label>
-                            @empty
+                            @if($selectedUsers->isNotEmpty())
+                                <!-- Selected Users Section -->
+                                <div class="mb-3">
+                                    <p class="text-xs font-semibold text-blue-600 uppercase mb-2 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Selected ({{ $selectedUsers->count() }})
+                                    </p>
+                                    @foreach($selectedUsers as $user)
+                                        <label class="flex items-center p-2 bg-blue-50 border border-blue-200 rounded cursor-pointer hover:bg-blue-100 transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                name="clockin_notification_recipients[]" 
+                                                value="{{ $user->id }}"
+                                                checked
+                                                class="recipient-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                onchange="updateRecipientCount()"
+                                            >
+                                            <span class="ml-3 text-sm text-gray-900 font-medium">
+                                                {{ $user->name }}
+                                                <span class="text-gray-600 font-normal">({{ $user->email }})</span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endif
+                            
+                            @if($unselectedUsers->isNotEmpty())
+                                <!-- Unselected Users Section -->
+                                <div>
+                                    @if($selectedUsers->isNotEmpty())
+                                        <p class="text-xs font-semibold text-gray-500 uppercase mb-2 mt-3 pt-3 border-t border-gray-200">
+                                            Available Staff ({{ $unselectedUsers->count() }})
+                                        </p>
+                                    @endif
+                                    @foreach($unselectedUsers as $user)
+                                        <label class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                name="clockin_notification_recipients[]" 
+                                                value="{{ $user->id }}"
+                                                class="recipient-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                onchange="updateRecipientCount()"
+                                            >
+                                            <span class="ml-3 text-sm text-gray-700">
+                                                {{ $user->name }}
+                                                <span class="text-gray-500">({{ $user->email }})</span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endif
+                            
+                            @if($allUsers->isEmpty())
                                 <p class="text-sm text-gray-500 text-center py-4">No active users found</p>
-                            @endforelse
+                            @endif
                         </div>
                     </div>
                     
                     <p class="text-xs text-gray-500 mt-2">
-                        💡 Tip: Select users who need daily reminders to clock in. The email will be sent at the time specified above.
+                        💡 Tip: Selected users will receive daily reminders at the time specified above. Deselect any user to stop their reminders.
                     </p>
                 </div>
+
+                <script>
+                    function updateRecipientCount() {
+                        const checkboxes = document.querySelectorAll('.recipient-checkbox');
+                        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                        document.getElementById('recipient-count').textContent = checkedCount + ' selected';
+                    }
+                    
+                    function selectAllRecipients() {
+                        document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = true);
+                        updateRecipientCount();
+                    }
+                    
+                    function deselectAllRecipients() {
+                        document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = false);
+                        updateRecipientCount();
+                    }
+                </script>
             </div>
 
             <!-- Enable Notice Notifications -->
