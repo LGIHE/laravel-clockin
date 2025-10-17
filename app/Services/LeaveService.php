@@ -50,18 +50,22 @@ class LeaveService
             'description' => $data['description'] ?? null,
         ]);
 
-        // Notify supervisors about new leave request
+        // Notify primary supervisor about new leave request
         try {
-            $applicant = User::with('supervisors')->find($userId);
-            if ($applicant && $applicant->supervisors) {
-                // Send in-app notification
-                $this->notificationService->notifyLeaveRequest($leave, $applicant);
+            $applicant = User::with('primarySupervisor')->find($userId);
+            if ($applicant) {
+                $primarySupervisor = $applicant->primarySupervisor()->first();
                 
-                // Send email notifications to supervisors
-                foreach ($applicant->supervisors as $supervisor) {
-                    if ($supervisor && $supervisor->email) {
-                        Mail::to($supervisor->email)->send(new LeaveRequestMail($leave, $applicant, $supervisor));
+                if ($primarySupervisor) {
+                    // Send in-app notification to primary supervisor only
+                    $this->notificationService->notifyLeaveRequest($leave, $applicant, $primarySupervisor);
+                    
+                    // Send email notification to primary supervisor only
+                    if ($primarySupervisor->email) {
+                        Mail::to($primarySupervisor->email)->send(new LeaveRequestMail($leave, $applicant, $primarySupervisor));
                     }
+                } else {
+                    \Log::info('No primary supervisor found for user', ['user_id' => $applicant->id]);
                 }
             }
         } catch (\Exception $e) {

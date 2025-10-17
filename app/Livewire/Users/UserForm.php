@@ -22,7 +22,8 @@ class UserForm extends Component
     public $userLevelId = '';
     public $departmentId = '';
     public $designationId = '';
-    public $selectedSupervisors = [];
+    public $primarySupervisorId = '';
+    public $secondarySupervisorId = '';
     public $selectedProjects = [];
     public $status = 1;
     
@@ -80,7 +81,16 @@ class UserForm extends Component
             $this->userLevelId = $user->user_level_id;
             $this->departmentId = $user->department_id;
             $this->designationId = $user->designation_id;
-            $this->selectedSupervisors = $user->supervisors->pluck('id')->toArray();
+            
+            // Load primary and secondary supervisors
+            foreach ($user->supervisors as $supervisor) {
+                if ($supervisor->pivot->supervisor_type === 'primary') {
+                    $this->primarySupervisorId = $supervisor->id;
+                } elseif ($supervisor->pivot->supervisor_type === 'secondary') {
+                    $this->secondarySupervisorId = $supervisor->id;
+                }
+            }
+            
             $this->status = $user->status;
             
             // Load project assignments
@@ -111,8 +121,8 @@ class UserForm extends Component
             'userLevelId' => 'required|exists:user_levels,id',
             'departmentId' => 'nullable|exists:departments,id',
             'designationId' => 'nullable|exists:designations,id',
-            'selectedSupervisors' => 'nullable|array',
-            'selectedSupervisors.*' => 'exists:users,id',
+            'primarySupervisorId' => 'nullable|exists:users,id',
+            'secondarySupervisorId' => 'nullable|exists:users,id|different:primarySupervisorId',
             'selectedProjects' => 'nullable|array',
             'selectedProjects.*' => 'exists:projects,id',
             'status' => 'required|in:0,1',
@@ -139,6 +149,7 @@ class UserForm extends Component
             'password.confirmed' => 'Password confirmation does not match',
             'userLevelId.required' => 'User role is required',
             'userLevelId.exists' => 'Selected role is invalid',
+            'secondarySupervisorId.different' => 'Secondary supervisor must be different from primary supervisor',
         ];
     }
 
@@ -175,7 +186,10 @@ class UserForm extends Component
                 $user = $this->userService->updateUser($this->userId, $data);
                 
                 // Update supervisors
-                $this->userService->assignSupervisor($this->userId, $this->selectedSupervisors);
+                $this->userService->assignSupervisor($this->userId, [
+                    'primary' => $this->primarySupervisorId,
+                    'secondary' => $this->secondarySupervisorId,
+                ]);
                 
                 $message = 'User updated successfully';
             } else {
@@ -196,8 +210,11 @@ class UserForm extends Component
                 ]);
                 
                 // Assign supervisors if provided
-                if (!empty($this->selectedSupervisors)) {
-                    $this->userService->assignSupervisor($user->id, $this->selectedSupervisors);
+                if (!empty($this->primarySupervisorId) || !empty($this->secondarySupervisorId)) {
+                    $this->userService->assignSupervisor($user->id, [
+                        'primary' => $this->primarySupervisorId,
+                        'secondary' => $this->secondarySupervisorId,
+                    ]);
                 }
                 
                 $message = 'User created successfully';
@@ -215,7 +232,7 @@ class UserForm extends Component
                 $this->reset([
                     'name', 'email', 'password', 'password_confirmation',
                     'userLevelId', 'departmentId', 'designationId',
-                    'selectedSupervisors', 'selectedProjects', 'status'
+                    'primarySupervisorId', 'secondarySupervisorId', 'selectedProjects', 'status'
                 ]);
                 $this->status = 1;
             }

@@ -60,17 +60,14 @@ class NotificationService
     }
 
     /**
-     * Create notification for new leave request (to supervisors)
+     * Create notification for new leave request (to primary supervisor)
      */
-    public function notifyLeaveRequest($leave, $applicant): void
+    public function notifyLeaveRequest($leave, $applicant, $supervisor): void
     {
         try {
-            // Notify all supervisors of the applicant
-            $supervisors = $applicant->supervisors;
-
-            // Check if user has supervisors
-            if (!$supervisors || $supervisors->isEmpty()) {
-                Log::info('No supervisors found for user', ['user_id' => $applicant->id]);
+            // Check if supervisor is provided
+            if (!$supervisor || !$supervisor->id) {
+                Log::info('No supervisor provided for leave request notification', ['user_id' => $applicant->id]);
                 return;
             }
 
@@ -81,27 +78,20 @@ class NotificationService
             // Use appropriate date display
             $dateDisplay = $startDate && $endDate ? "from {$startDate} to {$endDate}" : "for {$leaveDate}";
 
-            foreach ($supervisors as $supervisor) {
-                if (!$supervisor || !$supervisor->id) {
-                    Log::warning('Invalid supervisor object', ['supervisor' => $supervisor]);
-                    continue;
-                }
-                
-                $this->create(
-                    $supervisor->id,
-                    'leave_pending',
-                    'New Leave Request',
-                    "{$applicant->name} has submitted a leave request {$dateDisplay}",
-                    [
-                        'leave_id' => $leave->id,
-                        'applicant_id' => $applicant->id,
-                        'applicant_name' => $applicant->name,
-                    ],
-                    route('leaves.index')
-                );
-            }
+            $this->create(
+                $supervisor->id,
+                'leave_pending',
+                'New Leave Request',
+                "{$applicant->name} has submitted a leave request {$dateDisplay}",
+                [
+                    'leave_id' => $leave->id,
+                    'applicant_id' => $applicant->id,
+                    'applicant_name' => $applicant->name,
+                ],
+                route('leaves.index')
+            );
         } catch (\Exception $e) {
-            Log::error('Failed to create leave request notifications', ['error' => $e->getMessage()]);
+            Log::error('Failed to create leave request notification', ['error' => $e->getMessage()]);
         }
     }
 

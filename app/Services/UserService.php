@@ -181,42 +181,60 @@ class UserService
      * Assign supervisors to a user.
      *
      * @param string $userId
-     * @param array $supervisorIds
+     * @param array $supervisorData - Can be array of IDs (legacy) or ['primary' => id, 'secondary' => id]
      * @return User
      * @throws \Exception
      */
-    public function assignSupervisor(string $userId, array $supervisorIds = []): User
+    public function assignSupervisor(string $userId, array $supervisorData = []): User
     {
         $user = User::findOrFail($userId);
 
-        // Validate that supervisorIds is an array
-        if (!is_array($supervisorIds)) {
-            $supervisorIds = [];
+        // Handle both old format (array of IDs) and new format (with types)
+        $syncData = [];
+        
+        if (isset($supervisorData['primary']) || isset($supervisorData['secondary'])) {
+            // New format: ['primary' => id, 'secondary' => id]
+            if (!empty($supervisorData['primary']) && $supervisorData['primary'] !== $userId) {
+                $syncData[$supervisorData['primary']] = ['supervisor_type' => 'primary'];
+            }
+            if (!empty($supervisorData['secondary']) && $supervisorData['secondary'] !== $userId) {
+                $syncData[$supervisorData['secondary']] = ['supervisor_type' => 'secondary'];
+            }
+        } else {
+            // Legacy format: array of supervisor IDs (treat first as primary, second as secondary)
+            $supervisorIds = array_filter($supervisorData, function($id) use ($userId) {
+                return !empty($id) && $id !== $userId;
+            });
+            
+            $supervisorIds = array_values($supervisorIds); // Re-index array
+            
+            if (!empty($supervisorIds[0])) {
+                $syncData[$supervisorIds[0]] = ['supervisor_type' => 'primary'];
+            }
+            if (!empty($supervisorIds[1])) {
+                $syncData[$supervisorIds[1]] = ['supervisor_type' => 'secondary'];
+            }
         }
 
-        // Remove empty values and the user's own ID to prevent self-supervision
-        $supervisorIds = array_filter($supervisorIds, function($id) use ($userId) {
-            return !empty($id) && $id !== $userId;
-        });
-
         // Verify all supervisors exist
-        if (!empty($supervisorIds)) {
+        if (!empty($syncData)) {
+            $supervisorIds = array_keys($syncData);
             $existingCount = User::whereIn('id', $supervisorIds)->count();
             if ($existingCount !== count($supervisorIds)) {
                 throw new \Exception('One or more supervisor IDs are invalid');
             }
         }
 
-        // Sync supervisors
-        $user->supervisors()->sync($supervisorIds);
+        // Sync supervisors with their types
+        $user->supervisors()->sync($syncData);
 
         // Invalidate caches
         Cache::forget("user:{$userId}");
-        foreach ($supervisorIds as $supervisorId) {
+        foreach (array_keys($syncData) as $supervisorId) {
             Cache::forget("supervisor_team:{$supervisorId}");
         }
 
-        return $user->fresh(['userLevel', 'department', 'designation', 'supervisors']);
+        return $user->fresh(['userLevel', 'department', 'designation', 'supervisors', 'primarySupervisor', 'secondarySupervisor']);
     }
 
     /**

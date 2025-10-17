@@ -121,7 +121,29 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(User::class, 'user_supervisor', 'user_id', 'supervisor_id')
                     ->withTimestamps()
-                    ->withPivot('id');
+                    ->withPivot('id', 'supervisor_type');
+    }
+
+    /**
+     * Get the primary supervisor of the user.
+     */
+    public function primarySupervisor()
+    {
+        return $this->belongsToMany(User::class, 'user_supervisor', 'user_id', 'supervisor_id')
+                    ->wherePivot('supervisor_type', 'primary')
+                    ->withTimestamps()
+                    ->withPivot('id', 'supervisor_type');
+    }
+
+    /**
+     * Get the secondary supervisor of the user.
+     */
+    public function secondarySupervisor()
+    {
+        return $this->belongsToMany(User::class, 'user_supervisor', 'user_id', 'supervisor_id')
+                    ->wherePivot('supervisor_type', 'secondary')
+                    ->withTimestamps()
+                    ->withPivot('id', 'supervisor_type');
     }
 
     /**
@@ -131,7 +153,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(User::class, 'user_supervisor', 'supervisor_id', 'user_id')
                     ->withTimestamps()
-                    ->withPivot('id');
+                    ->withPivot('id', 'supervisor_type');
     }
     
     /**
@@ -140,7 +162,7 @@ class User extends Authenticatable
      */
     public function supervisor()
     {
-        return $this->supervisors()->first();
+        return $this->primarySupervisor()->first() ?? $this->supervisors()->first();
     }
 
     /**
