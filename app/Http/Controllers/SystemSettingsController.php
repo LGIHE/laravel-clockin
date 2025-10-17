@@ -133,9 +133,9 @@ class SystemSettingsController extends Controller
             SystemSetting::set('clockin_reminder_time', $request->clockin_reminder_time, 'string', 'notifications', 'Daily Clockin Reminder Time');
         }
         
-        // Save clockin notification recipients as JSON
+        // Save clockin notification recipients as JSON (SystemSetting will encode it)
         $recipients = $request->input('clockin_notification_recipients', []);
-        SystemSetting::set('clockin_notification_recipients', json_encode($recipients), 'json', 'notifications', 'Clockin Notification Recipients');
+        SystemSetting::set('clockin_notification_recipients', $recipients, 'json', 'notifications', 'Clockin Notification Recipients');
 
         return back()->with('success', 'Notification settings updated successfully!');
     }
