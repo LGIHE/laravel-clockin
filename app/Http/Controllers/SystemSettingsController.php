@@ -115,13 +115,27 @@ class SystemSettingsController extends Controller
             'enable_email_notifications' => 'boolean',
             'enable_leave_notifications' => 'boolean',
             'enable_attendance_notifications' => 'boolean',
+            'enable_notice_notifications' => 'boolean',
             'enable_task_notifications' => 'boolean',
+            'clockin_reminder_time' => 'nullable|date_format:H:i',
+            'clockin_notification_recipients' => 'nullable|array',
+            'clockin_notification_recipients.*' => 'exists:users,id',
         ]);
 
         SystemSetting::set('enable_email_notifications', $request->boolean('enable_email_notifications'), 'boolean', 'notification', 'Enable Email Notifications');
         SystemSetting::set('enable_leave_notifications', $request->boolean('enable_leave_notifications'), 'boolean', 'notification', 'Enable Leave Notifications');
         SystemSetting::set('enable_attendance_notifications', $request->boolean('enable_attendance_notifications'), 'boolean', 'notification', 'Enable Attendance Notifications');
+        SystemSetting::set('enable_notice_notifications', $request->boolean('enable_notice_notifications'), 'boolean', 'notification', 'Enable Notice Notifications');
         SystemSetting::set('enable_task_notifications', $request->boolean('enable_task_notifications'), 'boolean', 'notification', 'Enable Task Notifications');
+        
+        // Save clockin reminder settings
+        if ($request->has('clockin_reminder_time')) {
+            SystemSetting::set('clockin_reminder_time', $request->clockin_reminder_time, 'string', 'notifications', 'Daily Clockin Reminder Time');
+        }
+        
+        // Save clockin notification recipients as JSON
+        $recipients = $request->input('clockin_notification_recipients', []);
+        SystemSetting::set('clockin_notification_recipients', json_encode($recipients), 'json', 'notifications', 'Clockin Notification Recipients');
 
         return back()->with('success', 'Notification settings updated successfully!');
     }
