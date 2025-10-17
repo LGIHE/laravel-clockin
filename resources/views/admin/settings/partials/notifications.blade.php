@@ -117,8 +117,12 @@
                     </p>
                     
                     @php
-                        $selectedRecipients = old('clockin_notification_recipients', json_decode(\App\Models\SystemSetting::get('clockin_notification_recipients', '[]'), true));
-                        $allUsers = \App\Models\User::where('status', 'active')->orderBy('name')->get();
+                        $selectedRecipients = old('clockin_notification_recipients', \App\Models\SystemSetting::get('clockin_notification_recipients', []));
+                        // Ensure it's an array
+                        if (!is_array($selectedRecipients)) {
+                            $selectedRecipients = [];
+                        }
+                        $allUsers = \App\Models\User::where('status', 1)->orderBy('name')->get();
                     @endphp
 
                     <div class="max-h-64 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">

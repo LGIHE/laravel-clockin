@@ -70,7 +70,7 @@ class SendClockinReminders extends Command
         
         // Get all recipient users
         $recipients = User::whereIn('id', $recipientIds)
-            ->where('status', 'active')
+            ->where('status', 1)
             ->get();
         
         foreach ($recipients as $user) {
