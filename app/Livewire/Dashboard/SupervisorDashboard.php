@@ -42,12 +42,24 @@ class SupervisorDashboard extends Component
             $this->pendingLeaves = $this->dashboardData['pending_leaves'] ?? collect();
             $this->teamStats = $this->dashboardData['team_stats'] ?? [];
             $this->teamMembers = $this->dashboardData['team_members'] ?? collect();
+            
+            // Debug logging
+            \Log::info('Supervisor Dashboard Data Loaded', [
+                'team_members_count' => $this->teamMembers->count(),
+                'pending_leaves_count' => $this->pendingLeaves->count(),
+                'team_attendance' => $this->teamAttendance,
+                'team_stats' => $this->teamStats,
+            ]);
         } catch (\Exception $e) {
             // Initialize with empty values on error
             $this->teamAttendance = [];
             $this->pendingLeaves = collect();
             $this->teamStats = [];
             $this->teamMembers = collect();
+            
+            \Log::error('Supervisor Dashboard Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             
             $this->dispatch('toast', [
                 'message' => 'Failed to load dashboard data: ' . $e->getMessage(),

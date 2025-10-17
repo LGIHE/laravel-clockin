@@ -160,7 +160,11 @@ class DashboardService
         // Get team members (users supervised by this user) - cache for 10 minutes
         $cacheKey = "supervisor_team:{$userId}";
         $teamMembers = Cache::remember($cacheKey, 600, function () use ($userId) {
-            return User::where('supervisor_id', $userId)
+            $supervisor = User::find($userId);
+            if (!$supervisor) {
+                return collect();
+            }
+            return $supervisor->supervisedUsers()
                 ->where('status', 1)
                 ->with(['department', 'designation'])
                 ->get();
