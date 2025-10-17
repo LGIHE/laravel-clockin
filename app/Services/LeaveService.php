@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Mail\LeaveApprovedMail;
+use App\Mail\LeaveRejectedMail;
+use App\Mail\LeaveRequestMail;
 use App\Models\Leave;
 use App\Models\LeaveCategory;
 use App\Models\LeaveStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class LeaveService
@@ -50,7 +54,15 @@ class LeaveService
         try {
             $applicant = User::with('supervisors')->find($userId);
             if ($applicant && $applicant->supervisors) {
+                // Send in-app notification
                 $this->notificationService->notifyLeaveRequest($leave, $applicant);
+                
+                // Send email notifications to supervisors
+                foreach ($applicant->supervisors as $supervisor) {
+                    if ($supervisor && $supervisor->email) {
+                        Mail::to($supervisor->email)->send(new LeaveRequestMail($leave, $applicant, $supervisor));
+                    }
+                }
             }
         } catch (\Exception $e) {
             // Log but don't fail the leave creation if notification fails
@@ -97,7 +109,13 @@ class LeaveService
         $applicant = User::find($leave->user_id);
         $approver = User::find($reviewerId);
         if ($applicant && $approver) {
+            // Send in-app notification
             $this->notificationService->notifyLeaveApproved($leave, $applicant, $approver);
+            
+            // Send email notification
+            if ($applicant->email) {
+                Mail::to($applicant->email)->send(new LeaveApprovedMail($leave, $applicant, $approver));
+            }
         }
 
         return $leave->load(['user', 'category', 'status']);
@@ -136,7 +154,13 @@ class LeaveService
         $applicant = User::find($leave->user_id);
         $rejector = User::find($reviewerId);
         if ($applicant && $rejector) {
+            // Send in-app notification
             $this->notificationService->notifyLeaveRejected($leave, $applicant, $rejector);
+            
+            // Send email notification
+            if ($applicant->email) {
+                Mail::to($applicant->email)->send(new LeaveRejectedMail($leave, $applicant, $rejector));
+            }
         }
 
         return $leave->load(['user', 'category', 'status']);
