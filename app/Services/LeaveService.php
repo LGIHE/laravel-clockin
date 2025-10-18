@@ -50,6 +50,9 @@ class LeaveService
             'description' => $data['description'] ?? null,
         ]);
 
+        // Load relationships needed for notifications
+        $leave->load(['user', 'category', 'status']);
+
         // Notify primary supervisor about new leave request
         try {
             $applicant = User::with('primarySupervisor')->find($userId);
@@ -77,7 +80,7 @@ class LeaveService
             ]);
         }
 
-        return $leave->load(['user', 'category', 'status']);
+        return $leave;
     }
 
     /**
@@ -100,7 +103,7 @@ class LeaveService
         }
 
         // Get approved status
-        $approvedStatus = LeaveStatus::where('name', 'approved')->first();
+        $approvedStatus = LeaveStatus::where('name', 'granted')->first();
         if (!$approvedStatus) {
             throw new \Exception('Approved status not found');
         }
@@ -184,7 +187,12 @@ class LeaveService
         $category = LeaveCategory::findOrFail($categoryId);
         
         // Get approved leaves count for the year
-        $approvedStatus = LeaveStatus::where('name', 'approved')->first();
+        $approvedStatus = LeaveStatus::where('name', 'granted')->first();
+        if (!$approvedStatus) {
+            // If no approved status exists, no leaves have been approved yet
+            return;
+        }
+        
         $leavesCount = Leave::where('user_id', $userId)
             ->where('leave_category_id', $categoryId)
             ->where('leave_status_id', $approvedStatus->id)
@@ -209,12 +217,16 @@ class LeaveService
         $category = LeaveCategory::findOrFail($categoryId);
         
         // Get approved leaves count for the year
-        $approvedStatus = LeaveStatus::where('name', 'approved')->first();
-        $usedLeaves = Leave::where('user_id', $userId)
-            ->where('leave_category_id', $categoryId)
-            ->where('leave_status_id', $approvedStatus->id)
-            ->whereYear('date', $year)
-            ->count();
+        $approvedStatus = LeaveStatus::where('name', 'granted')->first();
+        $usedLeaves = 0;
+        
+        if ($approvedStatus) {
+            $usedLeaves = Leave::where('user_id', $userId)
+                ->where('leave_category_id', $categoryId)
+                ->where('leave_status_id', $approvedStatus->id)
+                ->whereYear('date', $year)
+                ->count();
+        }
 
         return [
             'category' => $category->name,
