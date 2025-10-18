@@ -1029,48 +1029,49 @@
                                         @error('editUser.designation_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                     </div>
 
-                                    <div class="space-y-2 col-span-2">
-                                        <label for="editUserSupervisors" class="block text-sm font-medium text-gray-700">Supervisors (Multiple Selection)</label>
+                                    <!-- Primary Supervisor -->
+                                    <div class="space-y-2">
+                                        <label for="editUserPrimarySupervisor" class="block text-sm font-medium text-gray-700">Primary Supervisor</label>
                                         <select 
-                                            id="editUserSupervisors"
-                                            wire:model.defer="editUser.supervisor_ids"
-                                            multiple
-                                            size="5"
+                                            id="editUserPrimarySupervisor"
+                                            wire:model="editUser.primary_supervisor_id"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         >
+                                            <option value="">Select Primary Supervisor</option>
                                             @foreach($supervisors as $supervisor)
-                                                <option value="{{ $supervisor->id }}" {{ in_array($supervisor->id, $editUser['supervisor_ids'] ?? []) ? 'selected' : '' }}>
-                                                    {{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})
-                                                </option>
+                                                @if($supervisor->id != $editUser['id'])
+                                                    <option value="{{ $supervisor->id }}">
+                                                        {{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})
+                                                    </option>
+                                                @endif
                                             @endforeach
                                         </select>
-                                        <p class="mt-1 text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple supervisors</p>
-                                        @error('editUser.supervisor_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                                        
-                                        @if(!empty($editUser['supervisor_ids']))
-                                            <div class="mt-2">
-                                                <p class="text-xs font-medium text-gray-700 mb-2">Currently Selected:</p>
-                                                <div class="flex flex-wrap gap-2">
-                                                    @foreach($supervisors as $supervisor)
-                                                        @if(in_array($supervisor->id, $editUser['supervisor_ids'] ?? []))
-                                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                                {{ $supervisor->name }}
-                                                                <button 
-                                                                    type="button"
-                                                                    wire:click="removeEditUserSupervisor('{{ $supervisor->id }}')"
-                                                                    class="inline-flex items-center justify-center w-4 h-4 ml-1 text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full transition-colors"
-                                                                    title="Remove {{ $supervisor->name }}"
-                                                                >
-                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                    </svg>
-                                                                </button>
-                                                            </span>
+                                        <p class="mt-1 text-xs text-gray-500">Primary supervisor receives leave request notifications</p>
+                                        @error('editUser.primary_supervisor_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <!-- Secondary Supervisor -->
+                                    <div class="space-y-2">
+                                        <label for="editUserSecondarySupervisor" class="block text-sm font-medium text-gray-700">Secondary Supervisor</label>
+                                        <select 
+                                            id="editUserSecondarySupervisor"
+                                            wire:model="editUser.secondary_supervisor_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Select Secondary Supervisor</option>
+                                            @foreach($supervisors as $supervisor)
+                                                @if($supervisor->id != $editUser['id'])
+                                                    <option value="{{ $supervisor->id }}" {{ $supervisor->id == $editUser['primary_supervisor_id'] ? 'disabled' : '' }}>
+                                                        {{ $supervisor->name }} ({{ ucfirst($supervisor->userLevel->name) }})
+                                                        @if($supervisor->id == $editUser['primary_supervisor_id'])
+                                                            (Already selected as primary)
                                                         @endif
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        <p class="mt-1 text-xs text-gray-500">Backup supervisor (optional)</p>
+                                        @error('editUser.secondary_supervisor_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -1201,55 +1202,57 @@
                         </div>
 
                         <form wire:submit.prevent="saveChangeSupervisor" class="space-y-4">
-                            <div>
+                            <div class="bg-gray-50 p-4 rounded-md">
                                 <p class="text-sm text-gray-600 mb-2">User: <strong>{{ $changeSupervisorData['user_name'] }}</strong></p>
-                                <p class="text-sm text-gray-600 mb-4">Current Supervisors: <strong>{{ $changeSupervisorData['current_supervisor'] }}</strong></p>
+                                <p class="text-sm text-gray-600">Current Primary: <strong>{{ $changeSupervisorData['current_primary_supervisor'] }}</strong></p>
+                                <p class="text-sm text-gray-600">Current Secondary: <strong>{{ $changeSupervisorData['current_secondary_supervisor'] }}</strong></p>
                             </div>
 
                             <div>
-                                <label for="newSupervisors" class="block text-sm font-medium text-gray-700">Supervisors (Multiple Selection)</label>
+                                <label for="newPrimarySupervisor" class="block text-sm font-medium text-gray-700 mb-1">Primary Supervisor</label>
                                 <select 
-                                    id="newSupervisors"
-                                    wire:model.defer="changeSupervisorData.new_supervisor_ids"
-                                    multiple
-                                    size="6"
-                                    class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    id="newPrimarySupervisor"
+                                    wire:model="changeSupervisorData.new_primary_supervisor_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
+                                    <option value="">Select Primary Supervisor</option>
                                     @foreach($supervisors as $supervisor)
-                                        <option value="{{ $supervisor->id }}" {{ in_array($supervisor->id, $changeSupervisorData['new_supervisor_ids'] ?? []) ? 'selected' : '' }}>
-                                            {{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})
-                                        </option>
+                                        @if($supervisor->id != $changeSupervisorData['user_id'])
+                                            <option value="{{ $supervisor->id }}">
+                                                {{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})
+                                            </option>
+                                        @endif
                                     @endforeach
                                 </select>
-                                <p class="mt-1 text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple supervisors. Deselect all for no supervisor.</p>
-                                @error('changeSupervisorData.new_supervisor_ids') 
+                                <p class="mt-1 text-xs text-gray-500">Primary supervisor receives leave request notifications</p>
+                                @error('changeSupervisorData.new_primary_supervisor_id') 
                                     <span class="text-red-500 text-xs">{{ $message }}</span> 
                                 @enderror
-                                
-                                @if(!empty($changeSupervisorData['new_supervisor_ids']))
-                                    <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                        <p class="text-xs font-medium text-blue-900 mb-2">Selected Supervisors:</p>
-                                        <div class="flex flex-wrap gap-2">
-                                            @foreach($supervisors as $supervisor)
-                                                @if(in_array($supervisor->id, $changeSupervisorData['new_supervisor_ids'] ?? []))
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">
-                                                        {{ $supervisor->name }}
-                                                        <button 
-                                                            type="button"
-                                                            wire:click="removeChangeSupervisor('{{ $supervisor->id }}')"
-                                                            class="inline-flex items-center justify-center w-4 h-4 ml-1 text-blue-700 hover:text-blue-900 hover:bg-blue-300 rounded-full transition-colors"
-                                                            title="Remove {{ $supervisor->name }}"
-                                                        >
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                            </svg>
-                                                        </button>
-                                                    </span>
+                            </div>
+
+                            <div>
+                                <label for="newSecondarySupervisor" class="block text-sm font-medium text-gray-700 mb-1">Secondary Supervisor</label>
+                                <select 
+                                    id="newSecondarySupervisor"
+                                    wire:model="changeSupervisorData.new_secondary_supervisor_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select Secondary Supervisor</option>
+                                    @foreach($supervisors as $supervisor)
+                                        @if($supervisor->id != $changeSupervisorData['user_id'])
+                                            <option value="{{ $supervisor->id }}" {{ $supervisor->id == $changeSupervisorData['new_primary_supervisor_id'] ? 'disabled' : '' }}>
+                                                {{ $supervisor->name }} ({{ $supervisor->userLevel->name ?? 'N/A' }})
+                                                @if($supervisor->id == $changeSupervisorData['new_primary_supervisor_id'])
+                                                    (Already selected as primary)
                                                 @endif
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Backup supervisor (optional)</p>
+                                @error('changeSupervisorData.new_secondary_supervisor_id') 
+                                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                                @enderror
                             </div>
 
                             <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-3 -mx-6 -mb-4 mt-6">

@@ -78,7 +78,8 @@ class UserList extends Component
         'user_level_id' => '',
         'department_id' => '',
         'designation_id' => '',
-        'supervisor_ids' => [],
+        'primary_supervisor_id' => '',
+        'secondary_supervisor_id' => '',
         'status' => 1,
         'password' => '',
         'password_confirmation' => '',
@@ -100,8 +101,10 @@ class UserList extends Component
     public $changeSupervisorData = [
         'user_id' => '',
         'user_name' => '',
-        'current_supervisor' => '',
-        'new_supervisor_ids' => [],
+        'current_primary_supervisor' => '',
+        'current_secondary_supervisor' => '',
+        'new_primary_supervisor_id' => '',
+        'new_secondary_supervisor_id' => '',
     ];
 
     // For IP Restriction Modal
@@ -536,14 +539,24 @@ class UserList extends Component
         try {
             $user = User::with('supervisors')->findOrFail($userId);
             
-            $supervisorNames = $user->supervisors->pluck('name')->toArray();
-            $currentSupervisor = !empty($supervisorNames) ? implode(', ', $supervisorNames) : 'No Supervisors';
+            $primarySupervisor = null;
+            $secondarySupervisor = null;
+            
+            foreach ($user->supervisors as $supervisor) {
+                if ($supervisor->pivot->supervisor_type === 'primary') {
+                    $primarySupervisor = $supervisor;
+                } elseif ($supervisor->pivot->supervisor_type === 'secondary') {
+                    $secondarySupervisor = $supervisor;
+                }
+            }
             
             $this->changeSupervisorData = [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'current_supervisor' => $currentSupervisor,
-                'new_supervisor_ids' => $user->supervisors->pluck('id')->toArray(),
+                'current_primary_supervisor' => $primarySupervisor ? $primarySupervisor->name : 'No Primary Supervisor',
+                'current_secondary_supervisor' => $secondarySupervisor ? $secondarySupervisor->name : 'No Secondary Supervisor',
+                'new_primary_supervisor_id' => $primarySupervisor ? $primarySupervisor->id : '',
+                'new_secondary_supervisor_id' => $secondarySupervisor ? $secondarySupervisor->id : '',
             ];
             
             $this->showChangeSupervisorModal = true;
@@ -853,11 +866,22 @@ class UserList extends Component
                     'user_level_id' => $user->user_level_id,
                     'department_id' => $user->department_id ?? '',
                     'designation_id' => $user->designation_id ?? '',
-                    'supervisor_ids' => $user->supervisors ? $user->supervisors->pluck('id')->toArray() : [],
+                    'primary_supervisor_id' => '',
+                    'secondary_supervisor_id' => '',
                     'status' => $user->status,
                     'password' => '',
                     'password_confirmation' => '',
                 ];
+                
+                // Load primary and secondary supervisors
+                foreach ($user->supervisors as $supervisor) {
+                    if ($supervisor->pivot->supervisor_type === 'primary') {
+                        $this->editUser['primary_supervisor_id'] = $supervisor->id;
+                    } elseif ($supervisor->pivot->supervisor_type === 'secondary') {
+                        $this->editUser['secondary_supervisor_id'] = $supervisor->id;
+                    }
+                }
+                
                 $this->editUserProjects = $user->projects ? $user->projects->pluck('id')->toArray() : [];
                 $this->showEditUserModal = true;
             }
@@ -882,7 +906,8 @@ class UserList extends Component
             'user_level_id' => '',
             'department_id' => '',
             'designation_id' => '',
-            'supervisor_ids' => [],
+            'primary_supervisor_id' => '',
+            'secondary_supervisor_id' => '',
             'status' => 1,
             'password' => '',
             'password_confirmation' => '',
@@ -900,25 +925,7 @@ class UserList extends Component
         }
     }
 
-    public function removeEditUserSupervisor($supervisorId)
-    {
-        $this->editUser['supervisor_ids'] = array_values(
-            array_filter(
-                $this->editUser['supervisor_ids'] ?? [],
-                fn($id) => $id !== $supervisorId
-            )
-        );
-    }
 
-    public function removeChangeSupervisor($supervisorId)
-    {
-        $this->changeSupervisorData['new_supervisor_ids'] = array_values(
-            array_filter(
-                $this->changeSupervisorData['new_supervisor_ids'] ?? [],
-                fn($id) => $id !== $supervisorId
-            )
-        );
-    }
 
     public function updateUser()
     {
@@ -930,8 +937,8 @@ class UserList extends Component
             'editUser.user_level_id' => 'required|exists:user_levels,id',
             'editUser.department_id' => 'nullable|exists:departments,id',
             'editUser.designation_id' => 'nullable|exists:designations,id',
-            'editUser.supervisor_ids' => 'nullable|array',
-            'editUser.supervisor_ids.*' => 'exists:users,id',
+            'editUser.primary_supervisor_id' => 'nullable|exists:users,id',
+            'editUser.secondary_supervisor_id' => 'nullable|exists:users,id|different:editUser.primary_supervisor_id',
             'editUser.status' => 'required|in:0,1',
         ];
 
@@ -947,25 +954,12 @@ class UserList extends Component
             $user = User::findOrFail($this->editUser['id']);
             
             // Check if user is trying to be their own supervisor
-            $supervisorIds = $this->editUser['supervisor_ids'] ?? [];
-            if (in_array($user->id, $supervisorIds)) {
+            if ($this->editUser['primary_supervisor_id'] == $user->id || $this->editUser['secondary_supervisor_id'] == $user->id) {
                 $this->dispatch('toast', [
                     'message' => 'A user cannot be their own supervisor',
                     'variant' => 'danger'
                 ]);
                 return;
-            }
-            
-            // Check for circular relationships
-            foreach ($supervisorIds as $supervisorId) {
-                if ($this->wouldCreateCircularRelationship($user->id, $supervisorId)) {
-                    $supervisor = User::find($supervisorId);
-                    $this->dispatch('toast', [
-                        'message' => "Cannot assign {$supervisor->name} as supervisor: This would create a circular supervisory relationship",
-                        'variant' => 'danger'
-                    ]);
-                    return;
-                }
             }
             
             // Convert empty strings to null for nullable foreign keys
@@ -987,8 +981,11 @@ class UserList extends Component
 
             $user->update($updateData);
 
-            // Sync supervisors (many-to-many)
-            $user->supervisors()->sync($supervisorIds);
+            // Update supervisors using UserService
+            $this->userService->assignSupervisor($user->id, [
+                'primary' => $this->editUser['primary_supervisor_id'],
+                'secondary' => $this->editUser['secondary_supervisor_id'],
+            ]);
             
             // Sync projects
             $user->projects()->sync($this->editUserProjects);
@@ -1048,16 +1045,16 @@ class UserList extends Component
     public function saveChangeSupervisor()
     {
         $this->validate([
-            'changeSupervisorData.new_supervisor_ids' => 'nullable|array',
-            'changeSupervisorData.new_supervisor_ids.*' => 'exists:users,id',
+            'changeSupervisorData.new_primary_supervisor_id' => 'nullable|exists:users,id',
+            'changeSupervisorData.new_secondary_supervisor_id' => 'nullable|exists:users,id|different:changeSupervisorData.new_primary_supervisor_id',
         ]);
 
         try {
             $user = User::findOrFail($this->changeSupervisorData['user_id']);
-            $newSupervisorIds = $this->changeSupervisorData['new_supervisor_ids'] ?? [];
             
             // Check if user is trying to be their own supervisor
-            if (in_array($user->id, $newSupervisorIds)) {
+            if ($this->changeSupervisorData['new_primary_supervisor_id'] == $user->id || 
+                $this->changeSupervisorData['new_secondary_supervisor_id'] == $user->id) {
                 $this->dispatch('toast', [
                     'message' => 'A user cannot be their own supervisor',
                     'variant' => 'danger'
@@ -1065,20 +1062,11 @@ class UserList extends Component
                 return;
             }
             
-            // Check for circular relationships
-            foreach ($newSupervisorIds as $supervisorId) {
-                if ($this->wouldCreateCircularRelationship($user->id, $supervisorId)) {
-                    $supervisor = User::find($supervisorId);
-                    $this->dispatch('toast', [
-                        'message' => "Cannot assign {$supervisor->name} as supervisor: This would create a circular supervisory relationship",
-                        'variant' => 'danger'
-                    ]);
-                    return;
-                }
-            }
-            
-            // Sync supervisors (this will remove old ones and add new ones)
-            $user->supervisors()->sync($newSupervisorIds);
+            // Update supervisors using UserService
+            $this->userService->assignSupervisor($user->id, [
+                'primary' => $this->changeSupervisorData['new_primary_supervisor_id'],
+                'secondary' => $this->changeSupervisorData['new_secondary_supervisor_id'],
+            ]);
 
             $this->dispatch('toast', [
                 'message' => 'Supervisors updated successfully',
@@ -1097,6 +1085,19 @@ class UserList extends Component
     public function closeChangeSupervisorModal()
     {
         $this->showChangeSupervisorModal = false;
+        $this->changeSupervisorData = [
+            'user_id' => '',
+            'user_name' => '',
+            'current_primary_supervisor' => '',
+            'current_secondary_supervisor' => '',
+            'new_primary_supervisor_id' => '',
+            'new_secondary_supervisor_id' => '',
+        ];
+        $this->resetErrorBag();
+    }
+    
+    public function resetChangeSupervisorData()
+    {
         $this->changeSupervisorData = [
             'user_id' => '',
             'user_name' => '',
