@@ -84,6 +84,75 @@ class LeaveService
     }
 
     /**
+     * Apply for leave range (multiple days).
+     *
+     * @param string $userId
+     * @param array $data
+     * @return Leave
+     * @throws \Exception
+     */
+    public function applyLeaveRange(string $userId, array $data): Leave
+    {
+        $startDate = new \DateTime($data['start_date']);
+        $endDate = new \DateTime($data['end_date']);
+        
+        // Calculate total days
+        $totalDays = $startDate->diff($endDate)->days + 1;
+        
+        // Validate leave limit for the range
+        $this->validateLeaveLimitForRange($userId, $data['leave_category_id'], $startDate->format('Y'), $totalDays);
+
+        // Get pending status
+        $pendingStatus = LeaveStatus::where('name', 'pending')->first();
+        if (!$pendingStatus) {
+            throw new \Exception('Pending status not found');
+        }
+
+        // Create leave with date range
+        $leave = Leave::create([
+            'id' => Str::uuid()->toString(),
+            'user_id' => $userId,
+            'leave_category_id' => $data['leave_category_id'],
+            'leave_status_id' => $pendingStatus->id,
+            'date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'description' => $data['description'] ?? null,
+        ]);
+
+        // Load relationships needed for notifications
+        $leave->load(['user', 'category', 'status']);
+
+        // Notify primary supervisor about new leave request
+        try {
+            $applicant = User::with('primarySupervisor')->find($userId);
+            if ($applicant) {
+                $primarySupervisor = $applicant->primarySupervisor()->first();
+                
+                if ($primarySupervisor) {
+                    // Send in-app notification to primary supervisor only
+                    $this->notificationService->notifyLeaveRequest($leave, $applicant, $primarySupervisor);
+                    
+                    // Send email notification to primary supervisor only
+                    if ($primarySupervisor->email) {
+                        Mail::to($primarySupervisor->email)->send(new LeaveRequestMail($leave, $applicant, $primarySupervisor));
+                    }
+                } else {
+                    \Log::info('No primary supervisor found for user', ['user_id' => $applicant->id]);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail the leave creation if notification fails
+            \Log::warning('Failed to send leave request notification', [
+                'error' => $e->getMessage(),
+                'leave_id' => $leave->id,
+                'user_id' => $userId
+            ]);
+        }
+
+        return $leave;
+    }
+
+    /**
      * Approve leave.
      *
      * @param string $leaveId
@@ -205,6 +274,72 @@ class LeaveService
     }
 
     /**
+     * Validate leave limit for a date range.
+     *
+     * @param string $userId
+     * @param string $categoryId
+     * @param int $year
+     * @param int $requestedDays
+     * @return void
+     * @throws \Exception
+     */
+    public function validateLeaveLimitForRange(string $userId, string $categoryId, int $year, int $requestedDays): void
+    {
+        $category = LeaveCategory::findOrFail($categoryId);
+        
+        // Get approved and pending leaves count for the year
+        $approvedStatus = LeaveStatus::where('name', 'granted')->first();
+        $pendingStatus = LeaveStatus::where('name', 'pending')->first();
+        
+        $usedDays = 0;
+        
+        if ($approvedStatus) {
+            // Count approved leaves
+            $approvedLeaves = Leave::where('user_id', $userId)
+                ->where('leave_category_id', $categoryId)
+                ->where('leave_status_id', $approvedStatus->id)
+                ->whereYear('date', $year)
+                ->get();
+            
+            foreach ($approvedLeaves as $leave) {
+                if ($leave->end_date) {
+                    $start = new \DateTime($leave->date);
+                    $end = new \DateTime($leave->end_date);
+                    $usedDays += $start->diff($end)->days + 1;
+                } else {
+                    $usedDays += 1;
+                }
+            }
+        }
+        
+        if ($pendingStatus) {
+            // Count pending leaves
+            $pendingLeaves = Leave::where('user_id', $userId)
+                ->where('leave_category_id', $categoryId)
+                ->where('leave_status_id', $pendingStatus->id)
+                ->whereYear('date', $year)
+                ->get();
+            
+            foreach ($pendingLeaves as $leave) {
+                if ($leave->end_date) {
+                    $start = new \DateTime($leave->date);
+                    $end = new \DateTime($leave->end_date);
+                    $usedDays += $start->diff($end)->days + 1;
+                } else {
+                    $usedDays += 1;
+                }
+            }
+        }
+
+        $totalDays = $usedDays + $requestedDays;
+        
+        if ($totalDays > $category->max_in_year) {
+            $remaining = $category->max_in_year - $usedDays;
+            throw new \Exception("Leave limit exceeded. You have {$remaining} day(s) remaining for {$category->name}. You requested {$requestedDays} day(s).");
+        }
+    }
+
+    /**
      * Get leave balance.
      *
      * @param string $userId
@@ -216,23 +351,33 @@ class LeaveService
     {
         $category = LeaveCategory::findOrFail($categoryId);
         
-        // Get approved leaves count for the year
+        // Get approved leaves for the year
         $approvedStatus = LeaveStatus::where('name', 'granted')->first();
-        $usedLeaves = 0;
+        $usedDays = 0;
         
         if ($approvedStatus) {
-            $usedLeaves = Leave::where('user_id', $userId)
+            $approvedLeaves = Leave::where('user_id', $userId)
                 ->where('leave_category_id', $categoryId)
                 ->where('leave_status_id', $approvedStatus->id)
                 ->whereYear('date', $year)
-                ->count();
+                ->get();
+            
+            foreach ($approvedLeaves as $leave) {
+                if ($leave->end_date) {
+                    $start = new \DateTime($leave->date);
+                    $end = new \DateTime($leave->end_date);
+                    $usedDays += $start->diff($end)->days + 1;
+                } else {
+                    $usedDays += 1;
+                }
+            }
         }
 
         return [
             'category' => $category->name,
             'total' => $category->max_in_year,
-            'used' => $usedLeaves,
-            'remaining' => $category->max_in_year - $usedLeaves,
+            'used' => $usedDays,
+            'remaining' => $category->max_in_year - $usedDays,
         ];
     }
 }

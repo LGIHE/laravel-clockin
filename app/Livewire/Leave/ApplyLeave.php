@@ -2,18 +2,24 @@
 
 namespace App\Livewire\Leave;
 
+use App\Models\Leave;
 use App\Models\LeaveCategory;
 use App\Services\LeaveService;
 use Livewire\Component;
+use Carbon\Carbon;
 
 class ApplyLeave extends Component
 {
     public $leaveCategoryId = '';
-    public $date = '';
+    public $startDate = '';
+    public $endDate = '';
     public $description = '';
     public $isLoading = false;
     public $leaveCategories = [];
     public $leaveBalances = [];
+    public $showDialog = false;
+    public $statusFilter = '';
+    public $totalDays = 0;
 
     protected LeaveService $leaveService;
 
@@ -25,7 +31,9 @@ class ApplyLeave extends Component
     public function mount()
     {
         $this->loadLeaveCategories();
-        $this->date = now()->addDay()->format('Y-m-d'); // Default to tomorrow
+        $tomorrow = now()->addDay()->format('Y-m-d');
+        $this->startDate = $tomorrow;
+        $this->endDate = $tomorrow;
     }
 
     public function loadLeaveCategories()
@@ -52,11 +60,48 @@ class ApplyLeave extends Component
         }
     }
 
+    public function updatedStartDate()
+    {
+        $this->calculateTotalDays();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->calculateTotalDays();
+    }
+
+    public function calculateTotalDays()
+    {
+        if ($this->startDate && $this->endDate) {
+            $start = Carbon::parse($this->startDate);
+            $end = Carbon::parse($this->endDate);
+            
+            if ($end->gte($start)) {
+                $this->totalDays = $start->diffInDays($end) + 1;
+            } else {
+                $this->totalDays = 0;
+            }
+        } else {
+            $this->totalDays = 0;
+        }
+    }
+
+    public function openDialog()
+    {
+        $this->showDialog = true;
+    }
+
+    public function closeDialog()
+    {
+        $this->showDialog = false;
+    }
+
     public function rules()
     {
         return [
             'leaveCategoryId' => 'required|exists:leave_categories,id',
-            'date' => 'required|date|after:today',
+            'startDate' => 'required|date|after:today',
+            'endDate' => 'required|date|after_or_equal:startDate',
             'description' => 'nullable|string|max:500',
         ];
     }
@@ -66,8 +111,10 @@ class ApplyLeave extends Component
         return [
             'leaveCategoryId.required' => 'Please select a leave category',
             'leaveCategoryId.exists' => 'Invalid leave category selected',
-            'date.required' => 'Please select a date',
-            'date.after' => 'Leave date must be in the future',
+            'startDate.required' => 'Please select a start date',
+            'startDate.after' => 'Start date must be in the future',
+            'endDate.required' => 'Please select an end date',
+            'endDate.after_or_equal' => 'End date must be on or after start date',
             'description.max' => 'Description cannot exceed 500 characters',
         ];
     }
@@ -79,9 +126,14 @@ class ApplyLeave extends Component
         $this->isLoading = true;
         
         try {
-            $this->leaveService->applyLeave(auth()->id(), [
+            // Apply leave for each day in the range
+            $start = Carbon::parse($this->startDate);
+            $end = Carbon::parse($this->endDate);
+            
+            $this->leaveService->applyLeaveRange(auth()->id(), [
                 'leave_category_id' => $this->leaveCategoryId,
-                'date' => $this->date,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
                 'description' => $this->description,
             ]);
             
@@ -92,7 +144,13 @@ class ApplyLeave extends Component
             
             // Reset form
             $this->reset(['leaveCategoryId', 'description']);
-            $this->date = now()->addDay()->format('Y-m-d');
+            $tomorrow = now()->addDay()->format('Y-m-d');
+            $this->startDate = $tomorrow;
+            $this->endDate = $tomorrow;
+            $this->totalDays = 0;
+            
+            // Close dialog
+            $this->showDialog = false;
             
             // Reload balances
             $this->loadLeaveCategories();
@@ -112,7 +170,20 @@ class ApplyLeave extends Component
 
     public function render()
     {
-        return view('livewire.leave.apply-leave')
-            ->layout('components.layouts.app', ['title' => 'Apply Leave']);
+        $query = Leave::where('user_id', auth()->id())
+            ->with(['category', 'status'])
+            ->orderBy('created_at', 'desc');
+
+        if ($this->statusFilter) {
+            $query->whereHas('status', function ($q) {
+                $q->where('name', strtolower($this->statusFilter));
+            });
+        }
+
+        $leaves = $query->get();
+
+        return view('livewire.leave.apply-leave', [
+            'leaves' => $leaves,
+        ])->layout('components.layouts.app', ['title' => 'Apply Leave']);
     }
 }

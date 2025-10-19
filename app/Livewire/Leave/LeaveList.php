@@ -71,20 +71,42 @@ class LeaveList extends Component
         $approvedStatus = LeaveStatus::whereRaw('LOWER(name) IN (?, ?)', ['approved', 'granted'])->first();
         $pendingStatus = LeaveStatus::whereRaw('LOWER(name) = ?', ['pending'])->first();
         
-        // Count approved leaves (assuming 1 day per leave for now)
+        // Count approved leaves (accounting for multi-day leaves)
         if ($approvedStatus) {
-            $this->approvedDays = Leave::where('user_id', $userId)
+            $approvedLeaves = Leave::where('user_id', $userId)
                 ->where('leave_status_id', $approvedStatus->id)
-                ->count();
+                ->get();
+            
+            $this->approvedDays = 0;
+            foreach ($approvedLeaves as $leave) {
+                if ($leave->end_date) {
+                    $start = Carbon::parse($leave->date);
+                    $end = Carbon::parse($leave->end_date);
+                    $this->approvedDays += $start->diffInDays($end) + 1;
+                } else {
+                    $this->approvedDays += 1;
+                }
+            }
         } else {
             $this->approvedDays = 0;
         }
             
-        // Count pending leaves
+        // Count pending leaves (accounting for multi-day leaves)
         if ($pendingStatus) {
-            $this->pendingDays = Leave::where('user_id', $userId)
+            $pendingLeaves = Leave::where('user_id', $userId)
                 ->where('leave_status_id', $pendingStatus->id)
-                ->count();
+                ->get();
+            
+            $this->pendingDays = 0;
+            foreach ($pendingLeaves as $leave) {
+                if ($leave->end_date) {
+                    $start = Carbon::parse($leave->date);
+                    $end = Carbon::parse($leave->end_date);
+                    $this->pendingDays += $start->diffInDays($end) + 1;
+                } else {
+                    $this->pendingDays += 1;
+                }
+            }
         } else {
             $this->pendingDays = 0;
         }

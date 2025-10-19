@@ -128,8 +128,12 @@
                                     @endif
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $leave->category->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {{ $leave->end_date ? \Carbon\Carbon::parse($leave->end_date)->format('M d, Y') : \Carbon\Carbon::parse($leave->date)->format('M d, Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {{ $leave->end_date ? \Carbon\Carbon::parse($leave->date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1 : 1 }}
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
                                             $statusName = strtolower($leave->status->name);

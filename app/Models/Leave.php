@@ -34,6 +34,7 @@ class Leave extends Model
         'leave_category_id',
         'leave_status_id',
         'date',
+        'end_date',
         'description',
     ];
 
@@ -44,6 +45,7 @@ class Leave extends Model
      */
     protected $casts = [
         'date' => 'date',
+        'end_date' => 'date',
     ];
 
     /**
