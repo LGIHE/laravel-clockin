@@ -186,10 +186,43 @@ class UserForm extends Component
         \Log::info('✅ Validation passed!');
 
         try {
+            // Additional admin role protection
+            $finalUserLevelId = $this->userLevelId;
+            
+            // If not admin, apply additional checks
+            if (auth()->user()->role !== 'ADMIN') {
+                $selectedLevel = UserLevel::find($this->userLevelId);
+                
+                // If trying to assign admin role, default to User role instead
+                if ($selectedLevel && strtoupper($selectedLevel->name) === 'ADMIN') {
+                    $userRole = UserLevel::where('name', 'User')->first();
+                    $finalUserLevelId = $userRole ? $userRole->id : $this->userLevelId;
+                    
+                    \Log::warning('Non-admin attempted to assign admin role, defaulted to User', [
+                        'actor' => auth()->user()->id,
+                        'target' => $this->userId ?? 'new user'
+                    ]);
+                }
+                
+                // If editing, check if user is currently admin
+                if ($this->isEditMode) {
+                    $existingUser = User::find($this->userId);
+                    if ($existingUser && $existingUser->userLevel && strtoupper($existingUser->userLevel->name) === 'ADMIN') {
+                        // Non-admin cannot change admin user's role - keep it as admin
+                        $finalUserLevelId = $existingUser->user_level_id;
+                        
+                        \Log::warning('Non-admin attempted to change admin user role, skipped', [
+                            'actor' => auth()->user()->id,
+                            'target' => $this->userId
+                        ]);
+                    }
+                }
+            }
+            
             $data = [
                 'name' => $this->name,
                 'email' => $this->email,
-                'user_level_id' => $this->userLevelId,
+                'user_level_id' => $finalUserLevelId,
                 'department_id' => $this->departmentId ?: null,
                 'designation_id' => $this->designationId ?: null,
                 'status' => $this->status,
@@ -216,7 +249,7 @@ class UserForm extends Component
                 \Log::info('UserForm: Creating new user via UI', [
                     'name' => $this->name,
                     'email' => $this->email,
-                    'user_level_id' => $this->userLevelId
+                    'user_level_id' => $finalUserLevelId
                 ]);
                 
                 $data['password'] = $this->password;

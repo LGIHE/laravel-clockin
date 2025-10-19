@@ -24,6 +24,22 @@ class UserService
         DB::beginTransaction();
         
         try {
+            // Admin role protection: Only admins can create admin users
+            $userLevelId = $data['user_level_id'];
+            if (auth()->check() && auth()->user()->role !== 'ADMIN') {
+                $selectedLevel = \App\Models\UserLevel::find($userLevelId);
+                if ($selectedLevel && strtoupper($selectedLevel->name) === 'ADMIN') {
+                    // Default to User role if non-admin tries to create admin
+                    $userRole = \App\Models\UserLevel::where('name', 'User')->first();
+                    $userLevelId = $userRole ? $userRole->id : $userLevelId;
+                    
+                    \Log::warning('Non-admin attempted to create admin user, defaulted to User role', [
+                        'actor' => auth()->user()->id,
+                        'attempted_role' => $selectedLevel->name
+                    ]);
+                }
+            }
+            
             // Generate unique setup token
             $setupToken = Str::random(64);
             $setupTokenExpiresAt = now()->addHours(24);
@@ -33,7 +49,7 @@ class UserService
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make(Str::random(32)), // Random password, user will set their own
-                'user_level_id' => $data['user_level_id'],
+                'user_level_id' => $userLevelId,
                 'designation_id' => $data['designation_id'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
                 'status' => $data['status'] ?? 1,
@@ -133,7 +149,38 @@ class UserService
             }
 
             if (isset($data['user_level_id'])) {
-                $updateData['user_level_id'] = $data['user_level_id'];
+                // Admin role protection
+                $userLevelId = $data['user_level_id'];
+                
+                if (auth()->check() && auth()->user()->role !== 'ADMIN') {
+                    // Check if user is currently admin
+                    if ($user->userLevel && strtoupper($user->userLevel->name) === 'ADMIN') {
+                        // Non-admin cannot change admin user's role - keep it as is
+                        \Log::warning('Non-admin attempted to change admin user role, skipped', [
+                            'actor' => auth()->user()->id,
+                            'target' => $userId,
+                            'current_role' => $user->userLevel->name
+                        ]);
+                        // Don't update the role
+                    } else {
+                        // Check if trying to assign admin role
+                        $selectedLevel = \App\Models\UserLevel::find($userLevelId);
+                        if ($selectedLevel && strtoupper($selectedLevel->name) === 'ADMIN') {
+                            // Default to User role
+                            $userRole = \App\Models\UserLevel::where('name', 'User')->first();
+                            $userLevelId = $userRole ? $userRole->id : $user->user_level_id;
+                            
+                            \Log::warning('Non-admin attempted to assign admin role, defaulted to User', [
+                                'actor' => auth()->user()->id,
+                                'target' => $userId
+                            ]);
+                        }
+                        $updateData['user_level_id'] = $userLevelId;
+                    }
+                } else {
+                    // Admin can change any role
+                    $updateData['user_level_id'] = $userLevelId;
+                }
             }
 
             if (isset($data['designation_id'])) {
