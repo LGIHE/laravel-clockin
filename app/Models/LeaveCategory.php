@@ -34,6 +34,7 @@ class LeaveCategory extends Model
         'name',
         'description',
         'max_in_year',
+        'gender_restriction',
     ];
 
     /**

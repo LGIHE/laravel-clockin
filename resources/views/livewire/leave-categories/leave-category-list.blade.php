@@ -49,6 +49,22 @@
                     @enderror
                 </div>
 
+                <div class="space-y-2">
+                    <label for="genderRestriction" class="block text-sm font-medium text-gray-700">Gender Restriction *</label>
+                    <select
+                        id="genderRestriction"
+                        wire:model="gender_restriction"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('gender_restriction') border-red-500 @enderror"
+                    >
+                        <option value="all">All Genders</option>
+                        <option value="male">Male Only (e.g., Paternity)</option>
+                        <option value="female">Female Only (e.g., Maternity)</option>
+                    </select>
+                    @error('gender_restriction')
+                        <p class="text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <button
                     wire:click="createCategory"
                     class="bg-green-500 hover:bg-green-600 text-white w-full mt-4 px-4 py-2 rounded-md font-medium"
@@ -82,6 +98,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Days/Year</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -94,6 +111,15 @@
                                         {{ $category->description ?: '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $category->max_in_year }} days</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($category->gender_restriction === 'all')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">All</span>
+                                        @elseif($category->gender_restriction === 'male')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Male</span>
+                                        @elseif($category->gender_restriction === 'female')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">Female</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex gap-2">
                                             <button
@@ -185,6 +211,22 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('max_in_year') border-red-500 @enderror"
                                 />
                                 @error('max_in_year')
+                                    <p class="text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="editGenderRestriction" class="block text-sm font-medium text-gray-700">Gender Restriction *</label>
+                                <select
+                                    id="editGenderRestriction"
+                                    wire:model="gender_restriction"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('gender_restriction') border-red-500 @enderror"
+                                >
+                                    <option value="all">All Genders</option>
+                                    <option value="male">Male Only (e.g., Paternity)</option>
+                                    <option value="female">Female Only (e.g., Maternity)</option>
+                                </select>
+                                @error('gender_restriction')
                                     <p class="text-sm text-red-500">{{ $message }}</p>
                                 @enderror
                             </div>

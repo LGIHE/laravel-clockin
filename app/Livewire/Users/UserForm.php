@@ -17,6 +17,7 @@ class UserForm extends Component
     public $userId = null;
     public $name = '';
     public $email = '';
+    public $gender = '';
     public $password = '';
     public $password_confirmation = '';
     public $userLevelId = '';
@@ -85,6 +86,7 @@ class UserForm extends Component
             
             $this->name = $user->name;
             $this->email = $user->email;
+            $this->gender = $user->gender;
             $this->userLevelId = $user->user_level_id;
             $this->departmentId = $user->department_id;
             $this->designationId = $user->designation_id;
@@ -125,6 +127,7 @@ class UserForm extends Component
                 'email',
                 Rule::unique('users', 'email')->ignore($this->userId)->whereNull('deleted_at')
             ],
+            'gender' => 'required|in:male,female,other',
             'userLevelId' => [
                 'required',
                 'exists:user_levels,id',
@@ -163,6 +166,8 @@ class UserForm extends Component
             'email.required' => 'Email is required',
             'email.email' => 'Please enter a valid email address',
             'email.unique' => 'This email is already registered',
+            'gender.required' => 'Gender is required',
+            'gender.in' => 'Please select a valid gender',
             'password.required' => 'Password is required',
             'password.min' => 'Password must be at least 6 characters',
             'password.confirmed' => 'Password confirmation does not match',
@@ -222,6 +227,7 @@ class UserForm extends Component
             $data = [
                 'name' => $this->name,
                 'email' => $this->email,
+                'gender' => $this->gender,
                 'user_level_id' => $finalUserLevelId,
                 'department_id' => $this->departmentId ?: null,
                 'designation_id' => $this->designationId ?: null,
@@ -282,7 +288,7 @@ class UserForm extends Component
             // Reset form if creating new user
             if (!$this->isEditMode) {
                 $this->reset([
-                    'name', 'email', 'password', 'password_confirmation',
+                    'name', 'email', 'gender', 'password', 'password_confirmation',
                     'userLevelId', 'departmentId', 'designationId',
                     'primarySupervisorId', 'secondarySupervisorId', 'selectedProjects', 'status'
                 ]);

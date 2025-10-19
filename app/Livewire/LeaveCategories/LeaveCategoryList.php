@@ -20,6 +20,7 @@ class LeaveCategoryList extends Component
     public $name = '';
     public $description = '';
     public $max_in_year = '';
+    public $gender_restriction = 'all';
     
     public $selectedCategory = null;
     public $isAdmin = false;
@@ -29,6 +30,7 @@ class LeaveCategoryList extends Component
         'name' => 'required|string|max:255',
         'description' => 'nullable|string|max:500',
         'max_in_year' => 'required|integer|min:1|max:365',
+        'gender_restriction' => 'required|in:male,female,all',
     ];
 
     protected $messages = [
@@ -39,6 +41,8 @@ class LeaveCategoryList extends Component
         'max_in_year.integer' => 'Maximum days must be a number',
         'max_in_year.min' => 'Maximum days must be at least 1',
         'max_in_year.max' => 'Maximum days cannot exceed 365',
+        'gender_restriction.required' => 'Gender restriction is required',
+        'gender_restriction.in' => 'Please select a valid gender restriction',
     ];
 
     public function mount()
@@ -86,6 +90,7 @@ class LeaveCategoryList extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'max_in_year' => $this->max_in_year,
+                'gender_restriction' => $this->gender_restriction,
             ]);
 
             $this->dispatch('toast', [
@@ -120,6 +125,7 @@ class LeaveCategoryList extends Component
             $this->name = $category->name;
             $this->description = $category->description ?? '';
             $this->max_in_year = $category->max_in_year;
+            $this->gender_restriction = $category->gender_restriction ?? 'all';
             $this->showEditModal = true;
         }
     }
@@ -159,6 +165,7 @@ class LeaveCategoryList extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'max_in_year' => $this->max_in_year,
+                'gender_restriction' => $this->gender_restriction,
             ]);
 
             $this->dispatch('toast', [
@@ -247,6 +254,7 @@ class LeaveCategoryList extends Component
         $this->name = '';
         $this->description = '';
         $this->max_in_year = '';
+        $this->gender_restriction = 'all';
         $this->resetErrorBag();
     }
 

@@ -53,6 +53,7 @@ class User extends Authenticatable
         'project_id',
         'name',
         'email',
+        'gender',
         'phone',
         'employee_code',
         'password',

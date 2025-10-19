@@ -38,7 +38,15 @@ class ApplyLeave extends Component
 
     public function loadLeaveCategories()
     {
-        $this->leaveCategories = LeaveCategory::orderBy('name')->get();
+        $userGender = auth()->user()->gender;
+        
+        // Filter leave categories based on user's gender
+        $this->leaveCategories = LeaveCategory::orderBy('name')
+            ->where(function($query) use ($userGender) {
+                $query->where('gender_restriction', 'all')
+                      ->orWhere('gender_restriction', $userGender);
+            })
+            ->get();
         
         // Load leave balances for current year
         $currentYear = now()->year;

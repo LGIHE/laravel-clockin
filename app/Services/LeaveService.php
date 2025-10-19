@@ -31,6 +31,9 @@ class LeaveService
      */
     public function applyLeave(string $userId, array $data): Leave
     {
+        // Validate gender restriction
+        $this->validateGenderRestriction($userId, $data['leave_category_id']);
+        
         // Validate leave limit
         $this->validateLeaveLimit($userId, $data['leave_category_id'], date('Y', strtotime($data['date'])));
 
@@ -98,6 +101,9 @@ class LeaveService
         
         // Calculate total days
         $totalDays = $startDate->diff($endDate)->days + 1;
+        
+        // Validate gender restriction
+        $this->validateGenderRestriction($userId, $data['leave_category_id']);
         
         // Validate leave limit for the range
         $this->validateLeaveLimitForRange($userId, $data['leave_category_id'], $startDate->format('Y'), $totalDays);
@@ -270,6 +276,28 @@ class LeaveService
 
         if ($leavesCount >= $category->max_in_year) {
             throw new \Exception("Leave limit exceeded. Maximum {$category->max_in_year} leaves allowed per year for {$category->name}");
+        }
+    }
+
+    /**
+     * Validate gender restriction for leave category.
+     *
+     * @param string $userId
+     * @param string $categoryId
+     * @return void
+     * @throws \Exception
+     */
+    public function validateGenderRestriction(string $userId, string $categoryId): void
+    {
+        $user = User::findOrFail($userId);
+        $category = LeaveCategory::findOrFail($categoryId);
+        
+        // Check if category has gender restriction
+        if ($category->gender_restriction !== 'all') {
+            if ($user->gender !== $category->gender_restriction) {
+                $restrictionText = $category->gender_restriction === 'male' ? 'male employees' : 'female employees';
+                throw new \Exception("{$category->name} is only available for {$restrictionText}.");
+            }
         }
     }
 
