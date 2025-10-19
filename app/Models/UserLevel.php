@@ -40,4 +40,28 @@ class UserLevel extends Model
     {
         return $this->hasMany(User::class, 'user_level_id');
     }
+
+    /**
+     * Get the permissions for the user level.
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'user_level_permission');
+    }
+
+    /**
+     * Check if the user level has a specific permission.
+     */
+    public function hasPermission(string $permissionSlug): bool
+    {
+        return $this->permissions()->where('slug', $permissionSlug)->exists();
+    }
+
+    /**
+     * Sync permissions for this user level.
+     */
+    public function syncPermissions(array $permissionIds): void
+    {
+        $this->permissions()->sync($permissionIds);
+    }
 }

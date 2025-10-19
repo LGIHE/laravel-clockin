@@ -77,6 +77,11 @@ Route::middleware('auth')->group(function () {
         // Leave Category Management
         Route::get('/leave-categories', LeaveCategoryList::class)->name('leave-categories.index');
         
+        // Role & Permission Management
+        Route::get('/roles', \App\Livewire\Roles\RoleList::class)->name('roles.index');
+        Route::get('/roles/create', \App\Livewire\Roles\RoleForm::class)->name('roles.create');
+        Route::get('/roles/{roleId}/edit', \App\Livewire\Roles\RoleForm::class)->name('roles.edit');
+        
         // System Settings
         Route::get('/settings', [SystemSettingsController::class, 'index'])->name('settings.index');
         Route::put('/settings/general', [SystemSettingsController::class, 'updateGeneral'])->name('settings.update.general');

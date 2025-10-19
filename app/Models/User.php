@@ -266,4 +266,58 @@ class User extends Authenticatable
     {
         return !is_null($this->archived_at);
     }
+
+    /**
+     * Check if user has a specific permission.
+     */
+    public function hasPermission(string $permissionSlug): bool
+    {
+        return $this->userLevel?->hasPermission($permissionSlug) ?? false;
+    }
+
+    /**
+     * Check if user has any of the given permissions.
+     */
+    public function hasAnyPermission(array $permissionSlugs): bool
+    {
+        foreach ($permissionSlugs as $slug) {
+            if ($this->hasPermission($slug)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if user has all of the given permissions.
+     */
+    public function hasAllPermissions(array $permissionSlugs): bool
+    {
+        foreach ($permissionSlugs as $slug) {
+            if (!$this->hasPermission($slug)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get all permissions for the user.
+     */
+    public function permissions()
+    {
+        if (!$this->userLevel) {
+            return collect();
+        }
+        
+        return $this->userLevel->permissions;
+    }
+    
+    /**
+     * Get all permission slugs for the user.
+     */
+    public function getPermissionSlugs()
+    {
+        return $this->permissions()->pluck('slug')->toArray();
+    }
 }
