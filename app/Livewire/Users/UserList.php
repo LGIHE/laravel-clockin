@@ -21,8 +21,8 @@ class UserList extends Component
     public $departmentId = '';
     public $designationId = '';
     public $userLevelId = '';
-    public $sortBy = 'created_at';
-    public $sortOrder = 'desc';
+    public $sortBy = 'name';
+    public $sortOrder = 'asc';
     public $perPage = 10;
     
     public $selectedUser = null;
