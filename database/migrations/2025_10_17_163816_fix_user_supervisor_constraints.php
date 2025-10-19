@@ -20,12 +20,33 @@ return new class extends Migration
         $this->dropIndexIfExists('user_supervisor', 'user_supervisor_user_id_supervisor_id_unique');
         $this->dropIndexIfExists('user_supervisor', 'user_supervisor_type_unique');
 
-        // Now add the new constraints in a separate operation
+        // Add the supervisor_type column and new constraints
         Schema::table('user_supervisor', function (Blueprint $table) {
+            // Add supervisor_type column if it doesn't exist
+            if (!Schema::hasColumn('user_supervisor', 'supervisor_type')) {
+                $table->string('supervisor_type')->default('primary')->after('supervisor_id');
+            }
+            
+            // Add the unique constraint
             $table->unique(['user_id', 'supervisor_type'], 'user_supervisor_type_unique');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('supervisor_id')->references('id')->on('users')->onDelete('cascade');
         });
+
+        // Add foreign keys using raw SQL to ensure proper charset/collation
+        DB::statement('
+            ALTER TABLE `user_supervisor` 
+            ADD CONSTRAINT `user_supervisor_user_id_foreign` 
+            FOREIGN KEY (`user_id`) 
+            REFERENCES `users` (`id`) 
+            ON DELETE CASCADE
+        ');
+        
+        DB::statement('
+            ALTER TABLE `user_supervisor` 
+            ADD CONSTRAINT `user_supervisor_supervisor_id_foreign` 
+            FOREIGN KEY (`supervisor_id`) 
+            REFERENCES `users` (`id`) 
+            ON DELETE CASCADE
+        ');
     }
 
     /**
@@ -37,6 +58,9 @@ return new class extends Migration
             $table->dropForeign(['user_id']);
             $table->dropForeign(['supervisor_id']);
             $table->dropUnique('user_supervisor_type_unique');
+            
+            // Drop the supervisor_type column
+            $table->dropColumn('supervisor_type');
             
             // Restore the original unique constraint
             $table->unique(['user_id', 'supervisor_id']);
