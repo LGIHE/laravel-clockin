@@ -12,18 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, drop existing constraints if they exist
-        Schema::table('user_supervisor', function (Blueprint $table) {
-            // Drop existing foreign keys
-            $this->dropForeignKeyIfExists('user_supervisor', 'user_supervisor_user_id_foreign');
-            $this->dropForeignKeyIfExists('user_supervisor', 'user_supervisor_supervisor_id_foreign');
-            
-            // Drop existing unique constraints
-            $this->dropIndexIfExists('user_supervisor', 'user_supervisor_user_id_supervisor_id_unique');
-            $this->dropIndexIfExists('user_supervisor', 'user_supervisor_type_unique');
-        });
+        // Drop existing foreign keys
+        $this->dropForeignKeyIfExists('user_supervisor', 'user_supervisor_user_id_foreign');
+        $this->dropForeignKeyIfExists('user_supervisor', 'user_supervisor_supervisor_id_foreign');
+        
+        // Drop existing unique constraints
+        $this->dropIndexIfExists('user_supervisor', 'user_supervisor_user_id_supervisor_id_unique');
+        $this->dropIndexIfExists('user_supervisor', 'user_supervisor_type_unique');
 
-        // Now add the new constraints
+        // Now add the new constraints in a separate operation
         Schema::table('user_supervisor', function (Blueprint $table) {
             $table->unique(['user_id', 'supervisor_type'], 'user_supervisor_type_unique');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
