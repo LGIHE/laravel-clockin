@@ -6,7 +6,7 @@
     $user = auth()->user();
 @endphp
 
-<header {{ $attributes->merge(['class' => 'sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-5 flex justify-between items-center']) }}>
+<header {{ $attributes->merge(['class' => 'sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center']) }}>
     <!-- Left side: Title -->
     <div class="flex items-center">
         <h1 class="text-xl font-semibold text-gray-800">{{ $title ?? 'Dashboard' }}</h1>
