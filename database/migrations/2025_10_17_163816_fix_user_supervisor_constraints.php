@@ -51,15 +51,19 @@ return new class extends Migration
      */
     private function dropForeignKeyIfExists(string $table, string $foreignKey): void
     {
-        $connection = Schema::getConnection();
-        $doctrineSchemaManager = $connection->getDoctrineSchemaManager();
-        $foreignKeys = $doctrineSchemaManager->listTableForeignKeys($table);
+        $database = DB::getDatabaseName();
+        $exists = DB::select(
+            "SELECT CONSTRAINT_NAME 
+             FROM information_schema.TABLE_CONSTRAINTS 
+             WHERE TABLE_SCHEMA = ? 
+             AND TABLE_NAME = ? 
+             AND CONSTRAINT_NAME = ? 
+             AND CONSTRAINT_TYPE = 'FOREIGN KEY'",
+            [$database, $table, $foreignKey]
+        );
         
-        foreach ($foreignKeys as $fk) {
-            if ($fk->getName() === $foreignKey) {
-                DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$foreignKey}`");
-                break;
-            }
+        if (!empty($exists)) {
+            DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$foreignKey}`");
         }
     }
 
@@ -68,11 +72,17 @@ return new class extends Migration
      */
     private function dropIndexIfExists(string $table, string $index): void
     {
-        $connection = Schema::getConnection();
-        $doctrineSchemaManager = $connection->getDoctrineSchemaManager();
-        $indexes = $doctrineSchemaManager->listTableIndexes($table);
+        $database = DB::getDatabaseName();
+        $exists = DB::select(
+            "SELECT INDEX_NAME 
+             FROM information_schema.STATISTICS 
+             WHERE TABLE_SCHEMA = ? 
+             AND TABLE_NAME = ? 
+             AND INDEX_NAME = ?",
+            [$database, $table, $index]
+        );
         
-        if (isset($indexes[$index])) {
+        if (!empty($exists)) {
             DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$index}`");
         }
     }
