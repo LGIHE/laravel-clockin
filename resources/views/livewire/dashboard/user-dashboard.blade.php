@@ -1,8 +1,8 @@
 <div>
     <!-- Page Header -->
-    <div class="mb-6">
+    <!-- <div class="mb-6">
         <h1 class="text-2xl font-semibold">Dashboard</h1>
-    </div>
+    </div> -->
 
     <!-- Statistics Cards Grid (3 columns) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

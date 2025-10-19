@@ -268,6 +268,6 @@ class LeaveList extends Component
         return view('livewire.leave.leave-list', [
             'myLeaves' => $myLeaves,
             'allLeaves' => $allLeaves,
-        ])->layout('components.layouts.app');
+        ])->layout('components.layouts.app', ['title' => 'Leave Management']);
     }
 }

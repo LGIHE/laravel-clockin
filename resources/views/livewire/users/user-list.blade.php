@@ -3,7 +3,7 @@
         <!-- Tabs -->
         <div class="flex justify-between items-center mb-4">
             <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8">
+                <!-- <nav class="-mb-px flex space-x-8">
                     <button 
                         wire:click="$set('activeTab', 'dashboard')"
                         class="@if($activeTab === 'dashboard') border-blue-500 text-blue-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors"
@@ -16,7 +16,7 @@
                     >
                         User List
                     </button>
-                </nav>
+                </nav> -->
             </div>
 
             <div class="flex gap-2">

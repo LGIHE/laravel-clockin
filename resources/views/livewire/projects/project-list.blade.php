@@ -1,6 +1,6 @@
 <div class="space-y-6">
     <!-- Tabs -->
-    <div class="border-b border-gray-200">
+    <!-- <div class="border-b border-gray-200">
         <div class="flex space-x-8">
             <button 
                 wire:click="$set('activeTab', 'dashboard')"
@@ -13,7 +13,7 @@
                 Project
             </button>
         </div>
-    </div>
+    </div> -->
 
     <!-- Tab Content -->
     @if($activeTab === 'dashboard')

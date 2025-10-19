@@ -398,6 +398,6 @@ class HolidayList extends Component
             'holidays' => $holidays,
             'calendarWeeks' => $calendarWeeks,
             'calendarMonths' => $calendarMonths,
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'Holiday Management']);
     }
 }

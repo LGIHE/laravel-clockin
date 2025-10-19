@@ -313,6 +313,7 @@ class UserForm extends Component
 
     public function render()
     {
-        return view('livewire.users.user-form');
+        return view('livewire.users.user-form')
+            ->layout('components.layouts.app', ['title' => 'User Form']);
     }
 }

@@ -67,6 +67,7 @@
                 <div class="flex-1 flex flex-col">
                     <!-- Header -->
                     <x-layout.header 
+                        :title="$title"
                         @toggle-sidebar="sidebarOpen = !sidebarOpen"
                         @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
                     />

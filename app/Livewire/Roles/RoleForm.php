@@ -70,6 +70,7 @@ class RoleForm extends Component
 
     public function render()
     {
-        return view('livewire.roles.role-form');
+        return view('livewire.roles.role-form')
+            ->layout('components.layouts.app', ['title' => 'User Role Form']);
     }
 }

@@ -8,6 +8,7 @@ class ReportsIndex extends Component
 {
     public function render()
     {
-        return view('livewire.reports.reports-index');
+        return view('livewire.reports.reports-index')
+            ->layout('components.layouts.app', ['title' => 'Reports & Analytics']);
     }
 }

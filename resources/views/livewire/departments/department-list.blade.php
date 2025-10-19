@@ -1,7 +1,7 @@
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-900">Department Management</h1>
+        <h1 class="text-2xl font-bold text-gray-900"></h1>
         @if($isAdmin)
             <button wire:click="openCreateModal" 
                     class="inline-flex items-center gap-2 px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white text-sm font-medium rounded-md transition-colors">

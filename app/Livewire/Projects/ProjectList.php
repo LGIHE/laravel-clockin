@@ -413,6 +413,6 @@ class ProjectList extends Component
 
         return view('livewire.projects.project-list', [
             'projects' => $projects
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'Project Management']);
     }
 }

@@ -79,6 +79,7 @@ class ProfilePage extends Component
 
     public function render()
     {
-        return view('livewire.profile-page');
+        return view('livewire.profile-page')
+            ->layout('components.layouts.app', ['title' => 'Profile Settings']);
     }
 }

@@ -279,6 +279,6 @@ class DesignationList extends Component
 
         return view('livewire.designations.designation-list', [
             'designations' => $designations
-        ])->layout('components.layouts.app');
+        ])->layout('components.layouts.app', ['title' => 'Designation Management']);
     }
 }

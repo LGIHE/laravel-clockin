@@ -1,7 +1,7 @@
 <div class="space-y-6 p-6">
-    <div class="flex justify-between items-center">
+    <!-- <div class="flex justify-between items-center">
         <h1 class="text-2xl font-semibold">Leave Management</h1>
-    </div>
+    </div> -->
 
     <!-- Leave Balance Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

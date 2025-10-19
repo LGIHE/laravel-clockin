@@ -133,6 +133,7 @@ class ClockInOut extends Component
 
     public function render()
     {
-        return view('livewire.attendance.clock-in-out');
+        return view('livewire.attendance.clock-in-out')
+            ->layout('components.layouts.app', ['title' => 'Clock In/Out']);
     }
 }

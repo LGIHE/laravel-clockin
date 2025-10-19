@@ -56,6 +56,6 @@ class RoleList extends Component
 
         return view('livewire.roles.role-list', [
             'roles' => $roles,
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'User Roles & Permissions']);
     }
 }

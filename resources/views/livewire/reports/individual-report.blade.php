@@ -1,6 +1,6 @@
 <div class="space-y-6 p-6">
     <!-- Breadcrumb Navigation -->
-    <div class="flex justify-between items-center">
+    <!-- <div class="flex justify-between items-center">
         <div class="space-x-2">
             <a href="{{ route('dashboard') }}" wire:navigate>
                 <button class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">
@@ -16,7 +16,7 @@
                 Individual
             </button>
         </div>
-    </div>
+    </div> -->
 
     <!-- Main Content Card -->
     <div class="bg-white p-6 rounded-md shadow-sm">

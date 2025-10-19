@@ -1,6 +1,6 @@
 <div class="space-y-6 p-6">
     <!-- Tab buttons (Dashboard/Attendance) -->
-    <div class="flex justify-between items-center">
+    <!-- <div class="flex justify-between items-center">
         <div class="space-x-2">
             <a href="{{ route('dashboard') }}">
                 <button class="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors">
@@ -11,7 +11,7 @@
                 Attendance
             </button>
         </div>
-    </div>
+    </div> -->
 
     <!-- Main content card -->
     <div class="bg-white p-6 rounded-md shadow-sm">

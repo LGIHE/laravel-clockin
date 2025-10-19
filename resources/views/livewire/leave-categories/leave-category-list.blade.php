@@ -1,7 +1,7 @@
 <div class="space-y-6 p-6">
-    <div class="flex justify-between items-center">
+    <!-- <div class="flex justify-between items-center">
         <h1 class="text-2xl font-semibold">Leave Categories</h1>
-    </div>
+    </div> -->
 
     <div class="flex gap-6 flex-col lg:flex-row">
         <!-- Create Leave Category Form -->

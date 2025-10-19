@@ -93,6 +93,7 @@ class ForcePunch extends Component
 
     public function render()
     {
-        return view('livewire.attendance.force-punch');
+        return view('livewire.attendance.force-punch')
+            ->layout('components.layouts.app', ['title' => 'Force Punch']);
     }
 }

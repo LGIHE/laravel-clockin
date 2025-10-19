@@ -1,7 +1,7 @@
 <div class="space-y-6">
     <!-- Tabs -->
     <div class="w-full">
-        <div class="flex justify-between items-center mb-4">
+        <!-- <div class="flex justify-between items-center mb-4">
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8">
                     <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
@@ -12,7 +12,7 @@
                     </button>
                 </nav>
             </div>
-        </div>
+        </div> -->
 
         <!-- Dashboard Tab Content (hidden by default) -->
         <div class="hidden">

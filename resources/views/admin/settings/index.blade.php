@@ -1,10 +1,10 @@
 <x-layouts.app title="System Settings">
     <div class="space-y-6">
         <!-- Page Header -->
-        <div class="mb-6">
+        <!-- <div class="mb-6">
             <h1 class="text-2xl font-semibold text-gray-900">System Settings</h1>
             <p class="mt-1 text-sm text-gray-600">Manage your application settings and configuration</p>
-        </div>
+        </div> -->
 
         <!-- Success Message -->
         @if(session('success'))

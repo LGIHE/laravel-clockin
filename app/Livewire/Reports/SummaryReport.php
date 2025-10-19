@@ -129,6 +129,7 @@ class SummaryReport extends Component
 
     public function render()
     {
-        return view('livewire.reports.summary-report');
+        return view('livewire.reports.summary-report')
+            ->layout('components.layouts.app', ['title' => 'Summary Attendance Report']);
     }
 }

@@ -311,6 +311,6 @@ class NoticeList extends Component
 
         return view('livewire.notices.notice-list', [
             'notices' => $notices,
-        ]);
+        ])->layout('components.layouts.app', ['title' => 'Notice Board']);
     }
 }

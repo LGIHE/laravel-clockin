@@ -1,7 +1,7 @@
 <div class="font-sans">
     <!-- Page Header -->
     <div class="mb-6 flex justify-between items-center">
-        <h1 class="text-2xl font-semibold">Tasks</h1>
+        <h1 class="text-2xl font-semibold"></h1>
         <x-ui.button wire:click="openCreateModal" variant="primary" size="sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>

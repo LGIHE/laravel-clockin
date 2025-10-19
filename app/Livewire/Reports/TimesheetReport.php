@@ -127,6 +127,7 @@ class TimesheetReport extends Component
 
     public function render()
     {
-        return view('livewire.reports.timesheet-report');
+        return view('livewire.reports.timesheet-report')
+            ->layout('components.layouts.app', ['title' => 'Timesheet Report']);
     }
 }

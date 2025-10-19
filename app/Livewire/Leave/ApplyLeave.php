@@ -112,6 +112,7 @@ class ApplyLeave extends Component
 
     public function render()
     {
-        return view('livewire.leave.apply-leave');
+        return view('livewire.leave.apply-leave')
+            ->layout('components.layouts.app', ['title' => 'Apply Leave']);
     }
 }
