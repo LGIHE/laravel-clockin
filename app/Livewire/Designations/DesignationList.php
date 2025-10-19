@@ -124,6 +124,11 @@ class DesignationList extends Component
             $this->designationId = $designation->id;
             $this->editName = $designation->name;
             $this->showEditModal = true;
+        } else {
+            $this->dispatch('toast', [
+                'message' => 'Designation not found',
+                'variant' => 'danger'
+            ]);
         }
     }
 
@@ -193,6 +198,11 @@ class DesignationList extends Component
         
         if ($this->selectedDesignation) {
             $this->showDeleteModal = true;
+        } else {
+            $this->dispatch('toast', [
+                'message' => 'Designation not found',
+                'variant' => 'danger'
+            ]);
         }
     }
 
@@ -269,6 +279,6 @@ class DesignationList extends Component
 
         return view('livewire.designations.designation-list', [
             'designations' => $designations
-        ]);
+        ])->layout('components.layouts.app');
     }
 }

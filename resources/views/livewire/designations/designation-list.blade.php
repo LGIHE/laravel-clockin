@@ -85,37 +85,47 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($designations as $designation)
-                                    <tr class="hover:bg-gray-50">
+                                    <tr wire:key="designation-{{ $designation->id }}" class="hover:bg-gray-50">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $designation->name }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                             @if($isAdmin)
-                                                <div class="relative inline-block text-left" x-data="{ open: false }">
+                                                <div class="relative inline-block text-left" x-data="{ open: false }" @click.away="open = false">
                                                     <button @click="open = !open" 
                                                             type="button"
                                                             class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1976d2] text-white text-sm rounded-md hover:bg-[#2196f3] transition-colors">
                                                         <span>Action</span>
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg class="w-4 h-4" :class="{ 'rotate-180': open }" 
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                             style="transition: transform 0.2s;">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                                         </svg>
                                                     </button>
 
                                                     <div x-show="open" 
                                                          @click.away="open = false"
-                                                         x-transition
+                                                         x-transition:enter="transition ease-out duration-100"
+                                                         x-transition:enter-start="transform opacity-0 scale-95"
+                                                         x-transition:enter-end="transform opacity-100 scale-100"
+                                                         x-transition:leave="transition ease-in duration-75"
+                                                         x-transition:leave-start="transform opacity-100 scale-100"
+                                                         x-transition:leave-end="transform opacity-0 scale-95"
+                                                         style="display: none;"
                                                          class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                                                         <div class="py-1">
-                                                            <button wire:click="openEditModal('{{ $designation->id }}')"
-                                                                    @click="open = false"
+                                                            <button type="button"
+                                                                    wire:click="openEditModal('{{ $designation->id }}')"
+                                                                    x-on:click="open = false"
                                                                     class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                                 </svg>
                                                                 Edit
                                                             </button>
-                                                            <button wire:click="confirmDelete('{{ $designation->id }}')"
-                                                                    @click="open = false"
+                                                            <button type="button"
+                                                                    wire:click="confirmDelete('{{ $designation->id }}')"
+                                                                    x-on:click="open = false"
                                                                     class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2">
                                                                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -147,86 +157,95 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Modal -->
-@if($showEditModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeEditModal"></div>
+    <!-- Edit Modal -->
+    @if($showEditModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeEditModal"></div>
 
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form wire:submit.prevent="updateDesignation">
-                    <div class="bg-white px-6 pt-5 pb-4">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-medium text-gray-900">Edit Designation</h3>
+                <!-- Center modal -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit.prevent="updateDesignation">
+                        <div class="bg-white px-6 pt-5 pb-4">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-medium text-gray-900" id="modal-title">Edit Designation</h3>
+                            </div>
+
+                            <div class="space-y-4 py-2">
+                                <div class="space-y-2">
+                                    <label for="edit-name" class="block text-sm font-medium text-gray-700">
+                                        Designation Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" 
+                                        id="edit-name"
+                                        wire:model="editName"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('editName') border-red-500 @enderror"
+                                        placeholder="Enter designation name">
+                                    @error('editName')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="space-y-4 py-2">
-                            <div class="space-y-2">
-                                <label for="edit-name" class="block text-sm font-medium text-gray-700">
-                                    Designation Name <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" 
-                                       id="edit-name"
-                                       wire:model="editName"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('editName') border-red-500 @enderror"
-                                       placeholder="Enter designation name">
-                                @error('editName')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                        <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+                            <button type="button" 
+                                    wire:click="closeEditModal"
+                                    class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
+                                Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteModal && $selectedDesignation)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeDeleteModal"></div>
+
+                <!-- Center modal -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Delete Designation</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to delete the designation "{{ $selectedDesignation->name }}"? 
+                                    This action cannot be undone and will fail if there are employees with this designation.
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                        <button type="button" 
-                                wire:click="closeEditModal"
-                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                        <button type="button"
+                                wire:click="closeDeleteModal" 
+                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors text-sm font-medium">
                             Cancel
                         </button>
-                        <button type="submit"
-                                class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
-                            Update
+                        <button type="button"
+                                wire:click="deleteDesignation" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors text-sm font-medium">
+                            Delete
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-@endif
-
-<!-- Delete Confirmation Modal -->
-@if($showDeleteModal && $selectedDesignation)
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeDeleteModal"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-6 pt-5 pb-4">
-                    <div class="mb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Delete Designation</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500">
-                                Are you sure you want to delete the designation "{{ $selectedDesignation->name }}"? 
-                                This action cannot be undone and will fail if there are employees with this designation.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                    <button wire:click="closeDeleteModal" 
-                            class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors text-sm font-medium">
-                        Cancel
-                    </button>
-                    <button wire:click="deleteDesignation" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors text-sm font-medium">
-                        Delete
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
-@endif
-
+    @endif
+</div>

@@ -112,151 +112,151 @@
             </div>
         </div>
     </div>
+
+
+    <!-- Create Modal -->
+    @if($showCreateModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeCreateModal"></div>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit.prevent="createDepartment">
+                        <div class="bg-white px-6 pt-5 pb-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Department</h3>
+
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label for="create-name" class="block text-sm font-medium text-gray-700">
+                                        Department Name
+                                    </label>
+                                    <input type="text" 
+                                        id="create-name"
+                                        wire:model="name"
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror">
+                                    @error('name')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="create-description" class="block text-sm font-medium text-gray-700">
+                                        Description
+                                    </label>
+                                    <input type="text"
+                                        id="create-description"
+                                        wire:model="description"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('description') border-red-500 @enderror">
+                                    @error('description')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+                            <button type="button" 
+                                    wire:click="closeCreateModal"
+                                    class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
+                                Save Department
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit Modal -->
+    @if($showEditModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeEditModal"></div>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit.prevent="updateDepartment">
+                        <div class="bg-white px-6 pt-5 pb-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Department</h3>
+
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label for="edit-name" class="block text-sm font-medium text-gray-700">
+                                        Department Name
+                                    </label>
+                                    <input type="text" 
+                                        id="edit-name"
+                                        wire:model="name"
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror">
+                                    @error('name')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="edit-description" class="block text-sm font-medium text-gray-700">
+                                        Description
+                                    </label>
+                                    <input type="text"
+                                        id="edit-description"
+                                        wire:model="description"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('description') border-red-500 @enderror">
+                                    @error('description')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+                            <button type="button" 
+                                    wire:click="closeEditModal"
+                                    class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
+                                Save Department
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteModal && $selectedDepartment)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeDeleteModal"></div>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-6 pt-5 pb-4">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Delete Department</h3>
+                        <p class="text-sm text-gray-500">
+                            Are you sure you want to delete the department "{{ $selectedDepartment->name }}"? 
+                            This action cannot be undone and will fail if there are employees assigned to this department.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+                        <button wire:click="closeDeleteModal" 
+                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
+                            Cancel
+                        </button>
+                        <button wire:click="deleteDepartment" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
-
-<!-- Create Modal -->
-@if($showCreateModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeCreateModal"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form wire:submit.prevent="createDepartment">
-                    <div class="bg-white px-6 pt-5 pb-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Department</h3>
-
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label for="create-name" class="block text-sm font-medium text-gray-700">
-                                    Department Name
-                                </label>
-                                <input type="text" 
-                                       id="create-name"
-                                       wire:model="name"
-                                       required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror">
-                                @error('name')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="create-description" class="block text-sm font-medium text-gray-700">
-                                    Description
-                                </label>
-                                <input type="text"
-                                       id="create-description"
-                                       wire:model="description"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('description') border-red-500 @enderror">
-                                @error('description')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                        <button type="button" 
-                                wire:click="closeCreateModal"
-                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
-                            Save Department
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-@endif
-
-<!-- Edit Modal -->
-@if($showEditModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeEditModal"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form wire:submit.prevent="updateDepartment">
-                    <div class="bg-white px-6 pt-5 pb-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Department</h3>
-
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label for="edit-name" class="block text-sm font-medium text-gray-700">
-                                    Department Name
-                                </label>
-                                <input type="text" 
-                                       id="edit-name"
-                                       wire:model="name"
-                                       required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('name') border-red-500 @enderror">
-                                @error('name')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="edit-description" class="block text-sm font-medium text-gray-700">
-                                    Description
-                                </label>
-                                <input type="text"
-                                       id="edit-description"
-                                       wire:model="description"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1976d2] focus:border-transparent @error('description') border-red-500 @enderror">
-                                @error('description')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                        <button type="button" 
-                                wire:click="closeEditModal"
-                                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 bg-[#1976d2] hover:bg-[#2196f3] text-white rounded-md transition-colors">
-                            Save Department
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-@endif
-
-<!-- Delete Confirmation Modal -->
-@if($showDeleteModal && $selectedDepartment)
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" wire:click="closeDeleteModal"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-6 pt-5 pb-4">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Delete Department</h3>
-                    <p class="text-sm text-gray-500">
-                        Are you sure you want to delete the department "{{ $selectedDepartment->name }}"? 
-                        This action cannot be undone and will fail if there are employees assigned to this department.
-                    </p>
-                </div>
-
-                <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
-                    <button wire:click="closeDeleteModal" 
-                            class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md transition-colors">
-                        Cancel
-                    </button>
-                    <button wire:click="deleteDepartment" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-@endif
-
