@@ -799,7 +799,7 @@ class UserList extends Component
         $this->validate([
             'newUser.name' => 'required|string|max:255',
             'newUser.email' => 'required|email|unique:users,email',
-            'gender' => 'required|in:male,female',
+            'newUser.gender' => 'required|in:male,female',
             'newUser.phone' => 'nullable|string|max:20',
             'newUser.employee_code' => 'nullable|string|max:50',
             'newUser.user_level_id' => 'required|exists:user_levels,id',
