@@ -48,6 +48,7 @@ class UserService
                 'id' => Str::uuid()->toString(),
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'gender' => $data['gender'],
                 'password' => Hash::make(Str::random(32)), // Random password, user will set their own
                 'user_level_id' => $userLevelId,
                 'designation_id' => $data['designation_id'] ?? null,
@@ -146,6 +147,10 @@ class UserService
 
             if (isset($data['email'])) {
                 $updateData['email'] = $data['email'];
+            }
+
+            if (isset($data['gender'])) {
+                $updateData['gender'] = $data['gender'];
             }
 
             if (isset($data['user_level_id'])) {

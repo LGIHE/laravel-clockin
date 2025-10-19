@@ -127,7 +127,7 @@ class UserForm extends Component
                 'email',
                 Rule::unique('users', 'email')->ignore($this->userId)->whereNull('deleted_at')
             ],
-            'gender' => 'required|in:male,female,other',
+            'gender' => 'required|in:male,female',
             'userLevelId' => [
                 'required',
                 'exists:user_levels,id',

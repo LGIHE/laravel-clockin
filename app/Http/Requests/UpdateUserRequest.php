@@ -33,6 +33,7 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
+            'gender' => 'sometimes|required|in:male,female,other',
             'user_level_id' => [
                 'sometimes',
                 'required',
@@ -68,6 +69,8 @@ class UpdateUserRequest extends FormRequest
             'email.required' => 'Email is required',
             'email.email' => 'Email must be a valid email address',
             'email.unique' => 'Email already exists',
+            'gender.required' => 'Gender is required',
+            'gender.in' => 'Gender must be male, female, or other',
             'user_level_id.required' => 'User level is required',
             'user_level_id.exists' => 'Invalid user level',
             'designation_id.exists' => 'Invalid designation',

@@ -27,6 +27,7 @@ class CreateUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
+            'gender' => 'required|in:male,female,other',
             'password' => 'required|string|min:6',
             'user_level_id' => [
                 'required',
@@ -62,6 +63,8 @@ class CreateUserRequest extends FormRequest
             'email.required' => 'Email is required',
             'email.email' => 'Email must be a valid email address',
             'email.unique' => 'Email already exists',
+            'gender.required' => 'Gender is required',
+            'gender.in' => 'Gender must be male, female, or other',
             'password.required' => 'Password is required',
             'password.min' => 'Password must be at least 6 characters',
             'user_level_id.required' => 'User level is required',
