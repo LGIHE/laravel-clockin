@@ -175,12 +175,18 @@
                         </table>
                     </div>
 
-                    <!-- Footer -->
-                    <div class="px-6 py-4 bg-white border-t border-gray-200">
-                        <div class="text-sm text-gray-500">
-                            Showing {{ $projects->count() }} of {{ $projects->total() }} projects
+                    <!-- Pagination -->
+                    @if($projects->hasPages())
+                        <div class="px-6 py-4 bg-white border-t border-gray-200">
+                            {{ $projects->links() }}
                         </div>
-                    </div>
+                    @else
+                        <div class="px-6 py-4 bg-white border-t border-gray-200">
+                            <div class="text-sm text-gray-500">
+                                Showing {{ $projects->count() }} {{ $projects->count() === 1 ? 'project' : 'projects' }}
+                            </div>
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

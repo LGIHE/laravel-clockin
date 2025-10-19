@@ -12,9 +12,9 @@ class DesignationList extends Component
     use WithPagination;
 
     public $search = '';
-    public $sortBy = 'created_at';
-    public $sortOrder = 'desc';
-    public $perPage = 15;
+    public $sortBy = 'name';
+    public $sortOrder = 'asc';
+    public $perPage = 10;
     
     public $showCreateModal = false;
     public $showEditModal = false;

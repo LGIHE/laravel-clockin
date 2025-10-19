@@ -148,11 +148,18 @@
                         </tbody>
                     </table>
                     
-                    <div class="px-6 py-4 bg-white border-t border-gray-200">
-                        <div class="text-sm text-gray-500">
-                            Showing {{ $designations->count() }} {{ $designations->count() === 1 ? 'entry' : 'entries' }}
+                    <!-- Pagination -->
+                    @if($designations->hasPages())
+                        <div class="px-6 py-4 bg-white border-t border-gray-200">
+                            {{ $designations->links() }}
                         </div>
-                    </div>
+                    @else
+                        <div class="px-6 py-4 bg-white border-t border-gray-200">
+                            <div class="text-sm text-gray-500">
+                                Showing {{ $designations->count() }} {{ $designations->count() === 1 ? 'entry' : 'entries' }}
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

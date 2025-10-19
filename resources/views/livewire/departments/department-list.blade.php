@@ -110,6 +110,19 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Pagination -->
+            @if($departments->hasPages())
+                <div class="px-6 py-4 border-t border-gray-200">
+                    {{ $departments->links() }}
+                </div>
+            @else
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        Showing {{ $departments->count() }} {{ $departments->count() === 1 ? 'entry' : 'entries' }}
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
