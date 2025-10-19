@@ -56,41 +56,64 @@ Route::middleware('auth')->group(function () {
     Route::get('/leaves', LeaveList::class)->name('leaves.index');
     Route::get('/leaves/apply', \App\Livewire\Leave\ApplyLeave::class)->name('leaves.apply');
     
-    // User Management (Admin only)
-    Route::middleware('role:admin')->group(function () {
-        // Attendance Management (Admin view)
+    // Attendance Management
+    Route::middleware('permission:attendance.view-all')->group(function () {
         Route::get('/attendance/manage', AttendanceList::class)->name('attendance.index');
-        
+    });
+    
+    // User Management
+    Route::middleware('permission:users.view')->group(function () {
         Route::get('/users', UserList::class)->name('users.index');
+    });
+    
+    Route::middleware('permission:users.create')->group(function () {
         Route::get('/users/create', UserForm::class)->name('users.create');
+    });
+    
+    Route::middleware('permission:users.edit')->group(function () {
         Route::get('/users/{userId}/edit', UserForm::class)->name('users.edit');
-        
-        // Department Management
+    });
+    
+    // Department Management
+    Route::middleware('permission:departments.view')->group(function () {
         Route::get('/departments', DepartmentList::class)->name('departments.index');
-        
-        // Designation Management
+    });
+    
+    // Designation Management
+    Route::middleware('permission:designations.view')->group(function () {
         Route::get('/designations', DesignationList::class)->name('designations.index');
-        
-        // Project Management
+    });
+    
+    // Project Management
+    Route::middleware('permission:projects.view')->group(function () {
         Route::get('/projects', ProjectList::class)->name('projects.index');
-        
-        // Leave Category Management
+    });
+    
+    // Leave Category Management
+    Route::middleware('permission:leave-categories.view')->group(function () {
         Route::get('/leave-categories', LeaveCategoryList::class)->name('leave-categories.index');
-        
-        // Role & Permission Management
+    });
+    
+    // Role & Permission Management
+    Route::middleware('permission:roles.view')->group(function () {
         Route::get('/roles', \App\Livewire\Roles\RoleList::class)->name('roles.index');
         Route::get('/roles/create', \App\Livewire\Roles\RoleForm::class)->name('roles.create');
         Route::get('/roles/{roleId}/edit', \App\Livewire\Roles\RoleForm::class)->name('roles.edit');
-        
-        // System Settings
+    });
+    
+    // System Settings
+    Route::middleware('permission:settings.view')->group(function () {
         Route::get('/settings', [SystemSettingsController::class, 'index'])->name('settings.index');
+        Route::get('/settings/logs', [SystemSettingsController::class, 'logs'])->name('settings.logs');
+        Route::get('/settings/stats', [SystemSettingsController::class, 'stats'])->name('settings.stats');
+    });
+    
+    Route::middleware('permission:settings.manage')->group(function () {
         Route::put('/settings/general', [SystemSettingsController::class, 'updateGeneral'])->name('settings.update.general');
         Route::put('/settings/email', [SystemSettingsController::class, 'updateEmail'])->name('settings.update.email');
         Route::put('/settings/system', [SystemSettingsController::class, 'updateSystem'])->name('settings.update.system');
         Route::put('/settings/notification', [SystemSettingsController::class, 'updateNotification'])->name('settings.update.notification');
-        Route::get('/settings/logs', [SystemSettingsController::class, 'logs'])->name('settings.logs');
         Route::delete('/settings/logs', [SystemSettingsController::class, 'clearLogs'])->name('settings.logs.clear');
-        Route::get('/settings/stats', [SystemSettingsController::class, 'stats'])->name('settings.stats');
         Route::post('/settings/cache/clear', [SystemSettingsController::class, 'clearCache'])->name('settings.cache.clear');
     });
     

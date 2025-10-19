@@ -56,7 +56,14 @@ class UserForm extends Component
 
     public function loadFormData()
     {
-        $this->userLevels = UserLevel::orderBy('name')->get();
+        // Load user levels - exclude Admin role for non-admin users
+        $this->userLevels = UserLevel::orderBy('name')
+            ->when(auth()->user()->role !== 'ADMIN', function($query) {
+                // Non-admin users cannot see or assign the Admin role
+                $query->where('name', '!=', 'Admin');
+            })
+            ->get();
+            
         $this->departments = Department::orderBy('name')->get();
         $this->designations = Designation::orderBy('name')->get();
         $this->projects = Project::where('status', 'ACTIVE')->orderBy('name')->get();
@@ -118,7 +125,19 @@ class UserForm extends Component
                 'email',
                 Rule::unique('users', 'email')->ignore($this->userId)->whereNull('deleted_at')
             ],
-            'userLevelId' => 'required|exists:user_levels,id',
+            'userLevelId' => [
+                'required',
+                'exists:user_levels,id',
+                function ($attribute, $value, $fail) {
+                    // Only admins can assign the Admin role
+                    if (auth()->user()->role !== 'ADMIN') {
+                        $userLevel = UserLevel::find($value);
+                        if ($userLevel && strtoupper($userLevel->name) === 'ADMIN') {
+                            $fail('You do not have permission to assign the Admin role.');
+                        }
+                    }
+                },
+            ],
             'departmentId' => 'nullable|exists:departments,id',
             'designationId' => 'nullable|exists:designations,id',
             'primarySupervisorId' => 'nullable|exists:users,id',

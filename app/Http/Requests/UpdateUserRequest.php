@@ -33,7 +33,21 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'user_level_id' => 'sometimes|required|string|exists:user_levels,id',
+            'user_level_id' => [
+                'sometimes',
+                'required',
+                'string',
+                'exists:user_levels,id',
+                function ($attribute, $value, $fail) {
+                    // Only admins can assign the Admin role
+                    if (auth()->user()->role !== 'ADMIN') {
+                        $userLevel = \App\Models\UserLevel::find($value);
+                        if ($userLevel && strtoupper($userLevel->name) === 'ADMIN') {
+                            $fail('You do not have permission to assign the Admin role.');
+                        }
+                    }
+                },
+            ],
             'designation_id' => 'nullable|string|exists:designations,id',
             'department_id' => 'nullable|string|exists:departments,id',
             'status' => 'sometimes|integer|in:0,1',

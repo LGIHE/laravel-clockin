@@ -28,7 +28,20 @@ class CreateUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
             'password' => 'required|string|min:6',
-            'user_level_id' => 'required|string|exists:user_levels,id',
+            'user_level_id' => [
+                'required',
+                'string',
+                'exists:user_levels,id',
+                function ($attribute, $value, $fail) {
+                    // Only admins can assign the Admin role
+                    if (auth()->user()->role !== 'ADMIN') {
+                        $userLevel = \App\Models\UserLevel::find($value);
+                        if ($userLevel && strtoupper($userLevel->name) === 'ADMIN') {
+                            $fail('You do not have permission to assign the Admin role.');
+                        }
+                    }
+                },
+            ],
             'designation_id' => 'nullable|string|exists:designations,id',
             'department_id' => 'nullable|string|exists:departments,id',
             'status' => 'nullable|integer|in:0,1',
