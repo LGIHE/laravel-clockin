@@ -53,8 +53,10 @@
         @if($reportData && count($reportData['attendances']) > 0)
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Attendance Trend</h3>
-                <div class="h-64 bg-gray-50 rounded-md flex items-center justify-center">
-                    <canvas id="attendanceChart" class="max-h-full"></canvas>
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <div style="height: 350px; position: relative;">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
                 </div>
             </div>
         @endif
@@ -248,44 +250,233 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('livewire:navigated', function() {
-            const ctx = document.getElementById('attendanceChart');
-            if (ctx) {
+        (function() {
+            let attendanceChartInstance = null;
+
+            function initAttendanceChart() {
+                const ctx = document.getElementById('attendanceChart');
+                if (!ctx) {
+                    console.log('Chart canvas not found');
+                    return;
+                }
+
+                // Destroy existing chart if it exists
+                if (attendanceChartInstance) {
+                    attendanceChartInstance.destroy();
+                    attendanceChartInstance = null;
+                }
+
                 const attendances = @json($reportData['attendances']);
-                const labels = attendances.map(att => {
-                    const date = new Date(att.in_time);
-                    return date.toLocaleDateString('en-US', { weekday: 'short' });
-                });
-                const data = attendances.map(att => att.worked ? (att.worked / 3600).toFixed(2) : 0);
+                const startDateStr = '{{ $startDate }}';
+                const endDateStr = '{{ $endDate }}';
                 
-                new Chart(ctx, {
+                console.log('Initializing chart with', attendances.length, 'attendance records');
+                
+                // Create a map of dates to hours worked
+                const attendanceMap = {};
+                attendances.forEach(att => {
+                    if (!att.in_time) return;
+                    const date = new Date(att.in_time);
+                    const dateKey = date.toISOString().split('T')[0];
+                    const hours = att.worked ? parseFloat((att.worked / 3600).toFixed(2)) : 0;
+                    
+                    // If multiple entries on same day, sum them
+                    if (attendanceMap[dateKey]) {
+                        attendanceMap[dateKey] += hours;
+                    } else {
+                        attendanceMap[dateKey] = hours;
+                    }
+                });
+
+                // Generate all dates in range with attendance data
+                const chartData = [];
+                const labels = [];
+                const startDate = new Date(startDateStr + 'T00:00:00');
+                const endDate = new Date(endDateStr + 'T23:59:59');
+                const currentDate = new Date(startDate);
+                
+                while (currentDate <= endDate) {
+                    const dateKey = currentDate.toISOString().split('T')[0];
+                    const hours = attendanceMap[dateKey] || 0;
+                    
+                    chartData.push(hours);
+                    labels.push(dateKey);
+                    
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                console.log('Chart data points:', chartData.length);
+
+                // Calculate date range in days
+                const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+                
+                // Calculate max Y value for better scaling
+                const maxHours = Math.max(...chartData, 8);
+                const yAxisMax = Math.ceil(maxHours / 2) * 2; // Round up to nearest even number
+
+                // Format labels based on date range
+                const formattedLabels = labels.map((dateStr, index) => {
+                    const date = new Date(dateStr + 'T00:00:00');
+                    if (daysDiff <= 7) {
+                        // Show day name and date for week view
+                        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    } else if (daysDiff <= 31) {
+                        // Show month and day for month view
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    } else {
+                        // Show every nth label for longer ranges
+                        const skipFactor = Math.ceil(daysDiff / 20);
+                        if (index % skipFactor === 0) {
+                            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }
+                        return '';
+                    }
+                });
+
+                attendanceChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: labels,
+                        labels: formattedLabels,
                         datasets: [{
                             label: 'Hours Worked',
-                            data: data,
-                            backgroundColor: '#10b981',
-                            borderColor: '#10b981',
-                            borderWidth: 2
+                            data: chartData,
+                            backgroundColor: chartData.map(value => {
+                                if (value === 0) return '#e5e7eb'; // gray for no attendance
+                                if (value < 4) return '#fbbf24'; // yellow for low hours
+                                if (value < 8) return '#60a5fa'; // blue for medium hours
+                                return '#10b981'; // green for full day
+                            }),
+                            borderColor: chartData.map(value => {
+                                if (value === 0) return '#d1d5db';
+                                if (value < 4) return '#f59e0b';
+                                if (value < 8) return '#3b82f6';
+                                return '#059669';
+                            }),
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 40
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                align: 'end'
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 13,
+                                    weight: 'bold'
+                                },
+                                bodyFont: {
+                                    size: 12
+                                },
+                                callbacks: {
+                                    title: function(context) {
+                                        const dateStr = labels[context[0].dataIndex];
+                                        const date = new Date(dateStr + 'T00:00:00');
+                                        return date.toLocaleDateString('en-US', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        });
+                                    },
+                                    label: function(context) {
+                                        const hours = context.parsed.y;
+                                        if (hours === 0) {
+                                            return 'No attendance recorded';
+                                        }
+                                        const h = Math.floor(hours);
+                                        const m = Math.round((hours - h) * 60);
+                                        return `Hours Worked: ${h}h ${m}m`;
+                                    }
+                                }
+                            }
+                        },
                         scales: {
-                            y: {
-                                beginAtZero: true,
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 0,
+                                    autoSkip: false,
+                                    font: {
+                                        size: 10
+                                    }
+                                },
                                 title: {
                                     display: true,
-                                    text: 'Hours'
+                                    text: 'Date',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    padding: { top: 10 }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: yAxisMax,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    stepSize: 2,
+                                    callback: function(value) {
+                                        return value + 'h';
+                                    },
+                                    font: {
+                                        size: 11
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Hours Worked',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    padding: { bottom: 10 }
                                 }
                             }
                         }
                     }
                 });
+
+                console.log('Chart initialized successfully');
             }
-        });
+
+            // Initialize chart on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAttendanceChart);
+            } else {
+                initAttendanceChart();
+            }
+            
+            // Reinitialize chart after Livewire updates
+            document.addEventListener('livewire:navigated', function() {
+                setTimeout(initAttendanceChart, 100);
+            });
+            
+            // Listen for Livewire component updates
+            if (typeof Livewire !== 'undefined') {
+                Livewire.hook('morph.updated', function({ el, component }) {
+                    setTimeout(initAttendanceChart, 100);
+                });
+            }
+        })();
     </script>
     @endpush
 @endif

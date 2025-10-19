@@ -66,7 +66,8 @@ class ReportService
         $startDate = Carbon::parse($filters['start_date']);
         $endDate = Carbon::parse($filters['end_date']);
 
-        $query = User::with(['userLevel', 'department', 'designation']);
+        $query = User::with(['userLevel', 'department', 'designation'])
+            ->where('status', 1); // Only active users
 
         // Apply filters
         if (!empty($filters['user_id'])) {
@@ -78,7 +79,13 @@ class ReportService
         }
 
         if (!empty($filters['project_id'])) {
-            $query->where('project_id', $filters['project_id']);
+            // Check both direct project_id and many-to-many relationship
+            $query->where(function($q) use ($filters) {
+                $q->where('project_id', $filters['project_id'])
+                  ->orWhereHas('projects', function($projectQuery) use ($filters) {
+                      $projectQuery->where('projects.id', $filters['project_id']);
+                  });
+            });
         }
 
         $users = $query->get();
