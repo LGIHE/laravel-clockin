@@ -66,10 +66,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', UserList::class)->name('users.index');
     });
     
-    Route::middleware('permission:users.create')->group(function () {
-        Route::get('/users/create', UserForm::class)->name('users.create');
-    });
-    
     Route::middleware('permission:users.edit')->group(function () {
         Route::get('/users/{userId}/edit', UserForm::class)->name('users.edit');
     });

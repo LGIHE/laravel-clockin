@@ -764,6 +764,20 @@
                                     />
                                     @error('newUser.employee_code') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                 </div>
+                                
+                                <div class="space-y-2">
+                                    <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Gender <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="gender" 
+                                            wire:model="gender"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('gender') border-red-500 @enderror">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                    @error('newUser.gender') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                </div>
 
                                 <div class="space-y-2">
                                     <label for="newUserRole" class="block text-sm font-medium text-gray-700">Role *</label>
@@ -797,7 +811,7 @@
                                     @error('newUser.department_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                 </div>
 
-                                <div class="space-y-2 col-span-2">
+                                <div class="space-y-2">
                                     <label for="newUserDesignation" class="block text-sm font-medium text-gray-700">Designation</label>
                                     <select 
                                         id="newUserDesignation"
@@ -898,6 +912,20 @@
                                             required
                                         />
                                         @error('editUser.email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="editUserGender" class="block text-sm font-medium text-gray-700">Gender *</label>
+                                        <select 
+                                            id="editUserGender"
+                                            wire:model="editUser.gender"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        >
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                        </select>
+                                        @error('editUser.gender') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="space-y-2">
