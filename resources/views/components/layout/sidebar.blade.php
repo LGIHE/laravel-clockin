@@ -80,20 +80,25 @@
             'type' => 'submenu',
             'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
             'permission' => 'leaves.view-own',
-            'activeRoutes' => ['leaves.apply', 'leaves.index', 'leave-categories.index'],
+            'activeRoutes' => ['leaves.apply', 'leaves.index', 'leave-categories.index', 'compensation-leaves.index'],
             'submenu' => [
                 [
-                    'label' => 'Apply',
+                    'label' => 'Apply Leave',
                     'route' => 'leaves.apply',
                     'permission' => 'leaves.apply'
                 ],
                 [
-                    'label' => 'View All',
+                    'label' => 'Compensation Leave',
+                    'route' => 'compensation-leaves.index',
+                    'permission' => null // Available to all users
+                ],
+                [
+                    'label' => 'View All Leaves',
                     'route' => 'leaves.index',
                     'permission' => 'leaves.view-all'
                 ],
                 [
-                    'label' => 'Category',
+                    'label' => 'Leave Categories',
                     'route' => 'leave-categories.index',
                     'permission' => 'leave-categories.view'
                 ],
