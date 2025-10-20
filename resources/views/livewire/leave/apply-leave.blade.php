@@ -9,15 +9,31 @@
                         <h4 class="text-sm font-medium text-gray-700 mb-2">{{ $balance['category'] }}</h4>
                         <div class="flex items-baseline space-x-2">
                             <span class="text-2xl font-bold text-gray-900">{{ $balance['remaining'] }}</span>
-                            <span class="text-sm text-gray-500">/ {{ $balance['total'] }} days</span>
+                            <span class="text-sm text-gray-500">/ {{ $balance['total_available'] ?? $balance['total'] }} days</span>
                         </div>
+                        @if(isset($balance['carried_forward']) && $balance['carried_forward'] > 0)
+                            <div class="mt-1 text-xs text-blue-600">
+                                Includes {{ $balance['carried_forward'] }} carried forward
+                                @if(isset($balance['carryforward_expires_at']))
+                                    (expires {{ $balance['carryforward_expires_at'] }})
+                                @endif
+                            </div>
+                        @endif
                         <div class="mt-2">
                             <div class="flex justify-between text-xs text-gray-600 mb-1">
                                 <span>Used: {{ $balance['used'] }}</span>
-                                <span>{{ round(($balance['used'] / $balance['total']) * 100) }}%</span>
+                                @if($balance['total'] > 0)
+                                    <span>{{ round(($balance['used'] / $balance['total']) * 100) }}%</span>
+                                @else
+                                    <span>-</span>
+                                @endif
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(($balance['used'] / $balance['total']) * 100, 100) }}%"></div>
+                                @if($balance['total'] > 0)
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(($balance['used'] / $balance['total']) * 100, 100) }}%"></div>
+                                @else
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                                @endif
                             </div>
                         </div>
                     </div>
