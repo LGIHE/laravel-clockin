@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
     // Leave Management
     Route::get('/leaves', LeaveList::class)->name('leaves.index');
     Route::get('/leaves/apply', \App\Livewire\Leave\ApplyLeave::class)->name('leaves.apply');
+    Route::get('/compensation-leaves', \App\Livewire\Leave\CompensationLeaveRequests::class)->name('compensation-leaves.index');
     
     // Attendance Management
     Route::middleware('permission:attendance.view-all')->group(function () {

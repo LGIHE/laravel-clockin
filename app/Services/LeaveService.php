@@ -16,10 +16,14 @@ use Illuminate\Support\Str;
 class LeaveService
 {
     protected NotificationService $notificationService;
+    protected LeaveBalanceService $leaveBalanceService;
 
-    public function __construct(NotificationService $notificationService)
-    {
+    public function __construct(
+        NotificationService $notificationService,
+        LeaveBalanceService $leaveBalanceService
+    ) {
         $this->notificationService = $notificationService;
+        $this->leaveBalanceService = $leaveBalanceService;
     }
     /**
      * Apply for leave.
@@ -183,9 +187,21 @@ class LeaveService
             throw new \Exception('Approved status not found');
         }
 
+        // Calculate days to deduct
+        $days = 1;
+        if ($leave->end_date) {
+            $start = new \DateTime($leave->date);
+            $end = new \DateTime($leave->end_date);
+            $days = $start->diff($end)->days + 1;
+        }
+
         // Update leave status
         $leave->leave_status_id = $approvedStatus->id;
         $leave->save();
+
+        // Deduct from balance
+        $year = date('Y', strtotime($leave->date));
+        $this->leaveBalanceService->deductLeave($leave->user_id, $leave->leave_category_id, $year, $days);
 
         // Notify the applicant
         $applicant = User::find($leave->user_id);
@@ -377,36 +393,7 @@ class LeaveService
      */
     public function getLeaveBalance(string $userId, string $categoryId, int $year): array
     {
-        $category = LeaveCategory::findOrFail($categoryId);
-        
-        // Get approved leaves for the year
-        $approvedStatus = LeaveStatus::where('name', 'granted')->first();
-        $usedDays = 0;
-        
-        if ($approvedStatus) {
-            $approvedLeaves = Leave::where('user_id', $userId)
-                ->where('leave_category_id', $categoryId)
-                ->where('leave_status_id', $approvedStatus->id)
-                ->whereYear('date', $year)
-                ->get();
-            
-            foreach ($approvedLeaves as $leave) {
-                if ($leave->end_date) {
-                    $start = new \DateTime($leave->date);
-                    $end = new \DateTime($leave->end_date);
-                    $usedDays += $start->diff($end)->days + 1;
-                } else {
-                    $usedDays += 1;
-                }
-            }
-        }
-
-        return [
-            'category' => $category->name,
-            'total' => $category->max_in_year,
-            'used' => $usedDays,
-            'remaining' => $category->max_in_year - $usedDays,
-        ];
+        return $this->leaveBalanceService->getAvailableBalance($userId, $categoryId, $year);
     }
 }
 

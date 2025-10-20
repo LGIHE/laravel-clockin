@@ -22,3 +22,9 @@ Schedule::command('attendance:send-clockin-reminders')
     ->dailyAt($clockinReminderTime)
     ->withoutOverlapping()
     ->runInBackground();
+
+// Reset leave balances on January 1st every year
+Schedule::command('leaves:reset-balances')
+    ->yearlyOn(1, 1, '00:01') // January 1st at 00:01
+    ->withoutOverlapping()
+    ->runInBackground();

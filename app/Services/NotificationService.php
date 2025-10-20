@@ -275,3 +275,78 @@ class NotificationService
             ->get();
     }
 }
+
+    /**
+     * Notify supervisor about compensation leave request
+     */
+    public function notifyCompensationLeaveRequest($request, $requester, $supervisor): void
+    {
+        $this->create(
+            $supervisor->id,
+            'compensation_leave_request',
+            'New Compensation Leave Request',
+            "{$requester->name} has requested {$request->days_requested} compensation day(s) for working on {$request->work_date->format('M d, Y')}",
+            ['request_id' => $request->id],
+            '/compensation-leaves'
+        );
+    }
+
+    /**
+     * Notify HR about supervisor-approved compensation leave
+     */
+    public function notifyCompensationLeaveForHR($request, $hrUser): void
+    {
+        $this->create(
+            $hrUser->id,
+            'compensation_leave_hr',
+            'Compensation Leave Awaiting HR Action',
+            "{$request->user->name}'s compensation leave request has been approved by supervisor and needs HR to effect it",
+            ['request_id' => $request->id],
+            '/compensation-leaves'
+        );
+    }
+
+    /**
+     * Notify requester that supervisor approved
+     */
+    public function notifyCompensationLeaveSupervisorApproved($request): void
+    {
+        $this->create(
+            $request->user_id,
+            'compensation_leave_approved',
+            'Compensation Leave Approved by Supervisor',
+            "Your compensation leave request for {$request->days_requested} day(s) has been approved by your supervisor. Awaiting HR to effect it.",
+            ['request_id' => $request->id],
+            '/compensation-leaves'
+        );
+    }
+
+    /**
+     * Notify requester that HR effected the request
+     */
+    public function notifyCompensationLeaveEffected($request): void
+    {
+        $this->create(
+            $request->user_id,
+            'compensation_leave_effected',
+            'Compensation Leave Days Added',
+            "{$request->days_requested} compensation day(s) have been added to your leave balance",
+            ['request_id' => $request->id],
+            '/leaves/apply'
+        );
+    }
+
+    /**
+     * Notify requester that request was rejected
+     */
+    public function notifyCompensationLeaveRejected($request, $reason): void
+    {
+        $this->create(
+            $request->user_id,
+            'compensation_leave_rejected',
+            'Compensation Leave Request Rejected',
+            "Your compensation leave request has been rejected. Reason: {$reason}",
+            ['request_id' => $request->id],
+            '/compensation-leaves'
+        );
+    }
