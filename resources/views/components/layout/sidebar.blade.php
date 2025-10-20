@@ -220,16 +220,19 @@
                                 @foreach($filteredSubmenu as $subItem)
                                     @php
                                         $isSubActive = $currentRoute === $subItem['route'];
+                                        $routeExists = \Illuminate\Support\Facades\Route::has($subItem['route']);
                                     @endphp
-                                    <li>
-                                        <a
-                                            href="{{ route($subItem['route']) }}"
-                                            class="block py-2 px-4 text-sm rounded {{ $isSubActive ? 'text-lgf-blue font-medium' : 'text-gray-600 hover:text-gray-900' }}"
-                                            wire:navigate
-                                        >
-                                            {{ $subItem['label'] }}
-                                        </a>
-                                    </li>
+                                    @if($routeExists)
+                                        <li>
+                                            <a
+                                                href="{{ route($subItem['route']) }}"
+                                                class="block py-2 px-4 text-sm rounded {{ $isSubActive ? 'text-lgf-blue font-medium' : 'text-gray-600 hover:text-gray-900' }}"
+                                                wire:navigate
+                                            >
+                                                {{ $subItem['label'] }}
+                                            </a>
+                                        </li>
+                                    @endif
                                 @endforeach
                             </ul>
                         </li>
@@ -238,19 +241,22 @@
                     @php
                         $isActive = isset($item['route']) && ($currentRoute === $item['route'] || 
                                     (isset($item['activeRoutes']) && in_array($currentRoute, $item['activeRoutes'])));
+                        $routeExists = isset($item['route']) && \Illuminate\Support\Facades\Route::has($item['route']);
                     @endphp
-                    <li>
-                        <a 
-                            href="{{ route($item['route']) }}" 
-                            class="flex items-center px-4 py-3 text-sm {{ $isActive ? 'bg-lgf-blue text-white' : 'text-gray-700 hover:bg-gray-100' }}"
-                            wire:navigate
-                        >
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
-                            </svg>
-                            <span>{{ $item['label'] }}</span>
-                        </a>
-                    </li>
+                    @if($routeExists)
+                        <li>
+                            <a 
+                                href="{{ route($item['route']) }}" 
+                                class="flex items-center px-4 py-3 text-sm {{ $isActive ? 'bg-lgf-blue text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                                wire:navigate
+                            >
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
+                                </svg>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
+                        </li>
+                    @endif
                 @endif
             @endforeach
         </ul>
