@@ -274,7 +274,6 @@ class NotificationService
             ->limit($limit)
             ->get();
     }
-}
 
     /**
      * Notify supervisor about compensation leave request
@@ -350,3 +349,4 @@ class NotificationService
             '/compensation-leaves'
         );
     }
+}
