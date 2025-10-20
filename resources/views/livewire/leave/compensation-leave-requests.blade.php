@@ -202,7 +202,7 @@
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75" wire:click="closeRequestModal"></div>
-                <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-1/3 p-6">
                     <h3 class="text-lg font-medium mb-4">Request Compensation Leave</h3>
                     <form wire:submit.prevent="submitRequest" class="space-y-4">
                         <div>
