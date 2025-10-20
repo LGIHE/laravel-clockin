@@ -49,6 +49,8 @@ class UserService
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'gender' => $data['gender'],
+                'phone' => $data['phone'] ?? null,
+                'employee_code' => $data['employee_code'] ?? null,
                 'password' => Hash::make(Str::random(32)), // Random password, user will set their own
                 'user_level_id' => $userLevelId,
                 'designation_id' => $data['designation_id'] ?? null,
@@ -151,6 +153,14 @@ class UserService
 
             if (isset($data['gender'])) {
                 $updateData['gender'] = $data['gender'];
+            }
+
+            if (isset($data['phone'])) {
+                $updateData['phone'] = $data['phone'];
+            }
+
+            if (isset($data['employee_code'])) {
+                $updateData['employee_code'] = $data['employee_code'];
             }
 
             if (isset($data['user_level_id'])) {

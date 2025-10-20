@@ -66,7 +66,11 @@ class UserList extends Component
         'user_level_id' => '',
         'department_id' => '',
         'designation_id' => '',
+        'primary_supervisor_id' => '',
+        'secondary_supervisor_id' => '',
+        'status' => 1,
         'password' => '',
+        'password_confirmation' => '',
     ];
 
     // For editing user
@@ -88,7 +92,9 @@ class UserList extends Component
     ];
     
     public $editUserProjects = [];
+    public $newUserProjects = [];
     public $projects = [];
+    public $showNewPassword = false;
     public $showEditPassword = false;
 
     // For Change Department Modal
@@ -770,6 +776,7 @@ class UserList extends Component
     public function closeAddUserModal()
     {
         $this->showAddUserModal = false;
+        $this->showNewPassword = false;
         $this->resetNewUserForm();
     }
     
@@ -784,8 +791,13 @@ class UserList extends Component
             'user_level_id' => '',
             'department_id' => '',
             'designation_id' => '',
+            'primary_supervisor_id' => '',
+            'secondary_supervisor_id' => '',
+            'status' => 1,
             'password' => '',
+            'password_confirmation' => '',
         ];
+        $this->newUserProjects = [];
         $this->resetErrorBag();
     }
     
@@ -803,9 +815,12 @@ class UserList extends Component
             'newUser.phone' => 'nullable|string|max:20',
             'newUser.employee_code' => 'nullable|string|max:50',
             'newUser.user_level_id' => 'required|exists:user_levels,id',
-            'newUser.department_id' => 'required|exists:departments,id',
+            'newUser.department_id' => 'nullable|exists:departments,id',
             'newUser.designation_id' => 'nullable|exists:designations,id',
-            'newUser.password' => 'required|string|min:8',
+            'newUser.primary_supervisor_id' => 'nullable|exists:users,id',
+            'newUser.secondary_supervisor_id' => 'nullable|exists:users,id',
+            'newUser.status' => 'required|in:0,1',
+            'newUser.password' => 'required|string|min:6',
         ]);
         
         \Log::info('✅ UserList validation passed!');
@@ -819,10 +834,10 @@ class UserList extends Component
                 'phone' => $this->newUser['phone'] ?: null,
                 'employee_code' => $this->newUser['employee_code'] ?: null,
                 'user_level_id' => $this->newUser['user_level_id'],
-                'department_id' => $this->newUser['department_id'],
+                'department_id' => $this->newUser['department_id'] ?: null,
                 'designation_id' => $this->newUser['designation_id'] ?: null,
                 'password' => $this->newUser['password'], // UserService will hash it
-                'status' => 1, // Active by default
+                'status' => $this->newUser['status'],
             ];
             
             \Log::info('📧 Calling UserService::createUser() from UserList', [
@@ -830,6 +845,24 @@ class UserList extends Component
             ]);
             
             $user = $this->userService->createUser($userData);
+            
+            // Attach supervisors if provided
+            if (!empty($this->newUser['primary_supervisor_id'])) {
+                $user->supervisors()->attach($this->newUser['primary_supervisor_id'], [
+                    'supervisor_type' => 'primary'
+                ]);
+            }
+            
+            if (!empty($this->newUser['secondary_supervisor_id'])) {
+                $user->supervisors()->attach($this->newUser['secondary_supervisor_id'], [
+                    'supervisor_type' => 'secondary'
+                ]);
+            }
+            
+            // Attach projects if selected
+            if (!empty($this->newUserProjects)) {
+                $user->projects()->sync($this->newUserProjects);
+            }
             
             \Log::info('✅ User created successfully via UserList', [
                 'user_id' => $user->id,
@@ -929,6 +962,15 @@ class UserList extends Component
             $this->editUserProjects = array_diff($this->editUserProjects, [$projectId]);
         } else {
             $this->editUserProjects[] = $projectId;
+        }
+    }
+
+    public function toggleNewProjectSelection($projectId)
+    {
+        if (in_array($projectId, $this->newUserProjects)) {
+            $this->newUserProjects = array_diff($this->newUserProjects, [$projectId]);
+        } else {
+            $this->newUserProjects[] = $projectId;
         }
     }
 
