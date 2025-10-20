@@ -814,7 +814,19 @@ class UserList extends Component
             'newUser.gender' => 'required|in:male,female',
             'newUser.phone' => 'nullable|string|max:20',
             'newUser.employee_code' => 'nullable|string|max:50',
-            'newUser.user_level_id' => 'required|exists:user_levels,id',
+            'newUser.user_level_id' => [
+                'required',
+                'exists:user_levels,id',
+                function ($attribute, $value, $fail) {
+                    // Only admins can assign the Admin role
+                    if (auth()->user()->role !== 'ADMIN') {
+                        $userLevel = UserLevel::find($value);
+                        if ($userLevel && strtoupper($userLevel->name) === 'ADMIN') {
+                            $fail('You do not have permission to assign the Admin role.');
+                        }
+                    }
+                },
+            ],
             'newUser.department_id' => 'nullable|exists:departments,id',
             'newUser.designation_id' => 'nullable|exists:designations,id',
             'newUser.primary_supervisor_id' => 'nullable|exists:users,id',
@@ -984,7 +996,19 @@ class UserList extends Component
             'editUser.phone' => 'nullable|string|max:20',
             'editUser.employee_code' => 'nullable|string|max:50',
             'editUser.gender' => 'required|in:male,female',
-            'editUser.user_level_id' => 'required|exists:user_levels,id',
+            'editUser.user_level_id' => [
+                'required',
+                'exists:user_levels,id',
+                function ($attribute, $value, $fail) {
+                    // Only admins can assign the Admin role
+                    if (auth()->user()->role !== 'ADMIN') {
+                        $userLevel = UserLevel::find($value);
+                        if ($userLevel && strtoupper($userLevel->name) === 'ADMIN') {
+                            $fail('You do not have permission to assign the Admin role.');
+                        }
+                    }
+                },
+            ],
             'editUser.department_id' => 'nullable|exists:departments,id',
             'editUser.designation_id' => 'nullable|exists:designations,id',
             'editUser.primary_supervisor_id' => 'nullable|exists:users,id',
