@@ -41,10 +41,15 @@ class ApplyLeave extends Component
         $userGender = auth()->user()->gender;
         
         // Filter leave categories based on user's gender
+        // Only show categories that are either 'all' or match the user's gender
         $this->leaveCategories = LeaveCategory::orderBy('name')
             ->where(function($query) use ($userGender) {
-                $query->where('gender_restriction', 'all')
-                      ->orWhere('gender_restriction', $userGender);
+                $query->where('gender_restriction', 'all');
+                
+                // Only add gender-specific filter if user has a gender set
+                if ($userGender) {
+                    $query->orWhere('gender_restriction', $userGender);
+                }
             })
             ->get();
         

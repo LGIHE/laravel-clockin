@@ -57,8 +57,22 @@ class LeaveList extends Component
         $this->isAdmin = strtolower($user->userLevel->name) === 'admin';
         $this->isSupervisor = $user->userLevel->name === 'supervisor';
         
-        // Load filter options
-        $this->categories = LeaveCategory::orderBy('name')->get();
+        // Load filter options - filter by gender for non-admin users
+        if ($this->isAdmin) {
+            // Admins can see all categories for filtering purposes
+            $this->categories = LeaveCategory::orderBy('name')->get();
+        } else {
+            // Regular users only see categories applicable to their gender
+            $userGender = $user->gender;
+            $this->categories = LeaveCategory::orderBy('name')
+                ->where(function($query) use ($userGender) {
+                    $query->where('gender_restriction', 'all');
+                    if ($userGender) {
+                        $query->orWhere('gender_restriction', $userGender);
+                    }
+                })
+                ->get();
+        }
         
         // Calculate leave balance
         $this->calculateLeaveBalance();
