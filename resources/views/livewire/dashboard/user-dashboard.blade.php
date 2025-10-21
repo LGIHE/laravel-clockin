@@ -298,49 +298,7 @@
                                 ></textarea>
                             </div>
 
-                            <!-- Task Status (only if task exists) -->
-                            @if(isset($attendanceStatus['attendance']) && $attendanceStatus['attendance']->task_id)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Task Status
-                                    </label>
-                                    <div class="space-y-2">
-                                        <label class="flex items-center space-x-2 border rounded-md p-2 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'completed' ? 'border-green-500 bg-green-50' : 'border-gray-300' }}">
-                                            <input 
-                                                type="radio" 
-                                                wire:model="taskStatus" 
-                                                value="completed"
-                                                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                                            >
-                                            <div class="flex-1">
-                                                <span class="text-sm font-medium text-gray-900">Completed</span>
-                                            </div>
-                                        </label>
-                                        <label class="flex items-center space-x-2 border rounded-md p-2 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'in-progress' ? 'border-blue-500 bg-blue-50' : 'border-gray-300' }}">
-                                            <input 
-                                                type="radio" 
-                                                wire:model="taskStatus" 
-                                                value="in-progress"
-                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                            >
-                                            <div class="flex-1">
-                                                <span class="text-sm font-medium text-gray-900">In Progress</span>
-                                            </div>
-                                        </label>
-                                        <label class="flex items-center space-x-2 border rounded-md p-2 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'on-hold' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-300' }}">
-                                            <input 
-                                                type="radio" 
-                                                wire:model="taskStatus" 
-                                                value="on-hold"
-                                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
-                                            >
-                                            <div class="flex-1">
-                                                <span class="text-sm font-medium text-gray-900">On Hold</span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            @endif
+
                         </div>
                     @endif
 
