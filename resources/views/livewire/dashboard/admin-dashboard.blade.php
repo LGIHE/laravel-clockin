@@ -131,46 +131,122 @@
                         @endif
                         
                         @if(!(isset($attendanceStatus) && is_array($attendanceStatus) && ($attendanceStatus['clocked_in'] ?? false)))
-                            <!-- Project Selector -->
+                            <!-- Project Selection -->
                             <div>
-                                <label for="selectedProject" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Project <span class="text-red-500">*</span>
+                                <label for="projectSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Select Projects <span class="text-red-500">*</span>
                                 </label>
                                 <select 
-                                    id="selectedProject"
-                                    wire:model="selectedProject"
+                                    id="projectSelect"
+                                    wire:model.live="projectToAdd"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                                     @if($isLoading) disabled @endif
                                 >
-                                    <option value="">Select a project...</option>
+                                    <option value="">Choose a project to add...</option>
                                     @foreach($userProjects as $project)
-                                        <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @if(!in_array($project->id, $selectedProjects))
+                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @endif
                                     @endforeach
                                 </select>
-                                @error('selectedProject') 
-                                    <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                                @error('selectedProjects') 
+                                    <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                                 @enderror
+                                
+                                <!-- Selected Projects List -->
+                                @if(!empty($selectedProjects))
+                                    <div class="mt-2">
+                                        <div class="text-xs font-medium text-gray-600 mb-1.5">Selected Projects:</div>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($selectedProjects as $projectId)
+                                                @php
+                                                    $project = $userProjects->firstWhere('id', $projectId);
+                                                @endphp
+                                                @if($project)
+                                                    <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-3 py-1.5">
+                                                        <span class="text-sm text-blue-900">{{ $project->name }}</span>
+                                                        <button 
+                                                            type="button"
+                                                            wire:click="removeProject('{{ $projectId }}')"
+                                                            class="text-blue-600 hover:text-blue-800 focus:outline-none"
+                                                            @if($isLoading) disabled @endif
+                                                        >
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-2 text-xs text-gray-500 italic">No projects selected yet</div>
+                                @endif
                             </div>
 
-                            <!-- Task Selector -->
+                            <!-- Task Selection -->
                             <div>
-                                <label for="selectedTask" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Task (Optional)
+                                <label for="taskSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Select Tasks (Optional)
                                 </label>
                                 <select 
-                                    id="selectedTask"
-                                    wire:model="selectedTask"
+                                    id="taskSelect"
+                                    wire:model.live="taskToAdd"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                                     @if($isLoading) disabled @endif
                                 >
-                                    <option value="">Select a task...</option>
+                                    <option value="">Choose a task to add...</option>
                                     @foreach($userTasks as $task)
-                                        <option value="{{ $task->id }}">{{ $task->title }}</option>
+                                        @if(!in_array($task->id, $selectedTasks))
+                                            <option value="{{ $task->id }}">
+                                                {{ $task->title }}
+                                                @if($task->project)
+                                                    ({{ $task->project->name }})
+                                                @endif
+                                            </option>
+                                        @endif
                                     @endforeach
                                 </select>
-                                @error('selectedTask') 
-                                    <span class="text-xs text-red-600 mt-1">{{ $message }}</span> 
+                                @error('selectedTasks') 
+                                    <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                                 @enderror
+                                
+                                <!-- Selected Tasks List -->
+                                @if(!empty($selectedTasks))
+                                    <div class="mt-2">
+                                        <div class="text-xs font-medium text-gray-600 mb-1.5">Selected Tasks:</div>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($selectedTasks as $taskId)
+                                                @php
+                                                    $task = $userTasks->firstWhere('id', $taskId);
+                                                @endphp
+                                                @if($task)
+                                                    <div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5">
+                                                        <div class="flex flex-col">
+                                                            <span class="text-sm text-purple-900 leading-tight">{{ $task->title }}</span>
+                                                            @if($task->project)
+                                                                <span class="text-xs text-purple-600 leading-tight">{{ $task->project->name }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <button 
+                                                            type="button"
+                                                            wire:click="removeTask('{{ $taskId }}')"
+                                                            class="text-purple-600 hover:text-purple-800 focus:outline-none"
+                                                            @if($isLoading) disabled @endif
+                                                        >
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-2 text-xs text-gray-500 italic">No tasks selected</div>
+                                @endif
                             </div>
                         @endif
                         
@@ -205,7 +281,7 @@
                         
                         <button 
                             @if($isClockedIn)
-                                wire:click="openPunchOutModal"
+                                wire:click="openPunchOutModalWithData"
                             @else
                                 wire:click="clockIn"
                             @endif
@@ -439,16 +515,28 @@
                                 <!-- Project and Task Info -->
                                 @if(isset($attendanceStatus['attendance']))
                                     <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                                        @if($attendanceStatus['attendance']->project)
+                                        @if($attendanceStatus['attendance']->projects && $attendanceStatus['attendance']->projects->isNotEmpty())
                                             <div>
-                                                <span class="font-semibold">Project: </span>
-                                                <span class="text-gray-700">{{ $attendanceStatus['attendance']->project->name }}</span>
+                                                <span class="font-semibold">Projects: </span>
+                                                <div class="mt-1 flex flex-wrap gap-1">
+                                                    @foreach($attendanceStatus['attendance']->projects as $project)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {{ $project->name }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         @endif
-                                        @if($attendanceStatus['attendance']->task)
+                                        @if($attendanceStatus['attendance']->tasks && $attendanceStatus['attendance']->tasks->isNotEmpty())
                                             <div>
-                                                <span class="font-semibold">Task: </span>
-                                                <span class="text-gray-700">{{ $attendanceStatus['attendance']->task->title }}</span>
+                                                <span class="font-semibold">Tasks: </span>
+                                                <div class="mt-1 flex flex-wrap gap-1">
+                                                    @foreach($attendanceStatus['attendance']->tasks as $task)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                            {{ $task->title }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
@@ -474,48 +562,46 @@
                                 <!-- Task Status Section -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Was the task completed?
+                                        Task Status
                                     </label>
                                     
-                                    @if(isset($attendanceStatus['attendance']) && $attendanceStatus['attendance']->task_id)
-                                        <!-- Show task status options when task exists -->
-                                        <div class="space-y-2">
-                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'completed' ? 'border-green-500 bg-green-50' : '' }}">
-                                                <input 
-                                                    type="radio" 
-                                                    wire:model="taskStatus" 
-                                                    value="completed"
-                                                    class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                                                >
-                                                <div class="flex-1">
-                                                    <span class="text-sm font-medium text-gray-900">Completed</span>
-                                                    <p class="text-xs text-gray-500 mt-0.5">Task is finished and delivered</p>
+                                    @if(isset($attendanceStatus['attendance']) && $attendanceStatus['attendance']->tasks && $attendanceStatus['attendance']->tasks->isNotEmpty())
+                                        <!-- Show task status options for each task -->
+                                        <div class="space-y-3">
+                                            @foreach($attendanceStatus['attendance']->tasks as $task)
+                                                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                                    <div class="font-medium text-sm text-gray-900 mb-2">{{ $task->title }}</div>
+                                                    <div class="space-y-1.5">
+                                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                                            <input 
+                                                                type="radio" 
+                                                                wire:model="taskStatuses.{{ $task->id }}" 
+                                                                value="completed"
+                                                                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                                                            >
+                                                            <span class="text-sm text-gray-700">✓ Completed</span>
+                                                        </label>
+                                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                                            <input 
+                                                                type="radio" 
+                                                                wire:model="taskStatuses.{{ $task->id }}" 
+                                                                value="in-progress"
+                                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                            >
+                                                            <span class="text-sm text-gray-700">⟳ In Progress</span>
+                                                        </label>
+                                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                                            <input 
+                                                                type="radio" 
+                                                                wire:model="taskStatuses.{{ $task->id }}" 
+                                                                value="on-hold"
+                                                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
+                                                            >
+                                                            <span class="text-sm text-gray-700">⏸ On Hold</span>
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                            </label>
-                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'in-progress' ? 'border-blue-500 bg-blue-50' : '' }}">
-                                                <input 
-                                                    type="radio" 
-                                                    wire:model="taskStatus" 
-                                                    value="in-progress"
-                                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                                >
-                                                <div class="flex-1">
-                                                    <span class="text-sm font-medium text-gray-900">In Progress</span>
-                                                    <p class="text-xs text-gray-500 mt-0.5">Still working on this task</p>
-                                                </div>
-                                            </label>
-                                            <label class="flex items-center space-x-3 border rounded-md p-3 hover:bg-gray-50 cursor-pointer {{ $taskStatus === 'on-hold' ? 'border-yellow-500 bg-yellow-50' : '' }}">
-                                                <input 
-                                                    type="radio" 
-                                                    wire:model="taskStatus" 
-                                                    value="on-hold"
-                                                    class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
-                                                >
-                                                <div class="flex-1">
-                                                    <span class="text-sm font-medium text-gray-900">On Hold</span>
-                                                    <p class="text-xs text-gray-500 mt-0.5">Task is paused or blocked</p>
-                                                </div>
-                                            </label>
+                                            @endforeach
                                         </div>
                                     @else
                                         <!-- Show message when no task is selected -->
@@ -524,7 +610,7 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                 </svg>
-                                                <span class="text-sm">No task was selected for this session</span>
+                                                <span class="text-sm">No tasks were selected for this session</span>
                                             </div>
                                         </div>
                                     @endif

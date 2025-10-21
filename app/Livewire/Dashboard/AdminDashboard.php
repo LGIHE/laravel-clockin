@@ -22,9 +22,11 @@ class AdminDashboard extends Component
     // For clock in/out
     public $attendanceStatus;
     public $clockMessage = '';
-    public $selectedProject = '';
-    public $selectedTask = '';
-    public $taskStatus = 'completed';
+    public $selectedProjects = []; // Changed to array for multiple selection
+    public $selectedTasks = []; // Changed to array for multiple selection
+    public $taskStatuses = []; // Array to store status for each task
+    public $projectToAdd = ''; // Temporary holder for project selection
+    public $taskToAdd = ''; // Temporary holder for task selection
     public $userProjects = [];
     public $userTasks = [];
     public $showPunchOutModal = false;
@@ -68,9 +70,39 @@ class AdminDashboard extends Component
         ]);
         
         // If user has only one project, select it by default
-        if ($this->userProjects->count() === 1 && empty($this->selectedProject)) {
-            $this->selectedProject = $this->userProjects->first()->id;
+        if ($this->userProjects->count() === 1 && empty($this->selectedProjects)) {
+            $this->selectedProjects = [$this->userProjects->first()->id];
         }
+    }
+
+    public function updatedProjectToAdd($value)
+    {
+        if (!empty($value) && !in_array($value, $this->selectedProjects)) {
+            $this->selectedProjects[] = $value;
+            $this->projectToAdd = ''; // Reset the select
+        }
+    }
+
+    public function removeProject($projectId)
+    {
+        $this->selectedProjects = array_values(array_filter($this->selectedProjects, function($id) use ($projectId) {
+            return $id !== $projectId;
+        }));
+    }
+
+    public function updatedTaskToAdd($value)
+    {
+        if (!empty($value) && !in_array($value, $this->selectedTasks)) {
+            $this->selectedTasks[] = $value;
+            $this->taskToAdd = ''; // Reset the select
+        }
+    }
+
+    public function removeTask($taskId)
+    {
+        $this->selectedTasks = array_values(array_filter($this->selectedTasks, function($id) use ($taskId) {
+            return $id !== $taskId;
+        }));
     }
 
     public function loadUserTasks()
@@ -133,8 +165,10 @@ class AdminDashboard extends Component
     public function clockIn()
     {
         $this->validate([
-            'selectedProject' => 'required|exists:projects,id',
-            'selectedTask' => 'nullable|exists:tasks,id',
+            'selectedProjects' => 'required|array|min:1',
+            'selectedProjects.*' => 'exists:projects,id',
+            'selectedTasks' => 'nullable|array',
+            'selectedTasks.*' => 'exists:tasks,id',
             'clockMessage' => 'nullable|string|max:500',
         ]);
 
@@ -144,13 +178,15 @@ class AdminDashboard extends Component
             $this->attendanceService->clockIn(
                 auth()->id(), 
                 $this->clockMessage,
-                $this->selectedProject,
-                $this->selectedTask ?: null
+                $this->selectedProjects,
+                !empty($this->selectedTasks) ? $this->selectedTasks : null
             );
             
             $this->clockMessage = '';
-            $this->selectedProject = '';
-            $this->selectedTask = '';
+            $this->selectedProjects = [];
+            $this->selectedTasks = [];
+            $this->projectToAdd = '';
+            $this->taskToAdd = '';
             $this->loadAttendanceStatus();
             $this->loadDashboardData(); // Refresh recent activities
             
@@ -187,7 +223,18 @@ class AdminDashboard extends Component
     {
         $this->showPunchOutModal = false;
         $this->clockMessage = '';
-        $this->taskStatus = 'completed';
+        $this->taskStatuses = [];
+    }
+
+    public function openPunchOutModalWithData()
+    {
+        // Initialize task statuses for all tasks in current attendance
+        if (isset($this->attendanceStatus['attendance']) && $this->attendanceStatus['attendance']->tasks) {
+            foreach ($this->attendanceStatus['attendance']->tasks as $task) {
+                $this->taskStatuses[$task->id] = $task->pivot->status ?? 'in-progress';
+            }
+        }
+        $this->showPunchOutModal = true;
     }
 
     public function confirmClockOut()
@@ -195,25 +242,37 @@ class AdminDashboard extends Component
         \Log::info('AdminDashboard confirmClockOut called', [
             'user_id' => auth()->id(),
             'clockMessage' => $this->clockMessage,
-            'taskStatus' => $this->taskStatus
+            'taskStatuses' => $this->taskStatuses
         ]);
         
         $this->validate([
             'clockMessage' => 'nullable|string|max:500',
-            'taskStatus' => 'nullable|in:in-progress,on-hold,completed',
+            'taskStatuses' => 'nullable|array',
+            'taskStatuses.*' => 'in:in-progress,on-hold,completed',
         ]);
 
         $this->isLoading = true;
         
         try {
+            // If no task statuses set but tasks exist, default all to completed
+            if (empty($this->taskStatuses) && 
+                isset($this->attendanceStatus['attendance']) && 
+                $this->attendanceStatus['attendance']->tasks && 
+                $this->attendanceStatus['attendance']->tasks->isNotEmpty()) {
+                
+                foreach ($this->attendanceStatus['attendance']->tasks as $task) {
+                    $this->taskStatuses[$task->id] = 'completed';
+                }
+            }
+
             $this->attendanceService->clockOut(
                 auth()->id(), 
                 $this->clockMessage,
-                $this->taskStatus
+                !empty($this->taskStatuses) ? $this->taskStatuses : null
             );
             
             $this->clockMessage = '';
-            $this->taskStatus = 'completed';
+            $this->taskStatuses = [];
             $this->showPunchOutModal = false;
             $this->loadAttendanceStatus();
             $this->loadDashboardData(); // Refresh recent activities
