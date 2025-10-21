@@ -103,8 +103,8 @@
         @endphp
         
         @if($logs)
-            <div class="bg-gray-900 rounded-lg p-4 overflow-auto" style="max-height: 400px;">
-                <pre class="text-xs text-green-400 font-mono">{{ $logs }}</pre>
+            <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto overflow-y-auto" style="max-height: 400px;">
+                <pre class="text-xs text-green-400 font-mono whitespace-pre-wrap break-words">{{ $logs }}</pre>
             </div>
         @else
             <div class="text-center py-8 text-gray-500">

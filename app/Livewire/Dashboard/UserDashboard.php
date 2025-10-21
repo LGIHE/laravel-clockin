@@ -16,13 +16,26 @@ class UserDashboard extends Component
     public $clockMessage = '';
     public $selectedProjects = []; // Changed to array for multiple selection
     public $selectedTasks = []; // Changed to array for multiple selection
+    public $selectedPredefinedTasks = []; // Array for predefined task selections
     public $taskStatuses = []; // Array to store status for each task
     public $projectToAdd = ''; // Temporary holder for project selection
     public $taskToAdd = ''; // Temporary holder for task selection
+    public $predefinedTaskToAdd = ''; // Temporary holder for predefined task selection
+    public $showCustomTaskField = false; // Show/hide custom task field
     public $userProjects = [];
     public $userTasks = [];
     public $showPunchOutModal = false;
     public $isLoading = false;
+
+    // Predefined task options
+    public $predefinedTaskOptions = [
+        'Report writing',
+        'Database update',
+        'Pretraining discussion',
+        'Module development',
+        'Post-training discussion',
+        'Other'
+    ];
 
     protected AttendanceService $attendanceService;
     protected DashboardService $dashboardService;
@@ -82,6 +95,29 @@ class UserDashboard extends Component
     {
         $this->selectedProjects = array_values(array_filter($this->selectedProjects, function($id) use ($projectId) {
             return $id !== $projectId;
+        }));
+    }
+
+    public function updatedPredefinedTaskToAdd($value)
+    {
+        if (!empty($value)) {
+            if ($value === 'Other') {
+                // Show custom task field
+                $this->showCustomTaskField = true;
+            } else {
+                // Add predefined task
+                if (!in_array($value, $this->selectedPredefinedTasks)) {
+                    $this->selectedPredefinedTasks[] = $value;
+                }
+            }
+            $this->predefinedTaskToAdd = ''; // Reset the select
+        }
+    }
+
+    public function removePredefinedTask($task)
+    {
+        $this->selectedPredefinedTasks = array_values(array_filter($this->selectedPredefinedTasks, function($t) use ($task) {
+            return $t !== $task;
         }));
     }
 
@@ -151,6 +187,7 @@ class UserDashboard extends Component
         $this->validate([
             'selectedProjects' => 'required|array|min:1',
             'selectedProjects.*' => 'exists:projects,id',
+            'selectedPredefinedTasks' => 'nullable|array',
             'selectedTasks' => 'nullable|array',
             'selectedTasks.*' => 'exists:tasks,id',
             'clockMessage' => 'nullable|string|max:500',
@@ -159,18 +196,30 @@ class UserDashboard extends Component
         $this->isLoading = true;
         
         try {
+            // Combine predefined tasks and custom tasks
+            $allTasks = $this->selectedTasks;
+            
+            // Store predefined tasks in the clock message if any
+            if (!empty($this->selectedPredefinedTasks)) {
+                $predefinedTasksText = 'Tasks: ' . implode(', ', $this->selectedPredefinedTasks);
+                $this->clockMessage = trim($predefinedTasksText . ($this->clockMessage ? ' | ' . $this->clockMessage : ''));
+            }
+            
             $this->attendanceService->clockIn(
                 auth()->id(), 
                 $this->clockMessage,
                 $this->selectedProjects,
-                !empty($this->selectedTasks) ? $this->selectedTasks : null
+                !empty($allTasks) ? $allTasks : null
             );
             
             $this->clockMessage = '';
             $this->selectedProjects = [];
             $this->selectedTasks = [];
+            $this->selectedPredefinedTasks = [];
             $this->projectToAdd = '';
             $this->taskToAdd = '';
+            $this->predefinedTaskToAdd = '';
+            $this->showCustomTaskField = false;
             $this->loadDashboardData();
             
             $this->dispatch('toast', [

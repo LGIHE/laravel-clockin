@@ -157,69 +157,116 @@
                                 @endif
                             </div>
 
-                            <!-- Task Selection -->
+                            <!-- Predefined Task Selection -->
                             <div>
-                                <label for="taskSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="predefinedTaskSelect" class="block text-sm font-medium text-gray-700 mb-1">
                                     Select Tasks (Optional)
                                 </label>
                                 <select 
-                                    id="taskSelect"
-                                    wire:model.live="taskToAdd"
+                                    id="predefinedTaskSelect"
+                                    wire:model.live="predefinedTaskToAdd"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     @if($isLoading) disabled @endif
                                 >
                                     <option value="">Choose a task to add...</option>
-                                    @foreach($userTasks as $task)
-                                        @if(!in_array($task->id, $selectedTasks))
-                                            <option value="{{ $task->id }}">
-                                                {{ $task->title }}
-                                                @if($task->project)
-                                                    ({{ $task->project->name }})
-                                                @endif
-                                            </option>
+                                    @foreach($predefinedTaskOptions as $option)
+                                        @if($option !== 'Other' || !in_array($option, $selectedPredefinedTasks))
+                                            <option value="{{ $option }}">{{ $option }}</option>
                                         @endif
                                     @endforeach
                                 </select>
-                                @error('selectedTasks') 
+                                @error('selectedPredefinedTasks') 
                                     <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                                 @enderror
                                 
-                                <!-- Selected Tasks List -->
-                                @if(!empty($selectedTasks))
+                                <!-- Selected Predefined Tasks List -->
+                                @if(!empty($selectedPredefinedTasks))
                                     <div class="mt-2">
                                         <div class="text-xs font-medium text-gray-600 mb-1.5">Selected Tasks:</div>
                                         <div class="flex flex-wrap gap-2">
-                                            @foreach($selectedTasks as $taskId)
-                                                @php
-                                                    $task = $userTasks->firstWhere('id', $taskId);
-                                                @endphp
-                                                @if($task)
-                                                    <div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5">
-                                                        <div class="flex flex-col">
-                                                            <span class="text-sm text-purple-900 leading-tight">{{ $task->title }}</span>
-                                                            @if($task->project)
-                                                                <span class="text-xs text-purple-600 leading-tight">{{ $task->project->name }}</span>
-                                                            @endif
-                                                        </div>
-                                                        <button 
-                                                            type="button"
-                                                            wire:click="removeTask('{{ $taskId }}')"
-                                                            class="text-purple-600 hover:text-purple-800 focus:outline-none"
-                                                            @if($isLoading) disabled @endif
-                                                        >
-                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                @endif
+                                            @foreach($selectedPredefinedTasks as $task)
+                                                <div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5">
+                                                    <span class="text-sm text-purple-900">{{ $task }}</span>
+                                                    <button 
+                                                        type="button"
+                                                        wire:click="removePredefinedTask('{{ $task }}')"
+                                                        class="text-purple-600 hover:text-purple-800 focus:outline-none"
+                                                        @if($isLoading) disabled @endif
+                                                    >
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
                                             @endforeach
                                         </div>
                                     </div>
-                                @else
-                                    <div class="mt-2 text-xs text-gray-500 italic">No tasks selected</div>
                                 @endif
                             </div>
+
+                            <!-- Custom Task Selection (shown when "Other" is selected) -->
+                            @if($showCustomTaskField)
+                                <div>
+                                    <label for="taskSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Select Custom Tasks
+                                    </label>
+                                    <select 
+                                        id="taskSelect"
+                                        wire:model.live="taskToAdd"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        @if($isLoading) disabled @endif
+                                    >
+                                        <option value="">Choose a custom task to add...</option>
+                                        @foreach($userTasks as $task)
+                                            @if(!in_array($task->id, $selectedTasks))
+                                                <option value="{{ $task->id }}">
+                                                    {{ $task->title }}
+                                                    @if($task->project)
+                                                        ({{ $task->project->name }})
+                                                    @endif
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    @error('selectedTasks') 
+                                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                                    @enderror
+                                    
+                                    <!-- Selected Custom Tasks List -->
+                                    @if(!empty($selectedTasks))
+                                        <div class="mt-2">
+                                            <div class="text-xs font-medium text-gray-600 mb-1.5">Selected Custom Tasks:</div>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($selectedTasks as $taskId)
+                                                    @php
+                                                        $task = $userTasks->firstWhere('id', $taskId);
+                                                    @endphp
+                                                    @if($task)
+                                                        <div class="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1.5">
+                                                            <div class="flex flex-col">
+                                                                <span class="text-sm text-indigo-900 leading-tight">{{ $task->title }}</span>
+                                                                @if($task->project)
+                                                                    <span class="text-xs text-indigo-600 leading-tight">{{ $task->project->name }}</span>
+                                                                @endif
+                                                            </div>
+                                                            <button 
+                                                                type="button"
+                                                                wire:click="removeTask('{{ $taskId }}')"
+                                                                class="text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                                                                @if($isLoading) disabled @endif
+                                                            >
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
 
                             <!-- Comment -->
                             <div>
