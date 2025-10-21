@@ -51,7 +51,7 @@ class NotificationService
                     'New Notice Published',
                     "A new notice has been published: {$noticeTitle}",
                     ['notice_id' => $noticeId],
-                    route('notices.index')
+                    url('/notices')
                 );
             }
         } catch (\Exception $e) {
@@ -88,7 +88,7 @@ class NotificationService
                     'applicant_id' => $applicant->id,
                     'applicant_name' => $applicant->name,
                 ],
-                route('leaves.index')
+                url('/leaves')
             );
         } catch (\Exception $e) {
             Log::error('Failed to create leave request notification', ['error' => $e->getMessage()]);
@@ -118,7 +118,7 @@ class NotificationService
                     'approver_id' => $approver->id,
                     'approver_name' => $approver->name,
                 ],
-                route('leaves.index')
+                url('/leaves')
             );
         } catch (\Exception $e) {
             Log::error('Failed to create leave approval notification', ['error' => $e->getMessage()]);
@@ -148,7 +148,7 @@ class NotificationService
                     'rejector_id' => $rejector->id,
                     'rejector_name' => $rejector->name,
                 ],
-                route('leaves.index')
+                url('/leaves')
             );
         } catch (\Exception $e) {
             Log::error('Failed to create leave rejection notification', ['error' => $e->getMessage()]);
@@ -171,7 +171,7 @@ class NotificationService
                     'New Holiday Added',
                     "A new holiday has been added: {$holiday->name} on {$holiday->date}",
                     ['holiday_id' => $holiday->id],
-                    route('holidays.index')
+                    url('/holidays')
                 );
             }
         } catch (\Exception $e) {
@@ -191,7 +191,7 @@ class NotificationService
                 'Profile Updated',
                 "Your profile has been updated: {$details}",
                 ['update_type' => $updateType],
-                route('profile')
+                url('/profile')
             );
         } catch (\Exception $e) {
             Log::error('Failed to create profile update notification', ['error' => $e->getMessage()]);
@@ -210,7 +210,7 @@ class NotificationService
                 'Welcome to ClockIn!',
                 "Your account has been created. Please check your email for login credentials.",
                 ['user_id' => $user->id],
-                route('dashboard')
+                url('/dashboard')
             );
         } catch (\Exception $e) {
             Log::error('Failed to create user creation notification', ['error' => $e->getMessage()]);
@@ -286,7 +286,7 @@ class NotificationService
             'New Compensation Leave Request',
             "{$requester->name} has requested {$request->days_requested} compensation day(s) for working on {$request->work_date->format('M d, Y')}",
             ['request_id' => $request->id],
-            '/compensation-leaves'
+            url('/compensation-leaves')
         );
     }
 
@@ -301,7 +301,7 @@ class NotificationService
             'Compensation Leave Awaiting HR Action',
             "{$request->user->name}'s compensation leave request has been approved by supervisor and needs HR to effect it",
             ['request_id' => $request->id],
-            '/compensation-leaves'
+            url('/compensation-leaves')
         );
     }
 
@@ -316,7 +316,7 @@ class NotificationService
             'Compensation Leave Approved by Supervisor',
             "Your compensation leave request for {$request->days_requested} day(s) has been approved by your supervisor. Awaiting HR to effect it.",
             ['request_id' => $request->id],
-            '/compensation-leaves'
+            url('/compensation-leaves')
         );
     }
 
@@ -331,7 +331,7 @@ class NotificationService
             'Compensation Leave Days Added',
             "{$request->days_requested} compensation day(s) have been added to your leave balance",
             ['request_id' => $request->id],
-            '/leaves/apply'
+            url('/leaves/apply')
         );
     }
 
@@ -346,7 +346,7 @@ class NotificationService
             'Compensation Leave Request Rejected',
             "Your compensation leave request has been rejected. Reason: {$reason}",
             ['request_id' => $request->id],
-            '/compensation-leaves'
+            url('/compensation-leaves')
         );
     }
 }
