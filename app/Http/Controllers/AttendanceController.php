@@ -32,7 +32,9 @@ class AttendanceController extends Controller
         try {
             $attendance = $this->attendanceService->clockIn(
                 auth()->id(),
-                $request->input('message')
+                $request->input('message'),
+                $request->input('project_ids', $request->input('project_id')), // Support both project_ids array and legacy project_id
+                $request->input('task_ids', $request->input('task_id')) // Support both task_ids array and legacy task_id
             );
 
             return response()->json([
@@ -62,7 +64,8 @@ class AttendanceController extends Controller
         try {
             $attendance = $this->attendanceService->clockOut(
                 auth()->id(),
-                $request->input('message')
+                $request->input('message'),
+                $request->input('task_statuses', $request->input('task_status')) // Support both task_statuses array and legacy task_status
             );
 
             return response()->json([

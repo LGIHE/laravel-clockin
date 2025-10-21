@@ -61,7 +61,7 @@ class Attendance extends Model
     }
 
     /**
-     * Get the project associated with the attendance.
+     * Get the project associated with the attendance (legacy - single project).
      */
     public function project()
     {
@@ -69,11 +69,30 @@ class Attendance extends Model
     }
 
     /**
-     * Get the task associated with the attendance.
+     * Get the task associated with the attendance (legacy - single task).
      */
     public function task()
     {
         return $this->belongsTo(Task::class, 'task_id');
+    }
+
+    /**
+     * Get all projects associated with this attendance session.
+     */
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'attendance_project')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get all tasks associated with this attendance session.
+     */
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'attendance_task')
+            ->withPivot('status')
+            ->withTimestamps();
     }
 
     /**

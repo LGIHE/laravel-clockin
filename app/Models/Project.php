@@ -55,4 +55,13 @@ class Project extends Model
     {
         return $this->hasMany(User::class, 'project_id');
     }
+
+    /**
+     * Get the attendances associated with this project.
+     */
+    public function attendances()
+    {
+        return $this->belongsToMany(Attendance::class, 'attendance_project')
+            ->withTimestamps();
+    }
 }

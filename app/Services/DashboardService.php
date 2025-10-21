@@ -32,7 +32,7 @@ class DashboardService
         // Get attendance status (whether user is currently clocked in) - no cache for real-time data
         $currentAttendance = Attendance::where('user_id', $userId)
             ->whereNull('out_time')
-            ->with(['project', 'task'])
+            ->with(['project', 'task', 'projects', 'tasks'])
             ->latest('in_time')
             ->first();
         

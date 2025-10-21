@@ -15,12 +15,12 @@ class AttendanceService
      *
      * @param string $userId
      * @param string|null $message
-     * @param string|null $projectId
-     * @param string|null $taskId
+     * @param array|string|null $projectIds - Array of project IDs or single project ID
+     * @param array|string|null $taskIds - Array of task IDs or single task ID
      * @return Attendance
      * @throws \Exception
      */
-    public function clockIn(string $userId, ?string $message = null, ?string $projectId = null, ?string $taskId = null): Attendance
+    public function clockIn(string $userId, ?string $message = null, $projectIds = null, $taskIds = null): Attendance
     {
         // Check if user is already clocked in
         $existingAttendance = Attendance::where('user_id', $userId)
@@ -31,16 +31,50 @@ class AttendanceService
             throw new \Exception('User is already clocked in. Please clock out first.');
         }
 
+        // Normalize project IDs to array
+        $projectIdsArray = [];
+        if (!empty($projectIds)) {
+            $projectIdsArray = is_array($projectIds) ? $projectIds : [$projectIds];
+            $projectIdsArray = array_filter($projectIdsArray); // Remove empty values
+        }
+
+        // Normalize task IDs to array
+        $taskIdsArray = [];
+        if (!empty($taskIds)) {
+            $taskIdsArray = is_array($taskIds) ? $taskIds : [$taskIds];
+            $taskIdsArray = array_filter($taskIdsArray); // Remove empty values
+        }
+
+        // Validate that at least one project is selected
+        if (empty($projectIdsArray)) {
+            throw new \Exception('Please select at least one project.');
+        }
+
         // Create new attendance record
         $attendance = Attendance::create([
             'id' => (string) Str::uuid(),
             'user_id' => $userId,
             'in_time' => Carbon::now(),
             'in_message' => $message,
-            'project_id' => $projectId,
-            'task_id' => $taskId,
-            'task_status' => $taskId ? 'in-progress' : null, // Set to in-progress when clocking in with a task
+            // Keep legacy fields for backward compatibility (use first project/task)
+            'project_id' => $projectIdsArray[0] ?? null,
+            'task_id' => $taskIdsArray[0] ?? null,
+            'task_status' => !empty($taskIdsArray) ? 'in-progress' : null,
         ]);
+
+        // Attach multiple projects
+        if (!empty($projectIdsArray)) {
+            $attendance->projects()->attach($projectIdsArray);
+        }
+
+        // Attach multiple tasks with default status
+        if (!empty($taskIdsArray)) {
+            $taskData = [];
+            foreach ($taskIdsArray as $taskId) {
+                $taskData[$taskId] = ['status' => 'in-progress'];
+            }
+            $attendance->tasks()->attach($taskData);
+        }
 
         // Update user's last_in_time
         User::where('id', $userId)->update([
@@ -51,7 +85,7 @@ class AttendanceService
         $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
         Cache::forget($cacheKey);
 
-        return $attendance->load('user');
+        return $attendance->load(['user', 'projects', 'tasks']);
     }
 
     /**
@@ -59,15 +93,16 @@ class AttendanceService
      *
      * @param string $userId
      * @param string|null $message
-     * @param string|null $taskStatus
+     * @param array|string|null $taskStatuses - Array of task statuses keyed by task_id, or single status for all tasks
      * @return Attendance
      * @throws \Exception
      */
-    public function clockOut(string $userId, ?string $message = null, ?string $taskStatus = null): Attendance
+    public function clockOut(string $userId, ?string $message = null, $taskStatuses = null): Attendance
     {
         // Find the active attendance record
         $attendance = Attendance::where('user_id', $userId)
             ->whereNull('out_time')
+            ->with(['tasks'])
             ->first();
 
         if (!$attendance) {
@@ -84,18 +119,46 @@ class AttendanceService
             'worked' => $workedSeconds,
         ];
 
-        // Update task status if provided and attendance has a task
-        if ($attendance->task_id && $taskStatus) {
-            $updateData['task_status'] = $taskStatus;
-            
-            // Also update the Task model status
-            $task = \App\Models\Task::find($attendance->task_id);
-            if ($task) {
-                $task->update(['status' => $taskStatus]);
-                \Log::info('Task status updated', [
-                    'task_id' => $attendance->task_id,
-                    'new_status' => $taskStatus
-                ]);
+        // Handle task statuses
+        if (!empty($taskStatuses) && $attendance->tasks->isNotEmpty()) {
+            // If taskStatuses is a string, apply it to all tasks
+            if (is_string($taskStatuses)) {
+                $updateData['task_status'] = $taskStatuses; // Update legacy field
+                
+                // Update all tasks in pivot table
+                foreach ($attendance->tasks as $task) {
+                    $attendance->tasks()->updateExistingPivot($task->id, ['status' => $taskStatuses]);
+                    
+                    // Also update the Task model status
+                    $task->update(['status' => $taskStatuses]);
+                    \Log::info('Task status updated', [
+                        'task_id' => $task->id,
+                        'new_status' => $taskStatuses
+                    ]);
+                }
+            } 
+            // If taskStatuses is an array, update each task individually
+            elseif (is_array($taskStatuses)) {
+                foreach ($taskStatuses as $taskId => $status) {
+                    if ($attendance->tasks->contains('id', $taskId)) {
+                        $attendance->tasks()->updateExistingPivot($taskId, ['status' => $status]);
+                        
+                        // Also update the Task model status
+                        $task = \App\Models\Task::find($taskId);
+                        if ($task) {
+                            $task->update(['status' => $status]);
+                            \Log::info('Task status updated', [
+                                'task_id' => $taskId,
+                                'new_status' => $status
+                            ]);
+                        }
+                    }
+                }
+                
+                // Update legacy field with first task status
+                if (!empty($taskStatuses)) {
+                    $updateData['task_status'] = reset($taskStatuses);
+                }
             }
         }
 
@@ -106,7 +169,7 @@ class AttendanceService
         $cacheKey = "user_stats:{$userId}:" . Carbon::now()->format('Y-m');
         Cache::forget($cacheKey);
 
-        return $attendance->load('user');
+        return $attendance->load(['user', 'projects', 'tasks']);
     }
 
     /**

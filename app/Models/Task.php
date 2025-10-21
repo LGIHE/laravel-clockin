@@ -40,4 +40,14 @@ class Task extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    /**
+     * Get the attendances associated with this task.
+     */
+    public function attendances()
+    {
+        return $this->belongsToMany(Attendance::class, 'attendance_task')
+            ->withPivot('status')
+            ->withTimestamps();
+    }
 }
