@@ -235,9 +235,22 @@
                             <!-- Custom Task Selection (shown when "Other" is selected) -->
                             @if($showCustomTaskField)
                                 <div>
-                                    <label for="taskSelect" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Select Custom Tasks
-                                    </label>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="taskSelect" class="block text-sm font-medium text-gray-700">
+                                            Select Custom Tasks
+                                        </label>
+                                        <button 
+                                            type="button"
+                                            wire:click="openCreateTaskModal"
+                                            class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                                            @if($isLoading) disabled @endif
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            New Task
+                                        </button>
+                                    </div>
                                     <select 
                                         id="taskSelect"
                                         wire:model.live="taskToAdd"
@@ -255,6 +268,7 @@
                                                 </option>
                                             @endif
                                         @endforeach
+                                        <option value="create_new">➕ Create new task</option>
                                     </select>
                                     @error('selectedTasks') 
                                         <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
@@ -685,6 +699,112 @@
                         type="button" 
                         wire:click="closePunchOutModal"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Create Task Modal -->
+    @if($showCreateTaskModal)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true" wire:click="closeCreateTaskModal"></div>
+
+            <!-- Modal panel -->
+            <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4" id="modal-title">
+                                Create New Task
+                            </h3>
+                            <div class="mt-2 space-y-4">
+                                <!-- Task Title -->
+                                <div>
+                                    <label for="newTaskTitle" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Task Title <span class="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="newTaskTitle"
+                                        wire:model="newTaskTitle"
+                                        placeholder="Enter task title"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                    @error('newTaskTitle') 
+                                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                                    @enderror
+                                </div>
+
+                                <!-- Task Description -->
+                                <div>
+                                    <label for="newTaskDescription" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Description
+                                    </label>
+                                    <textarea 
+                                        id="newTaskDescription"
+                                        wire:model="newTaskDescription"
+                                        placeholder="Enter task description (optional)"
+                                        rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    ></textarea>
+                                    @error('newTaskDescription') 
+                                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                                    @enderror
+                                </div>
+
+                                <!-- Start Date -->
+                                <div>
+                                    <label for="newTaskStartDate" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Start Date <span class="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="date" 
+                                        id="newTaskStartDate"
+                                        wire:model="newTaskStartDate"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                    @error('newTaskStartDate') 
+                                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                                    @enderror
+                                </div>
+
+                                <!-- End Date -->
+                                <div>
+                                    <label for="newTaskEndDate" class="block text-sm font-medium text-gray-700 mb-1">
+                                        End Date
+                                    </label>
+                                    <input 
+                                        type="date" 
+                                        id="newTaskEndDate"
+                                        wire:model="newTaskEndDate"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                    @error('newTaskEndDate') 
+                                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button 
+                        type="button"
+                        wire:click="createTask"
+                        class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                        Create Task
+                    </button>
+                    <button 
+                        type="button"
+                        wire:click="closeCreateTaskModal"
+                        class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Cancel
                     </button>

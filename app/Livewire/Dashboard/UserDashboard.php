@@ -130,9 +130,16 @@ class UserDashboard extends Component
 
     public function updatedTaskToAdd($value)
     {
-        if (!empty($value) && !in_array($value, $this->selectedTasks)) {
-            $this->selectedTasks[] = $value;
-            $this->taskToAdd = ''; // Reset the select
+        if (!empty($value)) {
+            if ($value === 'create_new') {
+                // Open the create task modal
+                \Log::info('Opening create task modal from dropdown');
+                $this->openCreateTaskModal();
+                $this->taskToAdd = ''; // Reset the select
+            } elseif (!in_array($value, $this->selectedTasks)) {
+                $this->selectedTasks[] = $value;
+                $this->taskToAdd = ''; // Reset the select
+            }
         }
     }
 
@@ -152,10 +159,12 @@ class UserDashboard extends Component
     
     public function openCreateTaskModal()
     {
+        \Log::info('openCreateTaskModal called');
         $this->resetTaskForm();
         // Set default start date to today
         $this->newTaskStartDate = now()->format('Y-m-d');
         $this->showCreateTaskModal = true;
+        \Log::info('showCreateTaskModal set to: ' . ($this->showCreateTaskModal ? 'true' : 'false'));
     }
     
     public function closeCreateTaskModal()
