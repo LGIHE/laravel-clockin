@@ -392,7 +392,7 @@
                         <tbody>
                             @if(isset($monthlyAttendance['user_reports']) && count($monthlyAttendance['user_reports']) > 0)
                                 @foreach($monthlyAttendance['user_reports'] as $index => $report)
-                                    @if($index < 5)
+                                    @if($index < 10)
                                         <tr class="border-b border-gray-100">
                                             <td class="py-3">{{ $index + 1 }}</td>
                                             <td class="py-3">{{ $report['user']['name'] }}</td>

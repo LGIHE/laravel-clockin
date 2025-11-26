@@ -14,6 +14,13 @@ class ClockInOut extends Component
     public $isLoading = false;
     public $userProjects = [];
     public $userTasks = [];
+    
+    // Task creation modal
+    public $showCreateTaskModal = false;
+    public $newTaskTitle = '';
+    public $newTaskDescription = '';
+    public $newTaskStartDate = '';
+    public $newTaskEndDate = '';
 
     protected AttendanceService $attendanceService;
 
@@ -45,6 +52,83 @@ class ClockInOut extends Component
         $this->userTasks = \App\Models\Task::where('user_id', auth()->id())
             ->whereIn('status', ['in-progress', 'on-hold'])
             ->get();
+    }
+    
+    public function openCreateTaskModal()
+    {
+        $this->resetTaskForm();
+        // Set default start date to today
+        $this->newTaskStartDate = now()->format('Y-m-d');
+        $this->showCreateTaskModal = true;
+    }
+    
+    public function closeCreateTaskModal()
+    {
+        $this->showCreateTaskModal = false;
+        $this->resetTaskForm();
+    }
+    
+    public function createTask()
+    {
+        $this->validate([
+            'newTaskTitle' => 'required|string|max:100',
+            'newTaskDescription' => 'nullable|string|max:500',
+            'newTaskStartDate' => 'required|date',
+            'newTaskEndDate' => 'nullable|date|after_or_equal:newTaskStartDate',
+        ], [
+            'newTaskTitle.required' => 'Task title is required',
+            'newTaskTitle.max' => 'Task title must be less than 100 characters',
+            'newTaskDescription.max' => 'Description must be less than 500 characters',
+            'newTaskStartDate.required' => 'Start date is required',
+            'newTaskStartDate.date' => 'Start date must be a valid date',
+            'newTaskEndDate.date' => 'End date must be a valid date',
+            'newTaskEndDate.after_or_equal' => 'End date must be after or equal to start date',
+        ]);
+        
+        try {
+            $task = \App\Models\Task::create([
+                'user_id' => auth()->id(),
+                'title' => $this->newTaskTitle,
+                'description' => $this->newTaskDescription ?: null,
+                'project_id' => $this->selectedProject ?: null,
+                'start_date' => $this->newTaskStartDate,
+                'end_date' => $this->newTaskEndDate ?: null,
+                'status' => 'in-progress',
+            ]);
+            
+            // Select the newly created task
+            $this->selectedTask = $task->id;
+            
+            // Reload tasks list
+            $this->loadUserTasks();
+            
+            $this->dispatch('toast', [
+                'message' => 'Task created successfully',
+                'variant' => 'success'
+            ]);
+            
+            $this->closeCreateTaskModal();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('toast', [
+                'message' => 'Error creating task: ' . $e->getMessage(),
+                'variant' => 'danger'
+            ]);
+        }
+    }
+    
+    private function resetTaskForm()
+    {
+        $this->newTaskTitle = '';
+        $this->newTaskDescription = '';
+        $this->newTaskStartDate = '';
+        $this->newTaskEndDate = '';
+        $this->resetValidation([
+            'newTaskTitle',
+            'newTaskDescription',
+            'newTaskStartDate',
+            'newTaskEndDate'
+        ]);
     }
 
     public function loadAttendanceStatus()
